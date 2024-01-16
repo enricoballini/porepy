@@ -6,12 +6,40 @@ import pygem
 import copy
 import os
 import pdb
+import warnings
 import porepy.models.two_phase_hu as two_phase_hu
 from case_3.flow_benchmark_3d import _flow_3d  ##########################
 
 """
 
 """
+
+
+class ConstantPorosityCase3:
+    """ """
+
+    def porosity(self, subdomains: list[pp.Grid]) -> pp.ad.Operator:
+        """ """
+        phi = [None] * len(subdomains)
+
+        for id_sd, sd in enumerate(subdomains):  # TODO: find a better way
+            if sd.dim == 3:
+                phi[id_sd] = 0.2 * np.ones(sd.num_cells)
+
+            elif sd.dim == 2:
+                phi[id_sd] = 0.2 * np.ones(sd.num_cells)
+
+            else:  # sd.dim == 1
+                phi[id_sd] = 0.2 * np.ones(sd.num_cells)
+
+        return pp.ad.DenseArray(np.concatenate(phi))
+
+
+class ConstitutiveLawPressureMass(
+    pp.constitutive_laws.DimensionReduction,
+    ConstantPorosityCase3,
+):
+    pass
 
 
 class SolutionStrategyTest1(two_phase_hu.SolutionStrategyPressureMass):
@@ -151,18 +179,15 @@ class SolutionStrategyTest1(two_phase_hu.SolutionStrategyPressureMass):
 
         if sd.dim == 3:
             permeability = pp.ad.DenseArray(
-                1e2 * np.ones(sd.num_cells)
-            )  # TODO: write right values
+                1e0 * np.ones(sd.num_cells)
+            )  # TODO: different units wrt paper 2019 verification benchmarks for single-phase flow...
         elif sd.dim == 2:
-            permeability = pp.ad.DenseArray(1e-2 * np.ones(sd.num_cells))
+            permeability = pp.ad.DenseArray(1e2 * np.ones(sd.num_cells))
         elif sd.dim == 1:  # 1D
-            permeability = pp.ad.DenseArray(1e-2 * np.ones(sd.num_cells))
+            permeability = pp.ad.DenseArray(1e0 * np.ones(sd.num_cells))
         else:  # 0D
             # print("\n\n\n\n mmmm i'm not sure i need it... why am i applying this val?")
-            # pdb.set_trace()
-            permeability = pp.ad.DenseArray(
-                1e-2 * np.ones(sd.num_cells)
-            )  # do i need it?
+            warnings.warn("tried to impose intrinsic permeability to 0D grid")
 
         permeability.set_name("intrinsic_permeability")
         return permeability
@@ -178,15 +203,15 @@ class SolutionStrategyTest1(two_phase_hu.SolutionStrategyPressureMass):
             # pp.plot_grid(sd_2d, extra_pts=intf.cell_centers.T, alpha=0)
 
             if intf.dim == 2:
-                perm[id_intf] = 1e-2 * np.ones(
+                perm[id_intf] = 2e6 * np.ones(
                     [intf.num_cells]
                 )  # TODO: write right values
 
             elif intf.dim == 1:
-                perm[id_intf] = 2 / (1 / 1e-2 + 1 / 1e2) * np.ones([intf.num_cells])
+                perm[id_intf] = 2e4 * np.ones([intf.num_cells])
 
             else:  # 0D
-                perm[id_intf] = 2 / (1 / 1e-2 + 1 / 1e2) * np.ones([intf.num_cells])
+                warnings.warn("tried to impose normal permeability to 0D grid")
 
         norm_perm = pp.ad.DenseArray(np.concatenate(perm))
 
@@ -260,11 +285,12 @@ class GeometryCase3(pp.ModelGeometry):
 
         self.mdg = _flow_3d.case3(refinement=0)
 
-        # exporter = pp.Exporter(self.mdg, "mdg_I_hope", "./case_3/")
-        # exporter.write_pvd()
-        # exporter.write_vtu()
-
         # where are 1D and 0D grids?
+        self.mdg.compute_geometry()  # still not see them...
+
+        exporter = pp.Exporter(self.mdg, "mdg_I_hope", "./case_3/")
+        exporter.write_pvd()
+        exporter.write_vtu()
 
         self.nd: int = self.mdg.dim_max()
         # pp.set_local_coordinate_projections(self.mdg) # dont know what is this, if it return an error uncomment it...
@@ -322,7 +348,7 @@ if __name__ == "__main__":
     fluid_constants = pp.FluidConstants({})
     solid_constants = pp.SolidConstants(
         {
-            "porosity": 0.25,
+            "porosity": None,
             "intrinsic_permeability": None,
             "normal_permeability": None,
             "residual_aperture": 1e-2 / L_0,
