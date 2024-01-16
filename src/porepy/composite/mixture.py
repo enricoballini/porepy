@@ -5,9 +5,7 @@ from porepy.composite.phase import Phase
 
 
 class Mixture(abc.ABC):
-    """
-    https://github.com/pmgbergen/porepy/blob/539f876e3cda7f5b911db9784210fceba19980ea/src/porepy/composite/mixture.py#L866
-    """
+    """ """
 
     def __init__(self) -> None:
         """ """
@@ -25,9 +23,7 @@ class Mixture(abc.ABC):
 
     @property
     def phases(self) -> Generator[Phase, None, None]:
-        """
-        not really used...
-        """
+        """ """
         for P in self._phases:
             yield P
 
@@ -55,12 +51,9 @@ class Mixture(abc.ABC):
         return self
 
     def apply_constraint(self, ell: int) -> None:
-        """
-        - hardcoded for two phase flow
-        - TODO: this function is not located in the best place
-        """
+        """ """
 
-        if ell == 0:  # sorry...
+        if ell == 0:  # HARDCODED for two phase
             m = 1
         else:  # ell == 1
             m = 0

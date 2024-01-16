@@ -24,10 +24,6 @@ import configparser
 import warnings
 
 
-os.system("clear")
-print("\n\n YOU ARE USING PorePy for exam")
-
-
 __version__ = "1.6.0"
 
 # Give a deprecation warning if the user is using python 3.8 or older

@@ -7,17 +7,7 @@ import pdb
 def rel_perm_quadratic(saturation: np.ndarray) -> np.ndarray:
     """ """
 
-    # linear: ----------------------------------------
-    # relative_perm = saturation
-
-    # abs: ---------------------------------------
-    # relative_perm = pp.ad.abs(saturation)
-
-    # quadratic: -----------------------------------------------
     relative_perm = saturation**2
-
-    # cubic: -----------------------------------------------
-    # relative_perm = saturation**3
 
     return relative_perm
 

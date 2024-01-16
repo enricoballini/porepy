@@ -9,15 +9,19 @@ from typing import Callable, Optional, Type, Literal, Sequence, Union
 from porepy.numerics.ad.forward_mode import AdArray, initAdArrays
 
 import os
+import warnings
 import pdb
 
 os.system("clear")
 
-pdb.set_trace()
-
 
 def myprint(var):
     print("\n" + var + " = ", eval(var))
+
+
+##############################################################################
+# utility functions for operators:
+##############################################################################
 
 
 class VariableDt(pp.ad.operator_functions.AbstractFunction):
@@ -290,6 +294,11 @@ class FunctionRhoG(pp.ad.operator_functions.AbstractFunction):
         return sp.sparse.vstack(jac_list)
 
 
+##############################################################################
+# governing equations:
+##############################################################################
+
+
 class PrimaryVariables(pp.VariableMixin):
     """ """
 
@@ -344,8 +353,8 @@ class PrimaryVariables(pp.VariableMixin):
         return mortar_flux
 
 
-class Equations(pp.BalanceEquation):
-    """"""
+class EquationsTwoPhase(pp.BalanceEquation):
+    """ """
 
     def set_equations(self) -> None:
         # pressure equation:
@@ -656,10 +665,7 @@ class Equations(pp.BalanceEquation):
     def eq_fcn_mortar_phase_0(
         self, interfaces: list[pp.MortarGrid]
     ) -> tuple[pp.ad.Operator]:
-        """definition of mortar flux
-        - mortar flux is integrated mortar flux
-        - mobility, Kr(s)/mu, is not included into this definition of mortar flux
-        """
+        """ """
         subdomains = self.interfaces_to_subdomains(interfaces)
 
         projection = pp.ad.MortarProjections(self.mdg, subdomains, interfaces, dim=1)
@@ -1061,14 +1067,46 @@ class Equations(pp.BalanceEquation):
         return expansion_operator
 
 
+##############################################################################
+# constitutive laws:
+##############################################################################
+
+
 class ConstitutiveLawPressureMass(
     pp.constitutive_laws.DimensionReduction,
     pp.constitutive_laws.ConstantPorosity,
 ):
-    pass
+    def intrinsic_permeability(self, subdomains: list[pp.Grid]) -> pp.ad.Operator:
+        """ """
+        size = sum(sd.num_cells for sd in subdomains)
+        permeability = pp.wrap_as_ad_array(
+            self.solid.permeability(), size, name="intrinsic_permeability"
+        )
+        return permeability
+
+    def intrinsic_permeability_tensor(self, sd: pp.Grid) -> pp.SecondOrderTensor:
+        """ """
+        permeability_ad = self.specific_volume([sd]) * self.intrinsic_permeability([sd])
+        try:
+            permeability = permeability_ad.evaluate(self.equation_system)
+        except KeyError:
+            volume = self.specific_volume([sd]).evaluate(self.equation_system)
+            permeability = self.solid.permeability() * np.ones(sd.num_cells) * volume
+        if isinstance(permeability, pp.ad.AdArray):
+            permeability = permeability.val
+        return pp.SecondOrderTensor(permeability)
+
+    def normal_perm(self, interfaces):
+        """ """
+        return pp.ad.Scalar(self.solid.normal_permeability())
 
 
-class BoundaryConditionsPressureMass:
+##############################################################################
+# boundary and initial conditions:
+##############################################################################
+
+
+class BoundaryAndInitialConditions:
     def bc_neu_phase_0(self, subdomains: list[pp.Grid]) -> pp.ad.DenseArray:
         """ """
 
@@ -1129,109 +1167,15 @@ class BoundaryConditionsPressureMass:
 
         return bc_values_array
 
-
-class SolutionStrategyPressureMass(pp.SolutionStrategy):
-    def __init__(self, params: Optional[dict] = None) -> None:
-        super().__init__(params)
-
-        self.pressure_variable: str = "pressure"
-        self.saturation_variable = "saturation"
-        self.interface_mortar_flux_phase_0_variable: str = (
-            "interface_mortar_flux_phase_0"
-        )
-        self.interface_mortar_flux_phase_1_variable: str = (
-            "interface_mortar_flux_phase_1"
-        )
-        self.darcy_keyword: str = "flow"
-        self.ppu_keyword: str = "ppu"
-
-    def prepare_simulation(self) -> None:
+    def bc_type_darcy(self, sd: pp.Grid) -> pp.BoundaryCondition:
         """ """
-        self.clean_working_directory()
+        boundary_faces = self.domain_boundary_sides(sd).all_bf
+        return pp.BoundaryCondition(sd, boundary_faces, "neu")
 
-        self.set_geometry()
-
-        self.initialize_data_saving()
-
-        self.set_materials()
-
-        self.set_equation_system_manager()
-
-        self.add_equation_system_to_phases()
-        self.mixture.apply_constraint(self.ell)
-
-        self.create_variables()
-
-        self.initial_condition()
-        self.compute_mass()
-
-        self.reset_state_from_file()
-        self.set_equations()
-
-        self.set_discretization_parameters()
-        self.discretize()
-
-        self._initialize_linear_solver()
-        self.set_nonlinear_discretizations()
-
-        self.save_data_time_step()
-
-        self.computations_for_hu()
-
-    # methods called in prepare_simulation: ------------------------------------------------------
-
-    def clean_working_directory(self) -> None:
+    def bc_values_darcy(self, subdomains: list[pp.Grid]) -> pp.ad.DenseArray:
         """ """
-        os.system("rm " + self.output_file_name)
-        os.system("rm " + self.mass_output_file_name)
-        os.system("rm " + self.flips_file_name)
-
-    def set_equation_system_manager(self) -> None:
-        """ """
-        if not hasattr(self, "equation_system"):
-            self.equation_system = pp.ad.EquationSystem(self.mdg)
-
-    def add_equation_system_to_phases(self) -> None:
-        """ """
-        for phase in self.mixture.phases:
-            phase.equation_system = self.equation_system
-
-    def set_materials(self):
-        """ """
-        constants = {}
-
-        constants.update(self.params.get("material_constants", {}))
-
-        for name, const in constants.items():
-            assert isinstance(const, pp.models.material_constants.MaterialConstants)
-            const.set_units(self.units)
-            setattr(self, name, const)
-
-    def reset_state_from_file(self) -> None:
-        """ """
-        if self.restart_options.get("restart", False):
-            if self.restart_options.get("pvd_file", None) is not None:
-                pvd_file = self.restart_options["pvd_file"]
-                is_mdg_pvd = self.restart_options.get("is_mdg_pvd", False)
-                times_file = self.restart_options.get("times_file", None)
-                self.load_data_from_pvd(
-                    pvd_file,
-                    is_mdg_pvd,
-                    times_file,
-                )
-            else:
-                vtu_files = self.restart_options["vtu_files"]
-                time_index = self.restart_options.get("time_index", -1)
-                times_file = self.restart_options.get("times_file", None)
-                self.load_data_from_vtu(
-                    vtu_files,
-                    time_index,
-                    times_file,
-                )
-            vals = self.equation_system.get_variable_values(time_step_index=0)
-            self.equation_system.set_variable_values(
-                vals, iterate_index=0, time_step_index=0
-            )
+        num_faces = sum([sd.num_faces for sd in subdomains])
+        return pp.wrap_as_ad_array(0, num_faces, "bc_values_darcy")
 
     def initial_condition(self) -> None:
         """ """
@@ -1310,6 +1254,113 @@ class SolutionStrategyPressureMass(pp.SolutionStrategy):
                 },
             )
 
+
+##############################################################################
+# solution strategies:
+##############################################################################
+
+
+class SolutionStrategyTwoPhase(pp.SolutionStrategy):
+    def __init__(self, params: Optional[dict] = None) -> None:
+        super().__init__(params)
+
+        self.pressure_variable: str = "pressure"
+        self.saturation_variable = "saturation"
+        self.interface_mortar_flux_phase_0_variable: str = (
+            "interface_mortar_flux_phase_0"
+        )
+        self.interface_mortar_flux_phase_1_variable: str = (
+            "interface_mortar_flux_phase_1"
+        )
+        self.darcy_keyword: str = "flow"
+        self.ppu_keyword: str = "ppu"
+
+    def prepare_simulation(self) -> None:
+        """ """
+        self.clean_working_directory()
+
+        self.set_geometry()
+
+        self.initialize_data_saving()
+
+        self.set_materials()
+
+        self.set_equation_system_manager()
+
+        self.add_equation_system_to_phases()
+        self.mixture.apply_constraint(self.ell)
+
+        self.create_variables()
+
+        self.initial_condition()
+
+        self.reset_state_from_file()
+        self.set_equations()
+
+        self.set_discretization_parameters()
+        self.discretize()
+
+        self._initialize_linear_solver()
+        self.set_nonlinear_discretizations()
+
+        self.save_data_time_step()
+
+        self.computations_for_hu()
+
+    # methods called in prepare_simulation: ------------------------------------------------------
+
+    def clean_working_directory(self) -> None:
+        """ """
+        os.system("rm " + self.output_file_name)
+        os.system("rm " + self.flips_file_name)
+
+    def set_equation_system_manager(self) -> None:
+        """ """
+        if not hasattr(self, "equation_system"):
+            self.equation_system = pp.ad.EquationSystem(self.mdg)
+
+    def add_equation_system_to_phases(self) -> None:
+        """ """
+        for phase in self.mixture.phases:
+            phase.equation_system = self.equation_system
+
+    def set_materials(self):
+        """ """
+        constants = {}
+
+        constants.update(self.params.get("material_constants", {}))
+
+        for name, const in constants.items():
+            assert isinstance(const, pp.models.material_constants.MaterialConstants)
+            const.set_units(self.units)
+            setattr(self, name, const)
+
+    def reset_state_from_file(self) -> None:
+        """ """
+        if self.restart_options.get("restart", False):
+            if self.restart_options.get("pvd_file", None) is not None:
+                pvd_file = self.restart_options["pvd_file"]
+                is_mdg_pvd = self.restart_options.get("is_mdg_pvd", False)
+                times_file = self.restart_options.get("times_file", None)
+                self.load_data_from_pvd(
+                    pvd_file,
+                    is_mdg_pvd,
+                    times_file,
+                )
+            else:
+                vtu_files = self.restart_options["vtu_files"]
+                time_index = self.restart_options.get("time_index", -1)
+                times_file = self.restart_options.get("times_file", None)
+                self.load_data_from_vtu(
+                    vtu_files,
+                    time_index,
+                    times_file,
+                )
+            vals = self.equation_system.get_variable_values(time_step_index=0)
+            self.equation_system.set_variable_values(
+                vals, iterate_index=0, time_step_index=0
+            )
+
     def set_discretization_parameters(self) -> None:
         """ """
 
@@ -1343,41 +1394,6 @@ class SolutionStrategyPressureMass(pp.SolutionStrategy):
                     "ambient_dimension": self.nd,
                 },
             )
-
-    def bc_type_darcy(self, sd: pp.Grid) -> pp.BoundaryCondition:
-        """ """
-        boundary_faces = self.domain_boundary_sides(sd).all_bf
-        return pp.BoundaryCondition(sd, boundary_faces, "neu")
-
-    def bc_values_darcy(self, subdomains: list[pp.Grid]) -> pp.ad.DenseArray:
-        """ """
-        num_faces = sum([sd.num_faces for sd in subdomains])
-        return pp.wrap_as_ad_array(0, num_faces, "bc_values_darcy")
-
-    #####################################################################################################################
-    def intrinsic_permeability(self, subdomains: list[pp.Grid]) -> pp.ad.Operator:
-        """ """
-        size = sum(sd.num_cells for sd in subdomains)
-        permeability = pp.wrap_as_ad_array(
-            self.solid.permeability(), size, name="intrinsic_permeability"
-        )
-        return permeability
-
-    def intrinsic_permeability_tensor(self, sd: pp.Grid) -> pp.SecondOrderTensor:
-        """ """
-        permeability_ad = self.specific_volume([sd]) * self.intrinsic_permeability([sd])
-        try:
-            permeability = permeability_ad.evaluate(self.equation_system)
-        except KeyError:
-            volume = self.specific_volume([sd]).evaluate(self.equation_system)
-            permeability = self.solid.permeability() * np.ones(sd.num_cells) * volume
-        if isinstance(permeability, pp.ad.AdArray):
-            permeability = permeability.val
-        return pp.SecondOrderTensor(permeability)
-
-    def normal_perm(self, interfaces):
-        """ """
-        return pp.ad.Scalar(self.solid.normal_permeability())
 
     def discretize(self) -> None:
         """ """
@@ -1551,7 +1567,7 @@ class SolutionStrategyPressureMass(pp.SolutionStrategy):
         if self._is_nonlinear_problem():
             print("\n===========================================")
             print(
-                "Nonlinear iterations did not converge. I'm going to reduce the time step"
+                "Nonlinear iterations did not converge. The time step will be reduced"
             )
             print("===========================================")
 
@@ -1564,8 +1580,10 @@ class SolutionStrategyPressureMass(pp.SolutionStrategy):
         else:
             raise ValueError("Tried solving singular matrix for the linear problem.")
 
-    # FUNCTION CALLED AFTER NONLINEAR CONVERGENCE -----------------------------------
-    # MAYBE i CAN DELETE THEM
+    ##############################################################################
+    # postprocess utility functions:
+    ##############################################################################
+
     def write_newton_info(
         self,
         time: np.ndarray,
@@ -1731,158 +1749,17 @@ class SolutionStrategyPressureMass(pp.SolutionStrategy):
                 delimiter=",",
             )
 
-    def beta_faces_model(self):
-        """"""
-
-        out = self.mdg.subdomains(return_data=True, dim=2)[0]
-        sd = out[0]
-        data = out[1]
-
-        left_restriction = data["for_hu"]["left_restriction"]
-        right_restriction = data["for_hu"]["right_restriction"]
-
-        def gamma_value(permeability):
-            """ """
-            alpha = 1.0  # as in the paper 2022
-
-            kr0 = permeability(saturation=1)
-
-            def second_derivative(permeability, val):
-                """sorry, I'm lazy..."""
-                h = 1e-4
-                return (
-                    permeability(val + h)
-                    - 2 * permeability(val)
-                    + permeability(val - h)
-                ) / (h**2)
-
-            dd_kr_max = np.nanmax(
-                second_derivative(permeability, np.linspace(0, 1, 10))
-            )
-
-            gamma_val = alpha / kr0 * dd_kr_max
-            return gamma_val
-
-        def g_ref_faces(
-            mixture: pp.Mixture,
-            pressure: pp.ad.AdArray,
-            z: np.ndarray,
-            gravity_value: float,
-            left_restriction: sp.sparse.spmatrix,
-            right_restriction: sp.sparse.spmatrix,
-        ):
-            """ """
-            density_faces_0 = pp.hu_utils.density_internal_faces(
-                mixture.get_phase(0).saturation,
-                mixture.get_phase(0).mass_density(pressure),
-                left_restriction,
-                right_restriction,
-            )
-            density_faces_1 = pp.hu_utils.density_internal_faces(
-                mixture.get_phase(1).saturation,
-                mixture.get_phase(1).mass_density(pressure),
-                left_restriction,
-                right_restriction,
-            )
-
-            density_max = pp.ad.maximum(density_faces_0, density_faces_1)
-
-            g_ref = (
-                density_max
-                * gravity_value
-                * (left_restriction @ z - right_restriction @ z)
-            )
-            return g_ref
-
-        pressure = self.pressure([sd]).evaluate(self.equation_system)
-        saturation = (
-            self.mixture.get_phase(0)
-            .saturation_operator([sd])
-            .evaluate(self.equation_system)
-            .val
-        )
-        density = self.mixture.get_phase(0).mass_density(pressure).val
-        z = -sd.cell_centers[1]  # HARDCODED for 2D
-        gravity_value = self.gravity_value
-        gamma_val = gamma_value(self.relative_permeability)
-        g_ref = g_ref_faces(
-            self.mixture,
-            pressure,
-            z,
-            gravity_value,
-            left_restriction,
-            right_restriction,
-        )
-
-        c_faces_ref = 0
-
-        density_internal_faces = pp.hu_utils.density_internal_faces(
-            saturation, density, left_restriction, right_restriction
-        )
-        g_internal_faces = pp.hu_utils.g_internal_faces(
-            z,
-            density_internal_faces,
-            gravity_value,
-            left_restriction,
-            right_restriction,
-        )
-        delta_pot_faces = (
-            left_restriction @ pressure - right_restriction @ pressure
-        ) - g_internal_faces
-
-        tmp = gamma_val / (pp.ad.abs(g_ref) + c_faces_ref + 1e-8)
-
-        tmp = -pp.ad.functions.maximum(-tmp, -1e6)
-
-        beta_faces = 0.5 + 1 / np.pi * pp.ad.arctan(tmp * delta_pot_faces)
-        beta_faces = beta_faces.val
-        coordinates = sd.face_centers[[0, 1]][:, sd.get_internal_faces()]
-        time = np.around(self.time_manager.time, decimals=6)
-
-        with open(self.beta_file_name + "_" + str(time), "w") as f:
-            info = np.concatenate(
-                [
-                    time * np.ones(beta_faces.shape[0]).reshape(1, -1),
-                    coordinates,
-                    beta_faces.reshape(1, -1),
-                    delta_pot_faces.val.reshape(1, -1),
-                ]
-            )
-            np.savetxt(f, info.T)
-
-        with open(self.beta_file_name + "_TIME", "a") as f:
-            np.savetxt(f, np.array([time]))
-
-    def compute_mass(self):
-        """ """
-        subdomains = self.mdg.subdomains()
-        saturation_phase_0 = self.mixture.get_phase(0).saturation_operator(subdomains)
-        volumes = self.specific_volume(subdomains) * self.wrap_grid_attribute(
-            subdomains, "cell_volumes", dim=1
-        )
-        density_phase_0 = self.mixture.get_phase(0).mass_density_operator(
-            subdomains, self.pressure
-        )
-        phi = self.porosity(subdomains)
-
-        mass_cells = volumes * phi * saturation_phase_0 * density_phase_0
-        mass_cells_phase_0 = mass_cells.evaluate(self.equation_system).val
-
-        mass_tot_phase_0 = np.sum(mass_cells_phase_0)
-
-        with open(self.mass_output_file_name, "a") as f:
-            info = np.array([self.time_manager.time, mass_tot_phase_0])
-
-            np.savetxt(f, info.reshape(1, -1), delimiter=",")
-
     def eb_after_timestep(self):
         """ """
-
-        self.compute_mass()
-        self.beta_faces_model()
+        return
 
 
-class MyModelGeometry(pp.ModelGeometry):
+##############################################################################
+# geometry:
+##############################################################################
+
+
+class GeometryTwoPhase(pp.ModelGeometry):
     def set_geometry(self) -> None:
         """ """
 
@@ -1931,12 +1808,17 @@ class MyModelGeometry(pp.ModelGeometry):
         """ """
         default_meshing_args: dict[str, float] = {
             "cell_size": 0.1 / self.L_0,
-            "cell_size_fracture": 0.02 / self.L_0,
+            "cell_size_fracture": 0.05 / self.L_0,
         }
         return self.params.get("meshing_arguments", default_meshing_args)
 
 
-class TimeManagerPP(pp.TimeManager):
+##############################################################################
+# time stepping:
+##############################################################################
+
+
+class TimeManagerTwoPhase(pp.TimeManager):
     def compute_time_step(
         self,
         is_converged,
@@ -1976,13 +1858,18 @@ class TimeManagerPP(pp.TimeManager):
         self.time -= self.dt
 
 
-class PartialFinalModel(
+##############################################################################
+# final model:
+##############################################################################
+
+
+class PartialModel(
     PrimaryVariables,
-    Equations,
+    EquationsTwoPhase,
     ConstitutiveLawPressureMass,
-    BoundaryConditionsPressureMass,
-    SolutionStrategyPressureMass,
-    MyModelGeometry,
+    BoundaryAndInitialConditions,
+    SolutionStrategyTwoPhase,
+    GeometryTwoPhase,
     pp.DataSavingMixin,
 ):
     """ """
@@ -1993,7 +1880,7 @@ if __name__ == "__main__":
     L_0 = 1
     gravity_0 = 1
     dynamic_viscosity_0 = 1
-    rho_0 = 1  # |rho_phase_0-rho_phase_1|
+    rho_0 = 1
     p_0 = 1
     Ka_0 = 1
     u_0 = Ka_0 * p_0 / (dynamic_viscosity_0 * L_0)
@@ -2014,10 +1901,10 @@ if __name__ == "__main__":
 
     material_constants = {"fluid": fluid_constants, "solid": solid_constants}
 
-    time_manager = TimeManagerPP(
-        schedule=np.array([0, 1]) / t_0,
-        dt_init=1e-1 / t_0,
-        dt_min_max=np.array([1e-5, 1e0]) / t_0,
+    time_manager = TimeManagerTwoPhase(
+        schedule=np.array([0, 5]) / t_0,
+        dt_init=5e-1 / t_0,
+        dt_min_max=np.array([1e-5, 5e-1]) / t_0,
         constant_dt=False,
         iter_max=20,
         print_info=True,
@@ -2037,7 +1924,7 @@ if __name__ == "__main__":
     mixture = pp.Mixture()
     mixture.add([wetting_phase, non_wetting_phase])
 
-    class FinalModel(PartialFinalModel):
+    class FinalModel(PartialModel):
         def __init__(self, params: Optional[dict] = None):
             super().__init__(params)
 
@@ -2075,9 +1962,7 @@ if __name__ == "__main__":
             self.sign_omega_1_prev = None
 
             self.output_file_name = "./OUTPUT_NEWTON_INFO_HU"
-            self.mass_output_file_name = "./MASS_OVER_TIME_HU"
             self.flips_file_name = "./FLIPS_HU"
-            self.beta_file_name = "./BETA/BETA_HU"
 
     model = FinalModel(params)
 

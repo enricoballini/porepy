@@ -51,16 +51,9 @@ class Phase(abc.ABC):
     def mass_density(self, p: pp.ad.AdArray) -> pp.ad.AdArray:
         """ """
 
-        # # constant density:
-        # if isinstance(p, pp.ad.AdArray):
-        #     rho = self._rho0 * pp.ad.AdArray(np.ones(p.val.shape), 0 * p.jac)
-        # else:
-        #     rho = self._rho0 * np.ones(p.shape)
-
-        # variable density:
         rho = self._rho0 * pp.ad.functions.exp(
             self._beta * self._p0 * (p / self._p0 - 1)
-        )  # i like dimless groups...
+        )
 
         return rho
 

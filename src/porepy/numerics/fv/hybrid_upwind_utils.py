@@ -29,7 +29,6 @@ def restriction_matrices_left_right(sd: pp.Grid) -> sp.sparse.spmatrix:
     remark: with ad you have to use matrices instead of working with indices
     TODO: PAY ATTENTION: there are two logical operation in the same function (improve it):
             get internal set of faces and compute left and right restriction of internal set
-    TODO: this function was essentially copied from email. Improve it if possible.
     TODO: use one matrix like: restriction = restriction_left + restiction_right
 
     var_left = left_restriction @ var
@@ -72,11 +71,11 @@ def density_internal_faces(
     right_restriction: sp.sparse.spmatrix,
 ) -> pp.ad.AdArray:
     """ """
-    saturation = saturation + 1e-10  # i'm adding a small error, but it's small...
+    saturation = saturation + 1e-10  # I'm adding a small error, but it's small...
 
     s_rho = saturation * density
     density_internal_faces = (left_restriction @ s_rho + right_restriction @ s_rho) / (
-        left_restriction @ saturation + right_restriction @ saturation  # + 1e-10
+        left_restriction @ saturation + right_restriction @ saturation
     )
 
     return density_internal_faces
@@ -107,9 +106,8 @@ def compute_transmissibility_tpfa(sd: pp.Grid, data: dict, keyword="flow") -> No
 def get_transmissibility_tpfa(
     sd: pp.Grid, data: dict, keyword="flow"
 ) -> (np.ndarray, np.ndarray):
-    """TODO: use the matrix of transmissibilities, not the vector"""
+    """ """
     matrix_dictionary = data[pp.DISCRETIZATION_MATRICES][keyword]
-    div_transmissibility = matrix_dictionary["flux"]  # TODO: "flux"
     transmissibility = matrix_dictionary["transmissibility"]
     transmissibility_internal = transmissibility[sd.get_internal_faces()]
 
@@ -135,13 +133,9 @@ def var_upwinded_faces(
     if isinstance(upwind_directions, pp.ad.AdArray):
         upwind_directions = upwind_directions.val
 
-    upwind_left = np.maximum(
-        0, np.heaviside(np.real(upwind_directions), 1)
-    )  # attention (if complex step is used): I'm using only the real part
+    upwind_left = np.maximum(0, np.heaviside(np.real(upwind_directions), 1))
 
-    upwind_right = (
-        np.ones(upwind_directions.shape) - upwind_left
-    )  # what's not left is right (here!)
+    upwind_right = np.ones(upwind_directions.shape) - upwind_left
 
     upwind_left_matrix = sp.sparse.diags(upwind_left)
     upwind_right_matrix = sp.sparse.diags(upwind_right)
