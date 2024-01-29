@@ -1217,6 +1217,8 @@ class SolutionStrategyPressureMass(pp.SolutionStrategy):
         self.darcy_keyword: str = "flow"
         self.ppu_keyword: str = "ppu"
 
+        self._nonlinear_discretizations = []
+
     def prepare_simulation(self) -> None:
         """ """
         self.clean_working_directory()
@@ -1461,8 +1463,66 @@ class SolutionStrategyPressureMass(pp.SolutionStrategy):
         self.equation_system.discretize()
 
     def rediscretize(self) -> None:
-        """TODO: Discretize only nonlinear terms"""
-        self.discretize()
+        """ """
+        # t = time.time()
+        unique_discr = pp.ad._ad_utils.uniquify_discretization_list(
+            self.nonlinear_discretizations
+        )
+        pp.ad._ad_utils.discretize_from_list(unique_discr, self.mdg)
+        # print("time rediscretize", time.time() - t)
+
+    @property
+    def nonlinear_discretizations(self) -> list[pp.ad._ad_utils.MergedOperator]:
+        """ """
+        return self._nonlinear_discretizations
+
+    def add_nonlinear_discretization(
+        self, discretization_list: list[pp.ad._ad_utils.MergedOperator]
+    ) -> None:
+        """ """
+        for discretization in discretization_list:
+            if discretization not in self._nonlinear_discretizations:
+                self._nonlinear_discretizations.append(discretization)
+
+    def set_nonlinear_discretizations(self) -> None:
+        """ """
+        # subdomains = [sd for sd in self.mdg.subdomains() if sd.dim < self.nd]
+        interfaces = self.mdg.interfaces()
+
+        # remember that ppu is used only for constan bc, so no need to rediscretize it. The rediscretizations affects interface_ppu and hu but the last is done elsewhere
+        self.add_nonlinear_discretization(
+            [
+                self.interface_ppu_discretization(
+                    interfaces, "interface_mortar_flux_phase_0"
+                ).mortar_discr,  # TODO: this is a constant matrix, right? I can remove it...
+                self.interface_ppu_discretization(
+                    interfaces, "interface_mortar_flux_phase_0"
+                ).flux,
+                self.interface_ppu_discretization(
+                    interfaces, "interface_mortar_flux_phase_0"
+                ).upwind_primary,
+                self.interface_ppu_discretization(
+                    interfaces, "interface_mortar_flux_phase_0"
+                ).upwind_secondary,
+            ]
+        )
+
+        self.add_nonlinear_discretization(
+            [
+                self.interface_ppu_discretization(
+                    interfaces, "interface_mortar_flux_phase_1"
+                ).mortar_discr,
+                self.interface_ppu_discretization(
+                    interfaces, "interface_mortar_flux_phase_1"
+                ).flux,
+                self.interface_ppu_discretization(
+                    interfaces, "interface_mortar_flux_phase_1"
+                ).upwind_primary,
+                self.interface_ppu_discretization(
+                    interfaces, "interface_mortar_flux_phase_1"
+                ).upwind_secondary,
+            ]
+        )
 
     def _initialize_linear_solver(self) -> None:
         """ """
@@ -1528,9 +1588,6 @@ class SolutionStrategyPressureMass(pp.SolutionStrategy):
         """
         - the comuication with HU is entirely through the data dictionary of each subdomain
         """
-
-        print("\n\n INSIDE BEFORE_NONLINEAR_ITERATION")
-
         for sd, data in self.mdg.subdomains(return_data=True):
             # OLD:
             # pressure_adarray = self.pressure([sd]).evaluate(self.equation_system)
@@ -1545,7 +1602,7 @@ class SolutionStrategyPressureMass(pp.SolutionStrategy):
             # dynamic_viscosity = data["for_hu"]["dynamic_viscosity"]
             # dim_max = data["for_hu"]["dim_max"]
 
-            t = time.time()
+            # t = time.time()
             total_flux_internal = (
                 pp.numerics.fv.hybrid_weighted_average.total_flux_internal(
                     sd,
@@ -1562,7 +1619,7 @@ class SolutionStrategyPressureMass(pp.SolutionStrategy):
                     self.relative_permeability,
                 )
             )
-            print("time total_flux_internal = ", time.time() - t)
+            # print("time total_flux_internal = ", time.time() - t)
 
             data["for_hu"]["total_flux_internal"] = (
                 total_flux_internal[0] + total_flux_internal[1]

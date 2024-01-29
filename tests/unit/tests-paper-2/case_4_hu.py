@@ -16,7 +16,7 @@ from flow_benchmark_3d import _flow_3d
 """
 
 
-class SolutionStrategyCase3(two_phase_hu.SolutionStrategyPressureMass):
+class SolutionStrategyCase4(two_phase_hu.SolutionStrategyPressureMass):
     def prepare_simulation(self) -> None:
         """ """
         self.clean_working_directory()
@@ -160,7 +160,7 @@ class SolutionStrategyCase3(two_phase_hu.SolutionStrategyPressureMass):
         # )
 
 
-class ConstitutiveLawCase3(
+class ConstitutiveLawCase4(
     pp.constitutive_laws.DimensionReduction,
 ):
     def intrinsic_permeability(self, subdomains: list[pp.Grid]) -> pp.ad.Operator:
@@ -274,7 +274,12 @@ class ConstitutiveLawCase3(
     def grid_aperture(self, sd: pp.Grid) -> np.ndarray:
         """ """
         aperture = np.ones(sd.num_cells)
-        residual_aperture_by_dim = [1e-6, 1e-8, 1e-4, 1.0]  # 0D, 1D, 2D, 3D
+        residual_aperture_by_dim = [
+            1e-12,
+            1e-8,
+            1e-4,
+            1.0,
+        ]  # 0D, 1D, 2D, 3D
         aperture = residual_aperture_by_dim[sd.dim] * aperture
         return aperture
 
@@ -391,9 +396,10 @@ class GeometryCase3(pp.ModelGeometry):
             frac_0,
             frac_1,
             frac_2,
-            frac_3,
-            frac_4,
         ]
+        # frac_3,
+        # frac_4,
+
         #     frac_5,
         #     frac_6,
         #     frac_7,
@@ -412,9 +418,9 @@ class GeometryCase3(pp.ModelGeometry):
 class PartialFinalModel(
     two_phase_hu.PrimaryVariables,
     two_phase_hu.Equations,
-    ConstitutiveLawCase3,
+    ConstitutiveLawCase4,
     two_phase_hu.BoundaryConditionsPressureMass,
-    SolutionStrategyCase3,
+    SolutionStrategyCase4,
     GeometryCase3,
     pp.DataSavingMixin,
 ):
@@ -515,9 +521,9 @@ if __name__ == "__main__":
     folder_name = "./case_4/hu/visualization"
 
     time_manager = two_phase_hu.TimeManagerPP(
-        schedule=np.array([0, 5]) / t_0,
-        dt_init=2e-3 / t_0,
-        dt_min_max=np.array([1e-5, 2e-3]) / t_0,
+        schedule=np.array([0, 1]) / t_0,
+        dt_init=1e-4 / t_0,
+        dt_min_max=np.array([1e-8, 1e-4]) / t_0,
         constant_dt=False,
         recomp_factor=0.5,
         recomp_max=10,

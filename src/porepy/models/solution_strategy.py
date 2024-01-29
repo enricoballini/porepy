@@ -585,9 +585,9 @@ class SolutionStrategy(abc.ABC):
         The linear system is defined by the current state of the model.
 
         """
-        t_0 = time.time()
+        # t_0 = time.time()
         self.linear_system = self.equation_system.assemble()
-        logger.debug(f"Assembled linear system in {t_0-time.time():.2e} seconds.")
+        # logger.debug(f"Assembled linear system in {t_0-time.time():.2e} seconds.")
 
     def solve_linear_system(self) -> np.ndarray:
         """Solve linear system.

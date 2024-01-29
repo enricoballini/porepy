@@ -717,12 +717,10 @@ class EquationSystem:
                 # if name == "pressure":
                 #     print('=========== PRESSURE: ==========================')
                 #     print('local_vec = ', local_vec)
-                #     pdb.set_trace()
 
                 # if name == "saturation":
                 #     print('=========== SATURATION: ==========================')
                 #     print('local_vec = ', local_vec)
-                #     pdb.set_trace()
 
                 # Move dissection forward.
                 dof_start = dof_end
@@ -1275,14 +1273,12 @@ class EquationSystem:
 
                 # if child.name == "rho qt":
                 #     # if child.name == "mass_density_operator":
-                #     pdb.set_trace()
 
                 discr += EquationSystem._recursive_discretization_search(child, list())
 
         if isinstance(operator, _ad_utils.MergedOperator):
             # We have reached the bottom; this is a discretization (example: mpfa.flux)
             discr.append(operator)
-        # pdb.set_trace()
 
         return discr
 
@@ -1496,12 +1492,10 @@ class EquationSystem:
                 known equations will be discretized.
 
         """
-        print("\n\n INSIDE DISCRETIZE")
-
         equation_names = list(self._parse_equations(equations).keys())
 
-        print("equaions = ", equations)
-        print("equation_names = ", equation_names)
+        # print("equaions = ", equations)
+        # print("equation_names = ", equation_names)
 
         # List containing all discretizations
         discr: list = []
@@ -1514,15 +1508,14 @@ class EquationSystem:
             # This will expand the list discr with new discretizations.
             # The list may contain duplicates.
             discr += self._recursive_discretization_search(eqn, list())
-            # pdb.set_trace()
 
         # Uniquify to save computational time, then discretize.
         unique_discr = _ad_utils.uniquify_discretization_list(discr)
         _ad_utils.discretize_from_list(unique_discr, self.mdg)
 
-        for i in discr:
-            print(i.name)
-        pdb.set_trace()
+        # for i in discr:
+        #     print(i.name)
+        # pdb.set_trace()
 
     def assemble(
         self,
@@ -1625,9 +1618,9 @@ class EquationSystem:
 
             print("eq = ", eq)
 
-            t = time.time()
+            # t = time.time()
             ad = eq.evaluate(self, state)
-            print("\n time eq.evaluate = ", time.time() - t)
+            # print("\n time eq.evaluate = ", time.time() - t)
 
             # If restriction to grid-related row blocks was made,
             # perform row slicing based on information we have obtained from parsing.
@@ -1642,7 +1635,6 @@ class EquationSystem:
                 block_length = len(ad.val)
 
                 # np.set_printoptions(precision=2, linewidth=700, threshold=sys.maxsize)
-                # pdb.set_trace()
 
             # Create indices range and shift to correct position.
             block_indices = np.arange(block_length) + ind_start

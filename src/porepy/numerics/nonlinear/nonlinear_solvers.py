@@ -126,10 +126,10 @@ class NewtonSolver:
         # Assemble and solve
         t = time.time()
         model.assemble_linear_system()
-        print("\n\n time assemble_linear_system = ", time.time() - t)
+        print("\n time assemble_linear_system = ", time.time() - t)
 
-        t = time.time()
+        # t = time.time()
         sol = model.solve_linear_system()
-        print("\n\n time solve_linear_system = ", time.time() - t)
+        # print("time solve_linear_system = ", time.time() - t)
 
         return sol
