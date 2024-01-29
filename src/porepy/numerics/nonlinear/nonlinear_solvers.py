@@ -8,6 +8,7 @@ import logging
 import numpy as np
 
 import pdb
+import time
 
 # Module-wide logger
 logger = logging.getLogger(__name__)
@@ -57,7 +58,9 @@ class NewtonSolver:
             )
 
             # Re-discretize the nonlinear term
+            t = time.time()
             model.before_nonlinear_iteration()
+            print("\n time before_nonliear_iteration = ", time.time() - t)
 
             sol = self.iteration(model)
 
@@ -121,7 +124,12 @@ class NewtonSolver:
         """
 
         # Assemble and solve
+        t = time.time()
         model.assemble_linear_system()
+        print("\n\n time assemble_linear_system = ", time.time() - t)
+
+        t = time.time()
         sol = model.solve_linear_system()
+        print("\n\n time solve_linear_system = ", time.time() - t)
 
         return sol

@@ -17,6 +17,7 @@ from .operators import MixedDimensionalVariable, Operator, Variable
 
 import pdb
 import sys
+import time
 
 __all__ = ["EquationSystem"]
 
@@ -1495,7 +1496,12 @@ class EquationSystem:
                 known equations will be discretized.
 
         """
+        print("\n\n INSIDE DISCRETIZE")
+
         equation_names = list(self._parse_equations(equations).keys())
+
+        print("equaions = ", equations)
+        print("equation_names = ", equation_names)
 
         # List containing all discretizations
         discr: list = []
@@ -1514,9 +1520,9 @@ class EquationSystem:
         unique_discr = _ad_utils.uniquify_discretization_list(discr)
         _ad_utils.discretize_from_list(unique_discr, self.mdg)
 
-        # for i in discr:
-        #     print(i.name)
-        # pdb.set_trace()
+        for i in discr:
+            print(i.name)
+        pdb.set_trace()
 
     def assemble(
         self,
@@ -1619,9 +1625,9 @@ class EquationSystem:
 
             print("eq = ", eq)
 
+            t = time.time()
             ad = eq.evaluate(self, state)
-
-            # pdb.set_trace()
+            print("\n time eq.evaluate = ", time.time() - t)
 
             # If restriction to grid-related row blocks was made,
             # perform row slicing based on information we have obtained from parsing.

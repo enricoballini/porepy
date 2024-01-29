@@ -2,20 +2,20 @@ import scipy as sp
 import numpy as np
 from typing import Callable, Optional, Type, Literal, Sequence, Union
 import porepy as pp
-import pygem
-import copy
 import os
 import pdb
 import warnings
 import porepy.models.two_phase_hu as two_phase_hu
-from flow_benchmark_3d import _flow_3d
+import porepy.models.two_phase_ppu as two_phase_ppu
+import case_3_hu
+
+"""
+TODO
 
 """
 
-"""
 
-
-class SolutionStrategyCase3(two_phase_hu.SolutionStrategyPressureMass):
+class SolutionStrategyCase3(two_phase_ppu.SolutionStrategyPressureMassPPU):
     def prepare_simulation(self) -> None:
         """ """
         self.clean_working_directory()
@@ -47,14 +47,13 @@ class SolutionStrategyCase3(two_phase_hu.SolutionStrategyPressureMass):
 
         self.save_data_time_step()
 
-        self.computations_for_hu()
+        # self.computations_for_hu()
 
     def clean_working_directory(self):
         """ """
         os.system("rm " + self.output_file_name)
         os.system("rm " + self.mass_output_file_name)
         os.system("rm " + self.flips_file_name)
-        os.system("rm " + self.beta_file_name)
 
     def initial_condition(self) -> None:
         """ """
@@ -103,9 +102,17 @@ class SolutionStrategyCase3(two_phase_hu.SolutionStrategyPressureMass):
             pp.initialize_data(
                 sd,
                 data,
-                self.ppu_keyword,
+                self.ppu_keyword + "_" + "darcy_flux_phase_0",
                 {
                     "darcy_flux_phase_0": np.zeros(sd.num_faces),
+                },
+            )
+
+            pp.initialize_data(
+                sd,
+                data,
+                self.ppu_keyword + "_" + "darcy_flux_phase_1",
+                {
                     "darcy_flux_phase_1": np.zeros(sd.num_faces),
                 },
             )
@@ -129,153 +136,14 @@ class SolutionStrategyCase3(two_phase_hu.SolutionStrategyPressureMass):
                 },
             )
 
-    # def after_nonlinear_iteration(self, solution_vector: np.ndarray) -> None:
-    #     """ """
-    #     self._nonlinear_iteration += 1
-    #     self.equation_system.shift_iterate_values()
-    #     self.equation_system.set_variable_values(
-    #         values=solution_vector, additive=True, iterate_index=0
-    #     )
-    #     self.clip_saturation()
-
-    #     # for sd in self.mdg.subdomains():
-    #     #     print("sd.dim = ", sd.dim)
-
-    #     np.set_printoptions(precision=16)
-    #     a = self.aperture(self.mdg.subdomains())
-    #     a = a.evaluate(self.equation_system)
-    #     print("a = ", a)
-    #     pdb.set_trace()
-
-
-class ConstitutiveLawCase3(
-    pp.constitutive_laws.DimensionReduction,
-):
-    def intrinsic_permeability(self, subdomains: list[pp.Grid]) -> pp.ad.Operator:
-        """for some reason subdoamins is always a single domain"""
-
-        sd = subdomains[0]
-
-        # if sd.dim == 0:
-        #     extra_pts = sd.cell_centers.T
-        # else:
-        #     extra_pts = sd.nodes.T
-
-        # print("\n\n\n id = ", sd.id)
-        # sd_3d = self.mdg.subdomains(dim=3)[0]
-        # pp.plot_grid(sd_3d, extra_pts=extra_pts, alpha=0)
-
-        if len(subdomains) > 1:
-            print("\n\n\n check intrinsic_permeability")
-            raise NotImplementedError
-
-        if sd.dim == 3:
-            permeability = pp.ad.DenseArray(1e0 * np.ones(sd.num_cells))
-        elif sd.dim == 2:
-            permeability = pp.ad.DenseArray(1e2 * np.ones(sd.num_cells))
-        elif sd.dim == 1:
-            permeability = pp.ad.DenseArray(1e0 * np.ones(sd.num_cells))
-        else:  # 0D
-            warnings.warn("setting intrinsic permeability to 0D grid")
-            permeability = pp.ad.DenseArray(np.ones(sd.num_cells))  # do i need it?
-
-        permeability.set_name("intrinsic_permeability")
-        return permeability
-
-    def normal_perm(self, interfaces) -> pp.ad.Operator:
-        """ """
-
-        perm = [None] * len(interfaces)
-
-        for id_intf, intf in enumerate(interfaces):
-            # print("\n\n\n id = ", intf.id)
-            # sd_2d = self.mdg.subdomains(dim=2)[0]
-            # pp.plot_grid(sd_2d, extra_pts=intf.cell_centers.T, alpha=0)
-
-            if intf.dim == 2:
-                perm[id_intf] = 2e6 * np.ones([intf.num_cells])
-
-            elif intf.dim == 1:
-                perm[id_intf] = 2e4 * np.ones([intf.num_cells])
-            else:  # 0D
-                warnings.warn("setting normal permeability to 0D interface")
-                perm[id_intf] = np.ones([intf.num_cells])
-
-        norm_perm = pp.ad.DenseArray(np.concatenate(perm))
-
-        return norm_perm
-
-    def porosity(self, subdomains: list[pp.Grid]) -> pp.ad.Operator:
-        """ """
-        phi = [None] * len(subdomains)
-
-        for index, sd in enumerate(subdomains):
-            if sd.dim == 3:
-                phi[index] = 2e-1 * np.ones([sd.num_cells])
-            if sd.dim == 2:
-                phi[index] = 2e-1 * np.ones([sd.num_cells])
-            if sd.dim == 1:
-                phi[index] = 2e-1 * np.ones([sd.num_cells])
-            if sd.dim == 0:
-                warnings.warn("setting porosity to 0D grid")
-                phi[index] = 2e-1 * np.ones([sd.num_cells])
-
-        return pp.ad.DenseArray(np.concatenate(phi))
-
-    def grid_aperture(self, sd: pp.Grid) -> np.ndarray:
-        """ """
-        aperture = np.ones(sd.num_cells)
-        residual_aperture_by_dim = [1.0, 1e-4, 1e-2, 1.0]  # 0D, 1D, 2D, 3D
-        if sd.dim == 0:
-            warnings.warn("setting residual aperture to 0D grid")
-        aperture = residual_aperture_by_dim[sd.dim] * aperture
-        return aperture
-
-
-class GeometryCase3(pp.ModelGeometry):
-    def set_geometry(self) -> None:
-        """ """
-        self.set_domain()
-
-        self.mdg = _flow_3d.case3(refinement=-1)
-
-        # rotation:
-        R = pp.map_geometry.rotation_matrix(np.pi / 2, np.array([1, 0, 0]))
-
-        for sd in self.mdg.subdomains():
-            sd.nodes = R @ sd.nodes
-
-        self.mdg.compute_geometry()
-
-        # exporter = pp.Exporter(self.mdg, "mdg_I_hope", "./case_3/")
-        # exporter.write_pvd()
-        # exporter.write_vtu()
-
-        self.nd: int = self.mdg.dim_max()
-        # pp.set_local_coordinate_projections(self.mdg) # dont know what is this, if it return an error uncomment it...
-
-    def set_domain(self) -> None:
-        """
-        TODO: you dont really need this set_domain... you know
-        """
-        bounding_box = {
-            "xmin": self.xmin,
-            "xmax": self.xmax,
-            "ymin": self.ymin,
-            "ymax": self.ymax,
-            "zmin": self.zmin,
-            "zmax": self.zmax,
-        }
-        self._domain = pp.Domain(bounding_box=bounding_box)
-
 
 class PartialFinalModel(
     two_phase_hu.PrimaryVariables,
-    two_phase_hu.Equations,
-    ConstitutiveLawCase3,
+    two_phase_ppu.EquationsPPU,
+    case_3_hu.ConstitutiveLawCase3,
     two_phase_hu.BoundaryConditionsPressureMass,
     SolutionStrategyCase3,
-    GeometryCase3,
+    case_3_hu.GeometryCase3,
     pp.DataSavingMixin,
 ):
     """ """
@@ -305,6 +173,7 @@ if __name__ == "__main__":
     print("=========================================\n")
 
     fluid_constants = pp.FluidConstants({})
+
     solid_constants = pp.SolidConstants(
         {
             "porosity": None,
@@ -358,21 +227,18 @@ if __name__ == "__main__":
                 self.mobility
             )
 
-            self.number_upwind_dirs = 3
-            self.sign_total_flux_internal_prev = None
-            self.sign_omega_0_prev = None
-            self.sign_omega_1_prev = None
+            self.number_upwind_dirs = 2
+            self.sign_darcy_phase_0_prev = None
+            self.sign_darcy_phase_1_prev = None
 
-            self.root_path = "./case_3/hu/"
+            self.root_path = "./case_3/ppu/"
 
             self.output_file_name = self.root_path + "OUTPUT_NEWTON_INFO"
             self.mass_output_file_name = self.root_path + "MASS_OVER_TIME"
             self.flips_file_name = self.root_path + "FLIPS"
-            self.beta_file_name = self.root_path + "BETA/BETA"
 
-    os.system("mkdir -p ./case_3/hu/")
-    os.system("mkdir -p ./case_3/hu/BETA")
-    folder_name = "./case_3/hu/visualization"
+    os.system("mkdir -p ./case_3/ppu/")
+    folder_name = "./case_3/ppu/visualization"
 
     time_manager = two_phase_hu.TimeManagerPP(
         schedule=np.array([0, 5]) / t_0,

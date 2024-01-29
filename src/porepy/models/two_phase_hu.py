@@ -14,6 +14,7 @@ import copy
 import os
 import sys
 import pdb
+import time
 
 os.system("clear")
 
@@ -1528,34 +1529,40 @@ class SolutionStrategyPressureMass(pp.SolutionStrategy):
         - the comuication with HU is entirely through the data dictionary of each subdomain
         """
 
+        print("\n\n INSIDE BEFORE_NONLINEAR_ITERATION")
+
         for sd, data in self.mdg.subdomains(return_data=True):
-            pressure_adarray = self.pressure([sd]).evaluate(self.equation_system)
-            left_restriction = data["for_hu"]["left_restriction"]
-            right_restriction = data["for_hu"][
-                "right_restriction"
-            ]  # created in prepare_simulation
-            transmissibility_internal_tpfa = data["for_hu"][
-                "transmissibility_internal_tpfa"
-            ]
-            ad = True
-            dynamic_viscosity = data["for_hu"]["dynamic_viscosity"]
-            dim_max = data["for_hu"]["dim_max"]
+            # OLD:
+            # pressure_adarray = self.pressure([sd]).evaluate(self.equation_system)
+            # left_restriction = data["for_hu"]["left_restriction"]
+            # right_restriction = data["for_hu"][
+            #     "right_restriction"
+            # ]  # created in prepare_simulation
+            # transmissibility_internal_tpfa = data["for_hu"][
+            #     "transmissibility_internal_tpfa"
+            # ]
+            # ad = True
+            # dynamic_viscosity = data["for_hu"]["dynamic_viscosity"]
+            # dim_max = data["for_hu"]["dim_max"]
+
+            t = time.time()
             total_flux_internal = (
                 pp.numerics.fv.hybrid_weighted_average.total_flux_internal(
                     sd,
                     self.mixture.mixture_for_subdomain(sd),
-                    pressure_adarray,
+                    self.pressure([sd]).evaluate(self.equation_system),
                     self.gravity_value,
-                    left_restriction,
-                    right_restriction,
-                    transmissibility_internal_tpfa,
-                    ad,
-                    dynamic_viscosity,
-                    dim_max,
+                    data["for_hu"]["left_restriction"],
+                    data["for_hu"]["right_restriction"],
+                    data["for_hu"]["transmissibility_internal_tpfa"],
+                    True,  # ad
+                    data["for_hu"]["dynamic_viscosity"],
+                    data["for_hu"]["dim_max"],
                     self.mobility,
                     self.relative_permeability,
                 )
             )
+            print("time total_flux_internal = ", time.time() - t)
 
             data["for_hu"]["total_flux_internal"] = (
                 total_flux_internal[0] + total_flux_internal[1]

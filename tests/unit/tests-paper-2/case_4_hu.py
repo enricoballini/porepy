@@ -12,6 +12,7 @@ from flow_benchmark_3d import _flow_3d
 
 """
 
+
 """
 
 
@@ -76,7 +77,7 @@ class SolutionStrategyCase3(two_phase_hu.SolutionStrategyPressureMass):
             )
 
             saturation_values = 0.0 * np.ones(sd.num_cells)
-            saturation_values[np.where(sd.cell_centers[2] >= self.zmax / 2)] = 1.0
+            saturation_values[np.where(sd.cell_centers[2] >= 0.75 * self.zmax)] = 1.0
 
             # if sd.dim == 1:
             #     saturation_values = 0.5 * np.ones(sd.num_cells)
@@ -147,6 +148,17 @@ class SolutionStrategyCase3(two_phase_hu.SolutionStrategyPressureMass):
     #     print("a = ", a)
     #     pdb.set_trace()
 
+    def eb_after_timestep(self):
+        """used for plots, tests, and more"""
+
+        self.compute_mass()
+        self.beta_faces_model(dim_to_check=self.mdg.dim_max())
+
+        # pdb.set_trace()
+        # ka = self.intrinsic_permeability([self.mdg.subdomains(dim=3)[0]]).evaluate(
+        #     self.equation_system
+        # )
+
 
 class ConstitutiveLawCase3(
     pp.constitutive_laws.DimensionReduction,
@@ -166,15 +178,53 @@ class ConstitutiveLawCase3(
         # pp.plot_grid(sd_3d, extra_pts=extra_pts, alpha=0)
 
         if len(subdomains) > 1:
-            print("\n\n\n check intrinsic_permeability")
+            print("\n\n\n check intrinsic_permeability\n")
             raise NotImplementedError
 
         if sd.dim == 3:
-            permeability = pp.ad.DenseArray(1e0 * np.ones(sd.num_cells))
+            c = sd.cell_centers
+            idx_region_1 = [
+                np.where(np.logical_and(c[0] > 0.5, c[1] < 0.5))[0],
+                np.where(
+                    np.logical_and(
+                        np.logical_and(
+                            c[0] > 0.75, np.logical_and(c[1] > 0.5, c[1] < 0.75)
+                        ),
+                        c[2] > 0.5,
+                    )
+                )[0],
+                np.where(
+                    np.logical_and(
+                        np.logical_and(
+                            np.logical_and(c[0] > 0.625, c[0] < 0.75),
+                            np.logical_and(c[1] > 0.5, c[1] < 0.625),
+                        ),
+                        np.logical_and(c[2] > 0.5, c[2] < 0.75),
+                    )
+                )[0],
+            ]
+            idx_region_1 = np.sort(
+                np.concatenate(idx_region_1)
+            )  # sort to make it readable
+
+            idx_region_0 = np.setdiff1d(np.arange(sd.num_cells), idx_region_1)
+
+            values = np.zeros(sd.num_cells)
+            values[idx_region_0] = 1.0
+            values[idx_region_1] = 1e-1
+            permeability = pp.ad.DenseArray(values)
+
+            # sd_3d = self.mdg.subdomains(dim=3)[0]
+            # # extra_pts = c.T[idx_region_0]
+            # # pp.plot_grid(sd_3d, extra_pts=extra_pts, alpha=0)
+
+            # exporter = pp.Exporter(sd_3d, "./case_4/check_K")
+            # exporter.write_vtu(("K", values))  # exporter is nosense
+
         elif sd.dim == 2:
-            permeability = pp.ad.DenseArray(1e2 * np.ones(sd.num_cells))
-        elif sd.dim == 1:
             permeability = pp.ad.DenseArray(1e0 * np.ones(sd.num_cells))
+        elif sd.dim == 1:
+            permeability = pp.ad.DenseArray(1e-4 * np.ones(sd.num_cells))
         else:  # 0D
             warnings.warn("setting intrinsic permeability to 0D grid")
             permeability = pp.ad.DenseArray(np.ones(sd.num_cells))  # do i need it?
@@ -193,13 +243,12 @@ class ConstitutiveLawCase3(
             # pp.plot_grid(sd_2d, extra_pts=intf.cell_centers.T, alpha=0)
 
             if intf.dim == 2:
-                perm[id_intf] = 2e6 * np.ones([intf.num_cells])
+                perm[id_intf] = 2e8 * np.ones([intf.num_cells])
 
             elif intf.dim == 1:
                 perm[id_intf] = 2e4 * np.ones([intf.num_cells])
             else:  # 0D
-                warnings.warn("setting normal permeability to 0D interface")
-                perm[id_intf] = np.ones([intf.num_cells])
+                perm[id_intf] = 2e0 * np.ones([intf.num_cells])
 
         norm_perm = pp.ad.DenseArray(np.concatenate(perm))
 
@@ -211,23 +260,21 @@ class ConstitutiveLawCase3(
 
         for index, sd in enumerate(subdomains):
             if sd.dim == 3:
-                phi[index] = 2e-1 * np.ones([sd.num_cells])
+                phi[index] = 1e-1 * np.ones([sd.num_cells])
             if sd.dim == 2:
-                phi[index] = 2e-1 * np.ones([sd.num_cells])
+                phi[index] = 9e-1 * np.ones([sd.num_cells])
             if sd.dim == 1:
-                phi[index] = 2e-1 * np.ones([sd.num_cells])
+                phi[index] = 9e-1 * np.ones([sd.num_cells])
             if sd.dim == 0:
                 warnings.warn("setting porosity to 0D grid")
-                phi[index] = 2e-1 * np.ones([sd.num_cells])
+                phi[index] = 1.0 * np.ones([sd.num_cells])
 
         return pp.ad.DenseArray(np.concatenate(phi))
 
     def grid_aperture(self, sd: pp.Grid) -> np.ndarray:
         """ """
         aperture = np.ones(sd.num_cells)
-        residual_aperture_by_dim = [1.0, 1e-4, 1e-2, 1.0]  # 0D, 1D, 2D, 3D
-        if sd.dim == 0:
-            warnings.warn("setting residual aperture to 0D grid")
+        residual_aperture_by_dim = [1e-6, 1e-8, 1e-4, 1.0]  # 0D, 1D, 2D, 3D
         aperture = residual_aperture_by_dim[sd.dim] * aperture
         return aperture
 
@@ -235,24 +282,28 @@ class ConstitutiveLawCase3(
 class GeometryCase3(pp.ModelGeometry):
     def set_geometry(self) -> None:
         """ """
+
         self.set_domain()
+        self.set_fractures()
 
-        self.mdg = _flow_3d.case3(refinement=-1)
+        self.fracture_network = pp.create_fracture_network(self.fractures, self.domain)
 
-        # rotation:
-        R = pp.map_geometry.rotation_matrix(np.pi / 2, np.array([1, 0, 0]))
-
-        for sd in self.mdg.subdomains():
-            sd.nodes = R @ sd.nodes
+        self.mdg = pp.create_mdg(
+            "cartesian",
+            self.meshing_arguments(),
+            self.fracture_network,
+            **self.meshing_kwargs(),
+        )
+        self.nd: int = self.mdg.dim_max()
 
         self.mdg.compute_geometry()
 
-        # exporter = pp.Exporter(self.mdg, "mdg_I_hope", "./case_3/")
+        # exporter = pp.Exporter(self.mdg, "mdg_I_hope", "./case_4/")
         # exporter.write_pvd()
         # exporter.write_vtu()
 
-        self.nd: int = self.mdg.dim_max()
-        # pp.set_local_coordinate_projections(self.mdg) # dont know what is this, if it return an error uncomment it...
+        print(self.mdg)
+        print("\n\n")
 
     def set_domain(self) -> None:
         """
@@ -267,6 +318,95 @@ class GeometryCase3(pp.ModelGeometry):
             "zmax": self.zmax,
         }
         self._domain = pp.Domain(bounding_box=bounding_box)
+
+    def set_fractures(self) -> None:
+        """ """
+
+        # 0,0,0,1,1,1
+        # 0.5,0,0,0.5,1,0,0.5,1,1,0.5,0,1
+        # 0,0.5,0,1,0.5,0,1,0.5,1,0,0.5,1
+        # 0,0,0.5,1,0,0.5,1,1,0.5,0,1,0.5
+        # 0.75,0.5,0.5,0.75,1.0,0.5,0.75,1.0,1.0,0.75,0.5,1.0
+        # 0.5,0.5,0.75,1.0,0.5,0.75,1.0,1.0,0.75,0.5,1.0,0.75
+        # 0.5,0.75,0.5,1.0,0.75,0.5,1.0,0.75,1.0,0.5,0.75,1.0
+        # 0.50,0.625,0.50,0.75,0.625,0.50,0.75,0.625,0.75,0.50,0.625,0.75
+        # 0.625,0.50,0.50,0.625,0.75,0.50,0.625,0.75,0.75,0.625,0.50,0.75
+        # 0.50,0.50,0.625,0.75,0.50,0.625,0.75,0.75,0.625,0.50,0.75,0.625
+
+        pts_0 = np.array([[0.5, 0, 0], [0.5, 1, 0], [0.5, 1, 1], [0.5, 0, 1]])
+        frac_0 = pp.PlaneFracture(pts_0.T)
+
+        pts_1 = np.array([[0, 0.5, 0], [1, 0.5, 0], [1, 0.5, 1], [0, 0.5, 1]])
+        frac_1 = pp.PlaneFracture(pts_1.T)
+
+        pts_2 = np.array([[0, 0, 0.5], [1, 0, 0.5], [1, 1, 0.5], [0, 1, 0.5]])
+        frac_2 = pp.PlaneFracture(pts_2.T)
+
+        pts_3 = np.array(
+            [[0.75, 0.5, 0.5], [0.75, 1.0, 0.5], [0.75, 1.0, 1.0], [0.75, 0.5, 1.0]]
+        )
+        frac_3 = pp.PlaneFracture(pts_3.T)
+
+        pts_4 = np.array(
+            [[0.5, 0.5, 0.75], [1.0, 0.5, 0.75], [1.0, 1.0, 0.75], [0.5, 1.0, 0.75]]
+        )
+        frac_4 = pp.PlaneFracture(pts_4.T)
+
+        pts_5 = np.array(
+            [[0.5, 0.75, 0.5], [1.0, 0.75, 0.5], [1.0, 0.75, 1.0], [0.5, 0.75, 1.0]]
+        )
+        frac_5 = pp.PlaneFracture(pts_5.T)
+
+        pts_6 = np.array(
+            [
+                [0.50, 0.625, 0.50],
+                [0.75, 0.625, 0.50],
+                [0.75, 0.625, 0.75],
+                [0.50, 0.625, 0.75],
+            ]
+        )
+        frac_6 = pp.PlaneFracture(pts_6.T)
+
+        pts_7 = np.array(
+            [
+                [0.625, 0.50, 0.50],
+                [0.625, 0.75, 0.50],
+                [0.625, 0.75, 0.75],
+                [0.625, 0.50, 0.75],
+            ]
+        )
+        frac_7 = pp.PlaneFracture(pts_7.T)
+
+        pts_8 = np.array(
+            [
+                [0.50, 0.50, 0.625],
+                [0.75, 0.50, 0.625],
+                [0.75, 0.75, 0.625],
+                [0.50, 0.75, 0.625],
+            ]
+        )
+        frac_8 = pp.PlaneFracture(pts_8.T)
+
+        self._fractures: list = [
+            frac_0,
+            frac_1,
+            frac_2,
+            frac_3,
+            frac_4,
+        ]
+        #     frac_5,
+        #     frac_6,
+        #     frac_7,
+        #     frac_8,
+        # ]
+
+    def meshing_arguments(self) -> dict[str, float]:
+        """ """
+        default_meshing_args: dict[str, float] = {
+            "cell_size": 0.1,
+            "cell_size_fracture": 0.1,
+        }
+        return self.params.get("meshing_arguments", default_meshing_args)
 
 
 class PartialFinalModel(
@@ -346,7 +486,7 @@ if __name__ == "__main__":
             self.xmin = 0.0 / self.L_0
             self.xmax = 1.0 / self.L_0
             self.ymin = 0.0 / self.L_0
-            self.ymax = 2.25 / self.L_0
+            self.ymax = 1.0 / self.L_0
             self.zmin = 0.0 / self.L_0
             self.zmax = 1.0 / self.L_0
 
@@ -363,16 +503,16 @@ if __name__ == "__main__":
             self.sign_omega_0_prev = None
             self.sign_omega_1_prev = None
 
-            self.root_path = "./case_3/hu/"
+            self.root_path = "./case_4/hu/"
 
             self.output_file_name = self.root_path + "OUTPUT_NEWTON_INFO"
             self.mass_output_file_name = self.root_path + "MASS_OVER_TIME"
             self.flips_file_name = self.root_path + "FLIPS"
             self.beta_file_name = self.root_path + "BETA/BETA"
 
-    os.system("mkdir -p ./case_3/hu/")
-    os.system("mkdir -p ./case_3/hu/BETA")
-    folder_name = "./case_3/hu/visualization"
+    os.system("mkdir -p ./case_4/hu/")
+    os.system("mkdir -p ./case_4/hu/BETA")
+    folder_name = "./case_4/hu/visualization"
 
     time_manager = two_phase_hu.TimeManagerPP(
         schedule=np.array([0, 5]) / t_0,
@@ -391,7 +531,7 @@ if __name__ == "__main__":
         "material_constants": material_constants,
         "max_iterations": 20,
         "nl_convergence_tol": 1e-6,
-        "nl_divergence_tol": 1e5,
+        "nl_divergence_tol": 1e6,
         "time_manager": time_manager,
         "folder_name": folder_name,
         "meshing_kwargs": meshing_kwargs,
