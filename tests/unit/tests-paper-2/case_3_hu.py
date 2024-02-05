@@ -237,7 +237,7 @@ class GeometryCase3(pp.ModelGeometry):
         """ """
         self.set_domain()
 
-        self.mdg = _flow_3d.case3(refinement=-1)
+        self.mdg = _flow_3d.case3(refinement=0)
 
         # rotation:
         R = pp.map_geometry.rotation_matrix(np.pi / 2, np.array([1, 0, 0]))

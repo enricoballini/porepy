@@ -394,12 +394,11 @@ class GeometryCase3(pp.ModelGeometry):
 
         self._fractures: list = [
             frac_0,
-            frac_1,
-            frac_2,
         ]
+        # frac_1,
+        # frac_2,
         # frac_3,
         # frac_4,
-
         #     frac_5,
         #     frac_6,
         #     frac_7,
@@ -522,8 +521,8 @@ if __name__ == "__main__":
 
     time_manager = two_phase_hu.TimeManagerPP(
         schedule=np.array([0, 1]) / t_0,
-        dt_init=1e-4 / t_0,
-        dt_min_max=np.array([1e-8, 1e-4]) / t_0,
+        dt_init=1e-3 / t_0,
+        dt_min_max=np.array([1e-8, 1e-3]) / t_0,
         constant_dt=False,
         recomp_factor=0.5,
         recomp_max=10,
