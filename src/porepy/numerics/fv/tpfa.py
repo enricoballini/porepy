@@ -2,6 +2,7 @@
 approximation scheme. The implementation resides in the class Tpfa.
 
 """
+
 import numpy as np
 import scipy.sparse as sps
 
@@ -93,9 +94,9 @@ class Tpfa(pp.FVElliptic):
             matrix_dictionary[self.vector_source_matrix_key] = sps.csr_matrix(
                 (0, sd.num_cells * max(vector_source_dim, 1))
             )
-            matrix_dictionary[
-                self.bound_pressure_vector_source_matrix_key
-            ] = sps.csr_matrix((0, sd.num_cells * max(vector_source_dim, 1)))
+            matrix_dictionary[self.bound_pressure_vector_source_matrix_key] = (
+                sps.csr_matrix((0, sd.num_cells * max(vector_source_dim, 1)))
+            )
             return None
 
         # Extract parameters
@@ -270,6 +271,6 @@ class Tpfa(pp.FVElliptic):
         bound_pressure_vector_source = sps.coo_matrix(
             (vals.ravel("f"), (rows, cols))
         ).tocsr()
-        matrix_dictionary[
-            self.bound_pressure_vector_source_matrix_key
-        ] = bound_pressure_vector_source
+        matrix_dictionary[self.bound_pressure_vector_source_matrix_key] = (
+            bound_pressure_vector_source
+        )

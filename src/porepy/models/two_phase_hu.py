@@ -15,6 +15,7 @@ import os
 import sys
 import pdb
 import time
+import warnings
 
 os.system("clear")
 
@@ -33,6 +34,8 @@ def myprint(var):
 - TODO: params is a mess, it contains keys about physics and numerics used by model and newton solver. Can't I write everything directly into the model?
 - TODO: the scaling how it is implemented now is a mess. There should be a method inside the model that takes care of the scaling. I don't like units
 - TODO: major review of the interaction run_time_dependent_simulation-Newton-model
+- TODO: with used defined intrinsic_permeability, normal_perm, grid aperture you get slightly different error numbers during newton iteration wrt the dictionary settings of those properties. No visible difference in the graphical result (paraview) tho, the newton tol is very low. That's scary anyhow, those are error only due to the implementaiton 
+- TODO: rediscretization of only nonlinear terms produces slighlty different results. Is it a bug? Have I forgotten a term? 
 
 - TODO SOON: there is something wrong with the scaling, Ka_0 shouldnt affects the results
 
@@ -1135,7 +1138,99 @@ class ConstitutiveLawPressureMass(
     pp.constitutive_laws.DimensionReduction,
     pp.constitutive_laws.ConstantPorosity,
 ):
-    pass
+    def intrinsic_permeability(self, subdomains: list[pp.Grid]) -> pp.ad.Operator:
+        """for some reason subdoamins is always a single domain"""
+
+        sd = subdomains[0]
+
+        if len(subdomains) > 1:
+            print("\n\n\n check intrinsic_permeability\n")
+            raise NotImplementedError
+
+        if sd.dim == 3:
+            permeability = pp.ad.DenseArray(1 * np.ones(sd.num_cells))
+        elif sd.dim == 2:
+            permeability = pp.ad.DenseArray(1 * np.ones(sd.num_cells))
+        elif sd.dim == 1:
+            permeability = pp.ad.DenseArray(1 * np.ones(sd.num_cells))
+        else:  # 0D
+            warnings.warn("setting intrinsic permeability to 0D grid")
+            permeability = pp.ad.DenseArray(1 * np.ones(sd.num_cells))  # do i need it?
+
+        permeability.set_name("intrinsic_permeability")
+        return permeability
+
+    def intrinsic_permeability_tensor(self, sd: pp.Grid) -> pp.SecondOrderTensor:
+        """ """
+        permeability_ad = self.specific_volume([sd]) * self.intrinsic_permeability([sd])
+        try:
+            permeability = permeability_ad.evaluate(self.equation_system)
+        except KeyError:
+            volume = self.specific_volume([sd]).evaluate(self.equation_system)
+            permeability = self.solid.permeability() * np.ones(sd.num_cells) * volume
+        if isinstance(permeability, pp.ad.AdArray):
+            permeability = permeability.val
+        return pp.SecondOrderTensor(permeability)
+
+    def normal_perm(self, interfaces) -> pp.ad.Operator:
+        """ """
+        perm = [None] * len(interfaces)
+
+        for id_intf, intf in enumerate(interfaces):
+            if intf.dim == 2:
+                perm[id_intf] = 1 * np.ones([intf.num_cells])
+            elif intf.dim == 1:
+                perm[id_intf] = 1 * np.ones([intf.num_cells])
+            else:  # 0D
+                perm[id_intf] = 1 * np.ones([intf.num_cells])
+
+        norm_perm = pp.ad.DenseArray(np.concatenate(perm))
+        return norm_perm
+
+    def porosity(self, subdomains: list[pp.Grid]) -> pp.ad.Operator:
+        """ """
+        phi = [None] * len(subdomains)
+
+        for index, sd in enumerate(subdomains):
+            if sd.dim == 3:
+                phi[index] = 0.25 * np.ones([sd.num_cells])
+            if sd.dim == 2:
+                phi[index] = 0.25 * np.ones([sd.num_cells])
+            if sd.dim == 1:
+                phi[index] = 0.25 * np.ones([sd.num_cells])
+            if sd.dim == 0:
+                warnings.warn("setting porosity to 0D grid")
+                phi[index] = 0.25 * np.ones([sd.num_cells])
+
+        return pp.ad.DenseArray(np.concatenate(phi))
+
+    def grid_aperture(self, sd: pp.Grid) -> np.ndarray:
+        """pay attention this is the grid aperture, not the aperture."""
+        aperture = np.ones(sd.num_cells)
+        residual_aperture_by_dim = [
+            0.1,
+            0.1,
+            1.0,
+            1.0,
+        ]  # 0D, 1D, 2D, 3D
+        aperture = residual_aperture_by_dim[sd.dim] * aperture
+        return aperture
+
+    def aperture(self, subdomains: list[pp.Grid]) -> pp.ad.Operator:
+        """ """
+        if len(subdomains) == 0:
+            return pp.wrap_as_ad_array(0, size=0)
+        projection = pp.ad.SubdomainProjections(subdomains, dim=1)
+
+        for i, sd in enumerate(subdomains):
+            a_loc = pp.wrap_as_ad_array(self.grid_aperture(sd))
+            a_glob = projection.cell_prolongation([sd]) @ a_loc
+            if i == 0:
+                apertures = a_glob
+            else:
+                apertures += a_glob
+        apertures.set_name("aperture")
+        return apertures
 
 
 class BoundaryConditionsPressureMass:
@@ -1160,9 +1255,9 @@ class BoundaryConditionsPressureMass:
                 boundary_faces = self.domain_boundary_sides(sd).all_bf
 
                 vals = np.zeros(sd.num_faces)
-                vals[
-                    boundary_faces
-                ] = 0  # change this if you want different bc val # pay attention, there is a mistake in calance eq, take a look...
+                vals[boundary_faces] = (
+                    0  # change this if you want different bc val # pay attention, there is a mistake in calance eq, take a look...
+                )
                 bc_values.append(vals)
 
         bc_values_array: pp.ad.DenseArray = pp.wrap_as_ad_array(
@@ -1200,6 +1295,105 @@ class BoundaryConditionsPressureMass:
         )
 
         return bc_values_array
+
+    def bc_type_darcy(self, sd: pp.Grid) -> pp.BoundaryCondition:
+        """required by tpfa, upwind
+        TODO: bc_type_darcy is a wrong name, change it
+        """
+
+        boundary_faces = self.domain_boundary_sides(sd).all_bf
+
+        return pp.BoundaryCondition(sd, boundary_faces, "neu")
+
+    def bc_values_darcy(self, subdomains: list[pp.Grid]) -> pp.ad.DenseArray:
+        """ """
+        num_faces = sum([sd.num_faces for sd in subdomains])
+        return pp.wrap_as_ad_array(0, num_faces, "bc_values_darcy")
+
+
+class InitalConditionPressureMass:
+    def initial_condition_common(self):
+        """ """
+        val = np.zeros(self.equation_system.num_dofs())
+        for time_step_index in self.time_step_indices:
+            self.equation_system.set_variable_values(
+                val,
+                time_step_index=time_step_index,
+            )
+
+        for iterate_index in self.iterate_indices:
+            self.equation_system.set_variable_values(val, iterate_index=iterate_index)
+
+        for sd in self.mdg.subdomains():
+            saturation_variable = (
+                self.mixture.mixture_for_subdomain(sd)
+                .get_phase(self.ell)
+                .saturation_operator([sd])
+            )
+
+            saturation_values = 0.0 * np.ones(sd.num_cells)
+            saturation_values[np.where(sd.cell_centers[1] >= self.ymax / 2.5)] = (
+                1.0  # TODO: HARDCODED for 2D
+            )
+
+            # if (
+            #     sd.dim == 1
+            # ):  # TODO: HARDCODED for 2D # thers is a is_frac attribute somewhere
+            #     saturation_values = 0.8 * np.ones(sd.num_cells)
+
+            self.equation_system.set_variable_values(
+                saturation_values,
+                variables=[saturation_variable],
+                time_step_index=0,
+                iterate_index=0,
+            )
+
+            pressure_variable = self.pressure([sd])
+
+            pressure_values = (
+                2 - 1 * sd.cell_centers[1] / self.ymax
+            ) / self.p_0  # TODO: hardcoded for 2D
+
+            self.equation_system.set_variable_values(
+                pressure_values,
+                variables=[pressure_variable],
+                time_step_index=0,
+                iterate_index=0,
+            )
+
+    def initial_condition(self) -> None:
+        """ """
+        self.initial_condition_common()
+
+        for sd, data in self.mdg.subdomains(return_data=True):
+            pp.initialize_data(
+                sd,
+                data,
+                self.ppu_keyword,
+                {
+                    "darcy_flux_phase_0": np.zeros(sd.num_faces),
+                    "darcy_flux_phase_1": np.zeros(sd.num_faces),
+                },
+            )
+
+        for intf, data in self.mdg.interfaces(return_data=True):
+            pp.initialize_data(
+                intf,
+                data,
+                self.ppu_keyword + "_" + "interface_mortar_flux_phase_0",
+                {
+                    "interface_mortar_flux_phase_0": np.zeros(intf.num_cells),
+                },
+            )
+
+            pp.initialize_data(
+                intf,
+                data,
+                self.ppu_keyword + "_" + "interface_mortar_flux_phase_1",
+                {
+                    "interface_mortar_flux_phase_1": np.zeros(intf.num_cells),
+                },
+            )
 
 
 class SolutionStrategyPressureMass(pp.SolutionStrategy):
@@ -1259,6 +1453,7 @@ class SolutionStrategyPressureMass(pp.SolutionStrategy):
         os.system("rm " + self.output_file_name)
         os.system("rm " + self.mass_output_file_name)
         os.system("rm " + self.flips_file_name)
+        os.system("rm " + self.beta_file_name)
 
     def set_equation_system_manager(self) -> None:
         """ """
@@ -1307,85 +1502,6 @@ class SolutionStrategyPressureMass(pp.SolutionStrategy):
                 vals, iterate_index=0, time_step_index=0
             )
 
-    def initial_condition(self) -> None:
-        """ """
-        val = np.zeros(self.equation_system.num_dofs())
-        for time_step_index in self.time_step_indices:
-            self.equation_system.set_variable_values(
-                val,
-                time_step_index=time_step_index,
-            )
-
-        for iterate_index in self.iterate_indices:
-            self.equation_system.set_variable_values(val, iterate_index=iterate_index)
-
-        for sd in self.mdg.subdomains():
-            saturation_variable = (
-                self.mixture.mixture_for_subdomain(sd)
-                .get_phase(self.ell)
-                .saturation_operator([sd])
-            )
-
-            saturation_values = 0.0 * np.ones(sd.num_cells)
-            saturation_values[
-                np.where(sd.cell_centers[1] >= self.ymax / 2)
-            ] = 1.0  # TODO: HARDCODED for 2D
-
-            if (
-                sd.dim == 1
-            ):  # TODO: HARDCODED for 2D # thers is a is_frac attribute somewhere
-                saturation_values = 0.8 * np.ones(sd.num_cells)
-
-            self.equation_system.set_variable_values(
-                saturation_values,
-                variables=[saturation_variable],
-                time_step_index=0,
-                iterate_index=0,
-            )
-
-            pressure_variable = self.pressure([sd])
-
-            pressure_values = (
-                2 - 1 * sd.cell_centers[1] / self.ymax
-            ) / self.p_0  # TODO: hardcoded for 2D
-
-            self.equation_system.set_variable_values(
-                pressure_values,
-                variables=[pressure_variable],
-                time_step_index=0,
-                iterate_index=0,
-            )
-
-        for sd, data in self.mdg.subdomains(return_data=True):
-            pp.initialize_data(
-                sd,
-                data,
-                self.ppu_keyword,
-                {
-                    "darcy_flux_phase_0": np.zeros(sd.num_faces),
-                    "darcy_flux_phase_1": np.zeros(sd.num_faces),
-                },
-            )
-
-        for intf, data in self.mdg.interfaces(return_data=True):
-            pp.initialize_data(
-                intf,
-                data,
-                self.ppu_keyword + "_" + "interface_mortar_flux_phase_0",
-                {
-                    "interface_mortar_flux_phase_0": np.zeros(intf.num_cells),
-                },
-            )
-
-            pp.initialize_data(
-                intf,
-                data,
-                self.ppu_keyword + "_" + "interface_mortar_flux_phase_1",
-                {
-                    "interface_mortar_flux_phase_1": np.zeros(intf.num_cells),
-                },
-            )
-
     def set_discretization_parameters(self) -> None:
         """ """
 
@@ -1420,56 +1536,18 @@ class SolutionStrategyPressureMass(pp.SolutionStrategy):
                 },
             )
 
-    def bc_type_darcy(self, sd: pp.Grid) -> pp.BoundaryCondition:
-        """required by tpfa, upwind
-        TODO: bc_type_darcy is a wrong name, change it
-        """
-
-        boundary_faces = self.domain_boundary_sides(sd).all_bf
-
-        return pp.BoundaryCondition(sd, boundary_faces, "neu")
-
-    def bc_values_darcy(self, subdomains: list[pp.Grid]) -> pp.ad.DenseArray:
-        """ """
-        num_faces = sum([sd.num_faces for sd in subdomains])
-        return pp.wrap_as_ad_array(0, num_faces, "bc_values_darcy")
-
-    def intrinsic_permeability(self, subdomains: list[pp.Grid]) -> pp.ad.Operator:
-        """TODO: wrong place, move it"""
-        size = sum(sd.num_cells for sd in subdomains)
-        permeability = pp.wrap_as_ad_array(
-            self.solid.permeability(), size, name="intrinsic_permeability"
-        )
-        return permeability
-
-    def intrinsic_permeability_tensor(self, sd: pp.Grid) -> pp.SecondOrderTensor:
-        """TODO: wrong place, move it"""
-        permeability_ad = self.specific_volume([sd]) * self.intrinsic_permeability([sd])
-        try:
-            permeability = permeability_ad.evaluate(self.equation_system)
-        except KeyError:
-            volume = self.specific_volume([sd]).evaluate(self.equation_system)
-            permeability = self.solid.permeability() * np.ones(sd.num_cells) * volume
-        if isinstance(permeability, pp.ad.AdArray):
-            permeability = permeability.val
-        return pp.SecondOrderTensor(permeability)
-
-    def normal_perm(self, interfaces):
-        """ """
-        return pp.ad.Scalar(self.solid.normal_permeability())
-
     def discretize(self) -> None:
         """ """
         self.equation_system.discretize()
 
     def rediscretize(self) -> None:
         """ """
-        # t = time.time()
         unique_discr = pp.ad._ad_utils.uniquify_discretization_list(
             self.nonlinear_discretizations
         )
         pp.ad._ad_utils.discretize_from_list(unique_discr, self.mdg)
-        # print("time rediscretize", time.time() - t)
+
+        # self.discretize()
 
     @property
     def nonlinear_discretizations(self) -> list[pp.ad._ad_utils.MergedOperator]:
@@ -1485,7 +1563,10 @@ class SolutionStrategyPressureMass(pp.SolutionStrategy):
                 self._nonlinear_discretizations.append(discretization)
 
     def set_nonlinear_discretizations(self) -> None:
-        """ """
+        """
+        only for hu. For ppu you have to upwind in sd.
+        Not added here because I use ppu_discretization only for neu bc matrix, that is time (and phase) independent
+        """
         # subdomains = [sd for sd in self.mdg.subdomains() if sd.dim < self.nd]
         interfaces = self.mdg.interfaces()
 
@@ -1537,9 +1618,9 @@ class SolutionStrategyPressureMass(pp.SolutionStrategy):
         this will change a lot so it is useless to improve it right now
         """
         for sd, data in self.mdg.subdomains(return_data=True):
-            data[
-                "for_hu"
-            ] = {}  # this is the first call, so i need to create the dictionary first
+            data["for_hu"] = (
+                {}
+            )  # this is the first call, so i need to create the dictionary first
 
             data["for_hu"]["gravity_value"] = self.gravity_value
             data["for_hu"]["ell"] = self.ell
@@ -1563,9 +1644,9 @@ class SolutionStrategyPressureMass(pp.SolutionStrategy):
                 )
                 data["for_hu"]["left_restriction"] = left_restriction
                 data["for_hu"]["right_restriction"] = right_restriction
-                data["for_hu"][
-                    "expansion_matrix"
-                ] = pp.numerics.fv.hybrid_upwind_utils.expansion_matrix(sd)
+                data["for_hu"]["expansion_matrix"] = (
+                    pp.numerics.fv.hybrid_upwind_utils.expansion_matrix(sd)
+                )
 
                 pp.numerics.fv.hybrid_upwind_utils.compute_transmissibility_tpfa(
                     sd, data, keyword="flow"
@@ -1898,7 +1979,7 @@ class SolutionStrategyPressureMass(pp.SolutionStrategy):
             """ """
             alpha = 1.0  # as in the paper 2022
 
-            kr0 = permeability(saturation=1)  # TODO: is it right?
+            kr0 = permeability(saturation=1)
 
             def second_derivative(permeability, val):
                 """sorry, I'm lazy..."""
@@ -2080,16 +2161,18 @@ class MyModelGeometry(pp.ModelGeometry):
 
     def set_fractures(self) -> None:
         """ """
-        frac1 = pp.LineFracture(1 * np.array([[0.2, 0.8], [0.6, 0.6]]))
+        frac1 = pp.LineFracture(np.array([[0.2, 0.8], [0.6, 0.6]]))
         frac2 = pp.LineFracture(np.array([[0.2, 0.8], [0.2, 0.2]]))
         frac3 = pp.LineFracture(np.array([[0.5, 0.5], [0.2, 0.8]]))
 
         frac4 = pp.LineFracture(np.array([[0.2, 0.8], [0.2, 0.8]]))
 
         frac5 = pp.LineFracture(np.array([[0.0, 0.8], [0.1, 0.3]]))
+        frac6 = pp.LineFracture(np.array([[0.5, 0.8], [0.5, 0.8]]))
 
         # frac1 = pp.PlaneFracture(np.array([[0.2, 0.7, 0.7, 0.2],[0.2, 0.2, 0.8, 0.8],[0.5, 0.5, 0.5, 0.5]]))
-        self._fractures: list = []  # frac1, frac2, frac3, frac4, frac5]
+        # self._fractures: list = [frac1, frac2, frac3, frac4, frac5]
+        self._fractures = [frac3, frac6]
 
     def meshing_arguments(self) -> dict[str, float]:
         """ """
@@ -2147,6 +2230,7 @@ class PartialFinalModel(
     Equations,
     ConstitutiveLawPressureMass,
     BoundaryConditionsPressureMass,
+    InitalConditionPressureMass,
     SolutionStrategyPressureMass,
     MyModelGeometry,
     pp.DataSavingMixin,
@@ -2180,22 +2264,25 @@ if __name__ == "__main__":
     fluid_constants = pp.FluidConstants({})
     solid_constants = pp.SolidConstants(
         {
-            "porosity": 0.25,
-            "intrinsic_permeability": 1 / Ka_0,
-            "normal_permeability": 0.1 / Ka_0,  # this does NOT include the aperture
-            "residual_aperture": 0.1 / Ka_0,
+            "porosity": None,
+            "intrinsic_permeability": None,  # / Ka_0,
+            "normal_permeability": None,  # / Ka_0 # this does NOT include the aperture
+            "residual_aperture": None,  # / L_0
         }
     )
 
     material_constants = {"fluid": fluid_constants, "solid": solid_constants}
 
+    folder_name = "./visualization"
+
     time_manager = TimeManagerPP(
         schedule=np.array([0, 50]) / t_0,
-        dt_init=1e-1 / t_0,
-        dt_min_max=np.array([1e-5, 1e0]) / t_0,
+        dt_init=2.5e-2 / t_0,
+        dt_min_max=np.array([1e-5, 5e-2]) / t_0,
         constant_dt=False,
         iter_max=20,
         print_info=True,
+        folder_name=folder_name,
     )
 
     params = {
@@ -2204,6 +2291,7 @@ if __name__ == "__main__":
         "nl_convergence_tol": 1e-6,
         "nl_divergence_tol": 1e5,
         "time_manager": time_manager,
+        "folder_name": folder_name,
     }
 
     wetting_phase = pp.composite.phase.Phase(

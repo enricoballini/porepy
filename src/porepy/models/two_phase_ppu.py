@@ -416,53 +416,10 @@ class EquationsPPU(two_phase_hu.Equations):
         return flux
 
 
-class SolutionStrategyPressureMassPPU(two_phase_hu.SolutionStrategyPressureMass):
+class InitialConditionPressureMassPPU(two_phase_hu.InitalConditionPressureMass):
     def initial_condition(self) -> None:
         """ """
-        val = np.zeros(self.equation_system.num_dofs())
-        for time_step_index in self.time_step_indices:
-            self.equation_system.set_variable_values(
-                val,
-                time_step_index=time_step_index,
-            )
-
-        for iterate_index in self.iterate_indices:
-            self.equation_system.set_variable_values(val, iterate_index=iterate_index)
-
-        for sd in self.mdg.subdomains():
-            saturation_variable = (
-                self.mixture.mixture_for_subdomain(sd)
-                .get_phase(self.ell)
-                .saturation_operator([sd])
-            )
-
-            saturation_values = 0.0 * np.ones(sd.num_cells)
-            saturation_values[
-                np.where(sd.cell_centers[1] >= self.ymax / 2)
-            ] = 1.0  # TODO: HARDCODED for 2D
-
-            if sd.dim == 1:
-                saturation_values = 0.8 * np.ones(sd.num_cells)
-
-            self.equation_system.set_variable_values(
-                saturation_values,
-                variables=[saturation_variable],
-                time_step_index=0,
-                iterate_index=0,
-            )
-
-            pressure_variable = self.pressure([sd])
-
-            pressure_values = (
-                2 - 1 * sd.cell_centers[1] / self.ymax
-            ) / self.p_0  # TODO: hardcoded for 2D
-
-            self.equation_system.set_variable_values(
-                pressure_values,
-                variables=[pressure_variable],
-                time_step_index=0,
-                iterate_index=0,
-            )
+        self.initial_condition_common()
 
         for sd, data in self.mdg.subdomains(return_data=True):
             pp.initialize_data(
@@ -502,6 +459,8 @@ class SolutionStrategyPressureMassPPU(two_phase_hu.SolutionStrategyPressureMass)
                 },
             )
 
+
+class SolutionStrategyPressureMassPPU(two_phase_hu.SolutionStrategyPressureMass):
     def set_discretization_parameters(self) -> None:
         """ """
 
@@ -544,6 +503,84 @@ class SolutionStrategyPressureMassPPU(two_phase_hu.SolutionStrategyPressureMass)
                     "ambient_dimension": self.nd,
                 },
             )
+
+    def rediscretize(self) -> None:
+        """
+        see comments in set_nonlinear_discrertizations
+        """
+        # unique_discr = pp.ad._ad_utils.uniquify_discretization_list(
+        #     self.nonlinear_discretizations
+        # )
+        # pp.ad._ad_utils.discretize_from_list(unique_discr, self.mdg)
+
+        self.discretize()
+
+    def set_nonlinear_discretizations(self) -> None:
+        """
+        There is something missing here, the solutions with or without rediscretization of nonlinear term are slightly different
+
+        """
+        # subdomains = [sd for sd in self.mdg.subdomains() if sd.dim < self.nd]
+        interfaces = self.mdg.interfaces()
+        subdomains = self.mdg.subdomains()
+
+        self.add_nonlinear_discretization(
+            [
+                self.interface_ppu_discretization(
+                    interfaces, "interface_mortar_flux_phase_0"
+                ).mortar_discr,  # TODO: this is a constant matrix, right? I can remove it...
+                self.interface_ppu_discretization(
+                    interfaces, "interface_mortar_flux_phase_0"
+                ).flux,
+                self.interface_ppu_discretization(
+                    interfaces, "interface_mortar_flux_phase_0"
+                ).upwind_primary,
+                self.interface_ppu_discretization(
+                    interfaces, "interface_mortar_flux_phase_0"
+                ).upwind_secondary,
+            ]
+        )
+
+        self.add_nonlinear_discretization(
+            [
+                self.interface_ppu_discretization(
+                    interfaces, "interface_mortar_flux_phase_1"
+                ).mortar_discr,
+                self.interface_ppu_discretization(
+                    interfaces, "interface_mortar_flux_phase_1"
+                ).flux,
+                self.interface_ppu_discretization(
+                    interfaces, "interface_mortar_flux_phase_1"
+                ).upwind_primary,
+                self.interface_ppu_discretization(
+                    interfaces, "interface_mortar_flux_phase_1"
+                ).upwind_secondary,
+            ]
+        )
+
+        self.add_nonlinear_discretization(
+            [
+                self.ppu_discretization(subdomains, "darcy_flux_phase_0").upwind,
+                self.ppu_discretization(
+                    subdomains, "darcy_flux_phase_0"
+                ).bound_transport_dir,
+                self.ppu_discretization(
+                    subdomains, "darcy_flux_phase_0"
+                ).bound_transport_neu,
+            ]
+        )
+
+        self.add_nonlinear_discretization(
+            [
+                self.ppu_discretization(subdomains, "darcy_flux_phase_1").upwind,
+                self.ppu_discretization(
+                    subdomains, "darcy_flux_phase_1"
+                ).bound_transport_dir,
+                self.ppu_discretization(
+                    subdomains, "darcy_flux_phase_1"
+                ).bound_transport_neu,
+            ]
+        )
 
     def before_nonlinear_iteration(self):
         """ """
@@ -636,6 +673,7 @@ class PartialFinalModel(
     EquationsPPU,
     two_phase_hu.ConstitutiveLawPressureMass,
     two_phase_hu.BoundaryConditionsPressureMass,
+    InitialConditionPressureMassPPU,
     SolutionStrategyPressureMassPPU,
     two_phase_hu.MyModelGeometry,
     pp.DataSavingMixin,
@@ -669,10 +707,10 @@ if __name__ == "__main__":
     fluid_constants = pp.FluidConstants({})
     solid_constants = pp.SolidConstants(
         {
-            "porosity": 0.25,
-            "intrinsic_permeability": 1 / Ka_0,
-            "normal_permeability": 0.1 / Ka_0,  # this does NOT include the aperture
-            "residual_aperture": 0.1 / Ka_0,
+            "porosity": None,
+            "intrinsic_permeability": None,  # 1 / Ka_0,
+            "normal_permeability": None,  # 1 / Ka_0,  # this does NOT include the aperture
+            "residual_aperture": None,  # 0.1 / Ka_0,
         }
     )
 
@@ -680,8 +718,8 @@ if __name__ == "__main__":
 
     time_manager = two_phase_hu.TimeManagerPP(
         schedule=np.array([0, 50]) / t_0,
-        dt_init=1e0 / t_0,
-        dt_min_max=np.array([1e-5, 1e0]) / t_0,
+        dt_init=2.5e-2 / t_0,
+        dt_min_max=np.array([1e-5, 5e-2]) / t_0,
         constant_dt=False,
         iter_max=20,
         print_info=True,
@@ -734,6 +772,7 @@ if __name__ == "__main__":
                 self.mobility
             )
 
+            self.number_upwind_dirs = 2
             self.sign_darcy_phase_0_prev = None
             self.sign_darcy_phase_1_prev = None
 

@@ -496,10 +496,6 @@ class FluidDensityFromPressure:
         # to be available by mixin.
         dp = self.perturbation_from_reference("pressure", subdomains)
 
-        # pdb.set_trace()
-        # self.pressure(subdomains)
-        # pdb.set_trace()
-
         # Wrap compressibility from fluid class as matrix (left multiplication with dp)
         c = self.fluid_compressibility(subdomains)
 
