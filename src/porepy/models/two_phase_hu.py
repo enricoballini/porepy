@@ -1453,7 +1453,7 @@ class SolutionStrategyPressureMass(pp.SolutionStrategy):
         os.system("rm " + self.output_file_name)
         os.system("rm " + self.mass_output_file_name)
         os.system("rm " + self.flips_file_name)
-        os.system("rm " + self.beta_file_name)
+        os.system("rm -r " + self.beta_file_name + "/*")
 
     def set_equation_system_manager(self) -> None:
         """ """
@@ -2073,7 +2073,7 @@ class SolutionStrategyPressureMass(pp.SolutionStrategy):
         coordinates = sd.face_centers[[0, 1]][:, sd.get_internal_faces()]
         time = np.around(self.time_manager.time, decimals=6)
 
-        with open(self.beta_file_name + "_" + str(time), "w") as f:
+        with open(self.beta_file_name + "/BETA_" + str(time), "w") as f:
             info = np.concatenate(
                 [
                     time * np.ones(beta_faces.shape[0]).reshape(1, -1),
@@ -2084,7 +2084,7 @@ class SolutionStrategyPressureMass(pp.SolutionStrategy):
             )
             np.savetxt(f, info.T)
 
-        with open(self.beta_file_name + "_TIME", "a") as f:
+        with open(self.beta_file_name + "/BETA_TIME", "a") as f:
             np.savetxt(f, np.array([time]))
 
     def compute_mass(self):
@@ -2345,7 +2345,7 @@ if __name__ == "__main__":
             self.output_file_name = "./OUTPUT_NEWTON_INFO_HU"
             self.mass_output_file_name = "./MASS_OVER_TIME_HU"
             self.flips_file_name = "./FLIPS_HU"
-            self.beta_file_name = "./BETA/BETA_HU"
+            self.beta_file_name = "./BETA"
 
     model = FinalModel(params)
 

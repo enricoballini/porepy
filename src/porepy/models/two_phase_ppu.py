@@ -779,6 +779,7 @@ if __name__ == "__main__":
             self.output_file_name = "./OUTPUT_NEWTON_INFO_PPU"
             self.mass_output_file_name = "./MASS_OVER_TIME_PPU"
             self.flips_file_name = "./FLIPS_PPU"
+            self.beta_file_name = "./BETA" # not used
 
     model = FinalModel(params)
 
