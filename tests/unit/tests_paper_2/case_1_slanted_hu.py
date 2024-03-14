@@ -170,8 +170,12 @@ class SolutionStrategyCase1Slanted(two_phase_hu.SolutionStrategyPressureMass):
         basically copied from old code. It is strongly hardcoded
         """
 
-        gb = copy.deepcopy(self.mdg)
-        gb_new = copy.deepcopy(self.mdg)
+        if mdg_ref:
+            gb = copy.deepcopy(self.mdg_ref)
+            gb_new = copy.deepcopy(self.mdg_ref)
+        else:
+            gb = copy.deepcopy(self.mdg)
+            gb_new = copy.deepcopy(self.mdg)
 
         g_old = gb.subdomains(dim=2)[0]
         g_new = gb_new.subdomains(dim=2)[0]
@@ -418,7 +422,10 @@ class SolutionStrategyCase1Slanted(two_phase_hu.SolutionStrategyPressureMass):
         gb.replace_subdomains_and_interfaces({g_old: g_new})
         gb.compute_geometry()
 
-        self.mdg = gb
+        if mdg_ref:
+            self.mdg_ref = gb
+        else:
+            self.mdg = gb
 
 
 class InitialConditionCase1Slanted(
@@ -497,13 +504,6 @@ class GeometryCase1Slanted(pp.ModelGeometry):
 
         pp.set_local_coordinate_projections(self.mdg)
 
-        self.set_well_network()
-        if len(self.well_network.wells) > 0:
-            assert isinstance(self.fracture_network, pp.FractureNetwork3d)
-            pp.compute_well_fracture_intersections(
-                self.well_network, self.fracture_network
-            )
-            self.well_network.mesh(self.mdg)
 
     def set_domain(self) -> None:
         """ """

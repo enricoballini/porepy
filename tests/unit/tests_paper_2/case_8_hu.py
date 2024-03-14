@@ -12,7 +12,8 @@ import porepy.models.two_phase_hu as two_phase_hu
 from flow_benchmark_3d import _flow_3d
 
 """
-- dont look at beta files, beta function inside the model is hardoced for 2D
+
+- THIS is case 3 with smaller timestep. 
 
 """
 
@@ -215,7 +216,7 @@ class GeometryCase3(pp.ModelGeometry):
         )
         self.nd: int = self.mdg.dim_max()
 
-        # exporter = pp.Exporter(self.mdg, "mdg_I_hope", "./case_3/")
+        # exporter = pp.Exporter(self.mdg, "mdg_I_hope", "./case_8/")
         # exporter.write_pvd()
         # exporter.write_vtu()
 
@@ -419,21 +420,21 @@ if __name__ == "__main__":
             self.sign_omega_0_prev = None
             self.sign_omega_1_prev = None
 
-            self.root_path = "./case_3/hu/"
+            self.root_path = "./case_8/hu/"
 
             self.output_file_name = self.root_path + "OUTPUT_NEWTON_INFO"
             self.mass_output_file_name = self.root_path + "MASS_OVER_TIME"
             self.flips_file_name = self.root_path + "FLIPS"
             self.beta_file_name = self.root_path + "BETA"
 
-    os.system("mkdir -p ./case_3/hu/")
-    os.system("mkdir -p ./case_3/hu/BETA")
-    folder_name = "./case_3/hu/visualization"
+    os.system("mkdir -p ./case_8/hu/")
+    os.system("mkdir -p ./case_8/hu/BETA")
+    folder_name = "./case_8/hu/visualization"
 
     time_manager = two_phase_hu.TimeManagerPP(
         schedule=np.array([0, 100]) / t_0,
-        dt_init=3e-1 / t_0,
-        dt_min_max=np.array([1e-9, 3e-1]) / t_0,
+        dt_init=1e-1 / t_0,
+        dt_min_max=np.array([1e-9, 1e-1]) / t_0,
         constant_dt=False,
         recomp_factor=0.5,
         recomp_max=10,

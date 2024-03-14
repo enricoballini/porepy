@@ -4,6 +4,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 from typing import Callable, Optional, Type, Literal, Sequence, Union
 import porepy as pp
+
+import sys
 import os
 import pdb
 
@@ -14,7 +16,9 @@ let's plot the convergence only for case 1 slanted, if you want more get your ha
 os.system("clear")
 
 ############################################################
-ppu = False
+ppu = False  # ...
+
+mesh_type = sys.argv[1]  # eiter "conforming" or "non_conforming"
 
 if ppu:
     root_paths = [
@@ -27,13 +31,21 @@ if ppu:
     # ]
 
 else:
-    root_paths = [
-        "./case_1/slanted_hu/convergence_results/",
-    ]
+    if mesh_type == "conforming":
+        root_paths = [
+            "./case_1/slanted_hu/convergence_results/",
+        ]
 
+    if mesh_type == "non_conforming":
+        root_paths = [
+            "./case_1/slanted_hu/non-conforming/convergence_results/",
+        ]
 
-save_folder = "./case_1/slanted"
-# save_folder = "./case_1/slanted-non-conforming"
+if mesh_type == "conforming":
+    save_folder = "./case_1/slanted"
+
+if mesh_type == "non_conforming":
+    save_folder = "./case_1/slanted-non-conforming"
 
 os.system("mkdir " + save_folder)
 
@@ -58,7 +70,9 @@ for index, root_path in enumerate(root_paths):
         root_path + "volumes_2d_" + str(cell_size) + ".npy", allow_pickle=True
     )
     volumes_1d_ref = np.loadtxt(root_path + "volumes_1d_" + str(cell_size))
-    volumes_mortar = np.concatenate((volumes_1d_ref, volumes_1d_ref))
+    volumes_mortar = np.concatenate(
+        (volumes_1d_ref, volumes_1d_ref)
+    )  # this holds also for non-matching subdomains!
 
     id_2d = np.arange(variable_num_dofs[0], dtype=np.int32)  # HARDCODED
     id_1d = np.arange(
@@ -135,13 +149,19 @@ for index, root_path in enumerate(root_paths):
             (saturation_1d_proj - saturation_1d_ref) * volumes_1d_ref, ord=2
         ) / np.linalg.norm(saturation_1d_ref * volumes_1d_ref, ord=2)
 
+        #
+        norm_perm = 0.01  ### hardcoded... see case_1_slanted_hu_convergence_non_conf.py
         err_mortar_0 = np.linalg.norm(
             (mortar_phase_0_proj - mortar_phase_0_ref) * volumes_mortar, ord=2
-        ) / np.linalg.norm(mortar_phase_0_ref * volumes_mortar, ord=2)
+        ) / np.linalg.norm(
+            norm_perm * volumes_mortar, ord=2
+        )  # / np.linalg.norm(mortar_phase_0_ref * volumes_mortar, ord=2)
 
         err_mortar_1 = np.linalg.norm(
             (mortar_phase_1_proj - mortar_phase_1_ref) * volumes_mortar, ord=2
-        ) / np.linalg.norm(mortar_phase_1_ref * volumes_mortar, ord=2)
+        ) / np.linalg.norm(
+            norm_perm * volumes_mortar, ord=2
+        )  # / np.linalg.norm(mortar_phase_1_ref * volumes_mortar, ord=2)
 
         err_list_p_2d[index] = np.append(err_list_p_2d[index], err_p_2d)
         err_list_p_1d[index] = np.append(err_list_p_1d[index], err_p_1d)
@@ -171,12 +191,12 @@ matplotlib.rcParams["axes.linewidth"] = 1.5
 
 items = zip(
     [
-        "err_list_p_2d",
-        "err_list_p_1d",
-        "err_list_s_2d",
-        "err_list_s_1d",
-        "err_list_mortar_0",
-        "err_list_mortar_1",
+        ["err_list_p_2d", "$p_{\Omega_h}$"],
+        ["err_list_p_1d", "$p_{\Omega_l}$"],
+        ["err_list_s_2d", "$s_{\Omega_h}$"],
+        ["err_list_s_1d", "$s_{\Omega_l}$"],
+        ["err_list_mortar_0", "$\zeta_0$"],
+        ["err_list_mortar_1", "$\zeta_1$"],
     ],
     [
         err_list_p_2d,
@@ -188,7 +208,11 @@ items = zip(
     ],
 )
 
-for name, val in items:
+for names, val in items:
+
+    name = names[0]
+    name_label = names[1]
+
     fig, ax_1 = plt.subplots()
 
     for label in ax_1.get_xticklabels() + ax_1.get_yticklabels():
@@ -197,7 +221,7 @@ for name, val in items:
     ax_1.loglog(
         cell_sizes[:-1],
         val[0],
-        label=name,
+        label=name_label,
         linestyle="-",
         color=[0, 0, 0],
         marker="o",
@@ -206,7 +230,7 @@ for name, val in items:
         ax_1.loglog(
             cell_sizes[:-1],
             val[1],
-            label=name,
+            label=name_label,
             linestyle="-",
             color=[0, 0, 0],
             marker="",
@@ -224,6 +248,9 @@ for name, val in items:
     ax_1.set_xticks(x_ticks)
 
     ax_1.grid(linestyle="--", alpha=0.5)
+
+    handle = ax_1.get_legend_handles_labels()[0][0]
+    plt.legend([handle], [name_label])
 
     plt.savefig(
         save_folder + "/convergence_" + name + ".pdf",

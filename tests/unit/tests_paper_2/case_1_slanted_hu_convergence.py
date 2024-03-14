@@ -207,14 +207,6 @@ class GeometryCase1SlantedConvergence(pp.ModelGeometry):
 
         pp.set_local_coordinate_projections(self.mdg)
 
-        self.set_well_network()
-        if len(self.well_network.wells) > 0:
-            assert isinstance(self.fracture_network, pp.FractureNetwork3d)
-            pp.compute_well_fracture_intersections(
-                self.well_network, self.fracture_network
-            )
-            self.well_network.mesh(self.mdg)
-
     def set_domain(self) -> None:
         """ """
         self.size = 1
@@ -246,7 +238,7 @@ class GeometryCase1SlantedConvergence(pp.ModelGeometry):
         frac_constr_1 = pp.LineFracture(
             np.array(
                 [
-                    [self.x_intersection, self.xmax],
+                    [self.x_intersection + 0.07, self.xmax],
                     [
                         self.y_intersection,
                         self.y_intersection,
@@ -258,7 +250,7 @@ class GeometryCase1SlantedConvergence(pp.ModelGeometry):
         frac_constr_2 = pp.LineFracture(
             np.array(
                 [
-                    [self.xmin, self.xmean],
+                    [self.xmin, self.xmean - 0.07],
                     [self.ymean, self.ymean],
                 ]
             )

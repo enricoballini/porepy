@@ -8,14 +8,14 @@ import warnings
 
 import porepy.models.two_phase_hu as two_phase_hu
 import porepy.models.two_phase_ppu as two_phase_ppu
-import case_3_hu
+import case_8_hu
 
 """
-
+- thisis case 3 with smaller timestep
 """
 
 
-class InitialContitionCase3PPU(case_3_hu.InitialConditionCase3):
+class InitialContitionCase3PPU(case_8_hu.InitialConditionCase3):
     def initial_condition(self) -> None:
         """ """
         self.initial_condition_common()
@@ -62,11 +62,11 @@ class InitialContitionCase3PPU(case_3_hu.InitialConditionCase3):
 class PartialFinalModel(
     two_phase_hu.PrimaryVariables,
     two_phase_ppu.EquationsPPU,
-    case_3_hu.ConstitutiveLawCase3,
+    case_8_hu.ConstitutiveLawCase3,
     two_phase_hu.BoundaryConditionsPressureMass,
     InitialContitionCase3PPU,
     two_phase_ppu.SolutionStrategyPressureMassPPU,
-    case_3_hu.GeometryCase3,
+    case_8_hu.GeometryCase3,
     pp.DataSavingMixin,
 ):
     """ """
@@ -155,20 +155,20 @@ if __name__ == "__main__":
             self.sign_darcy_phase_0_prev = None
             self.sign_darcy_phase_1_prev = None
 
-            self.root_path = "./case_3/ppu/"
+            self.root_path = "./case_8/ppu/"
 
             self.output_file_name = self.root_path + "OUTPUT_NEWTON_INFO"
             self.mass_output_file_name = self.root_path + "MASS_OVER_TIME"
             self.flips_file_name = self.root_path + "FLIPS"
             self.beta_file_name = self.root_path + "BETA"  # not used
 
-    os.system("mkdir -p ./case_3/ppu/")
-    folder_name = "./case_3/ppu/visualization"
+    os.system("mkdir -p ./case_8/ppu/")
+    folder_name = "./case_8/ppu/visualization"
 
     time_manager = two_phase_hu.TimeManagerPP(
         schedule=np.array([0, 100]) / t_0,
-        dt_init=3e-1 / t_0,
-        dt_min_max=np.array([1e-9, 3e-1]) / t_0,
+        dt_init=1e-1 / t_0,
+        dt_min_max=np.array([1e-9, 1e-1]) / t_0,
         constant_dt=False,
         recomp_factor=0.5,
         recomp_max=10,

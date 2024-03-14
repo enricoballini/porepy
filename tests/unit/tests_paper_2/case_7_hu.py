@@ -215,9 +215,10 @@ class GeometryCase3(pp.ModelGeometry):
         )
         self.nd: int = self.mdg.dim_max()
 
-        # exporter = pp.Exporter(self.mdg, "mdg_I_hope", "./case_3/")
+        # exporter = pp.Exporter(self.mdg, "mdg_I_hope", "./case_7/")
         # exporter.write_pvd()
         # exporter.write_vtu()
+        # pdb.set_trace()
 
         self.nd: int = self.mdg.dim_max()
         # pp.set_local_coordinate_projections(self.mdg) # dont know what is this, if it return an error uncomment it...
@@ -304,14 +305,14 @@ class GeometryCase3(pp.ModelGeometry):
 
         self._fractures: list = [
             frac_0,
-            frac_1,
+            # frac_1,
             frac_2,
             frac_3,
-            frac_4,
-            frac_5,
-            frac_6,
-            frac_7,
-            frac_8_constr,
+            # frac_4,
+            # frac_5,
+            # frac_6,
+            # frac_7,
+            # frac_8_constr,
         ]
 
     def meshing_arguments(self) -> dict[str, float]:
@@ -419,16 +420,16 @@ if __name__ == "__main__":
             self.sign_omega_0_prev = None
             self.sign_omega_1_prev = None
 
-            self.root_path = "./case_3/hu/"
+            self.root_path = "./case_7/hu/"
 
             self.output_file_name = self.root_path + "OUTPUT_NEWTON_INFO"
             self.mass_output_file_name = self.root_path + "MASS_OVER_TIME"
             self.flips_file_name = self.root_path + "FLIPS"
             self.beta_file_name = self.root_path + "BETA"
 
-    os.system("mkdir -p ./case_3/hu/")
-    os.system("mkdir -p ./case_3/hu/BETA")
-    folder_name = "./case_3/hu/visualization"
+    os.system("mkdir -p ./case_7/hu/")
+    os.system("mkdir -p ./case_7/hu/BETA")
+    folder_name = "./case_7/hu/visualization"
 
     time_manager = two_phase_hu.TimeManagerPP(
         schedule=np.array([0, 100]) / t_0,
