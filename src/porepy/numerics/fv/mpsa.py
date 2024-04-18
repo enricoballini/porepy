@@ -7,6 +7,7 @@ The implementation is based on the weakly symmetric version of MPSA, described i
         IJNME, 2017.
 
 """
+
 from __future__ import annotations
 
 import logging
@@ -24,7 +25,6 @@ logger = logging.getLogger(__name__)
 
 
 class Mpsa(Discretization):
-
     """Implementation of the Multi-point stress approximation.
 
     The method can be used directly on a single grid, by calling ``:meth:discretize``
@@ -181,7 +181,7 @@ class Mpsa(Discretization):
         hf_eta: Optional[float] = parameter_dictionary.get("reconstruction_eta", None)
 
         inverter: Literal["python", "numba"] = parameter_dictionary.get(
-            "inverter", "python"
+            "inverter", "numba"
         )
 
         # Control of the number of subdomanis.
@@ -208,8 +208,8 @@ class Mpsa(Discretization):
             sd, active_cells
         )
         # Constitutive law and boundary condition for the active grid
-        active_constit: pp.FourthOrderTensor = self._constit_for_subgrid(
-            constit, active_cells
+        active_constit: pp.FourthOrderTensor = (
+            pp.fvutils.restrict_fourth_order_tensor_to_subgrid(constit, active_cells)
         )
 
         # Extract the relevant part of the boundary condition
@@ -272,8 +272,10 @@ class Mpsa(Discretization):
             tic = time()
 
             # Copy stiffness tensor, and restrict to local cells.
-            loc_c: pp.FourthOrderTensor = self._constit_for_subgrid(
-                active_constit, l2g_cells
+            loc_c: pp.FourthOrderTensor = (
+                pp.fvutils.restrict_fourth_order_tensor_to_subgrid(
+                    active_constit, l2g_cells
+                )
             )
 
             # Boundary conditions are slightly more complex. Find local faces that are
@@ -387,24 +389,24 @@ class Mpsa(Discretization):
             matrix_dictionary[self.stress_matrix_key][update_ind] = stress_glob[
                 update_ind
             ]
-            matrix_dictionary[self.bound_stress_matrix_key][
-                update_ind
-            ] = bound_stress_glob[update_ind]
-            matrix_dictionary[self.bound_displacement_cell_matrix_key][
-                update_ind
-            ] = bound_displacement_cell_glob[update_ind]
-            matrix_dictionary[self.bound_displacement_face_matrix_key][
-                update_ind
-            ] = bound_displacement_face_glob[update_ind]
+            matrix_dictionary[self.bound_stress_matrix_key][update_ind] = (
+                bound_stress_glob[update_ind]
+            )
+            matrix_dictionary[self.bound_displacement_cell_matrix_key][update_ind] = (
+                bound_displacement_cell_glob[update_ind]
+            )
+            matrix_dictionary[self.bound_displacement_face_matrix_key][update_ind] = (
+                bound_displacement_face_glob[update_ind]
+            )
         else:
             matrix_dictionary[self.stress_matrix_key] = stress_glob
             matrix_dictionary[self.bound_stress_matrix_key] = bound_stress_glob
-            matrix_dictionary[
-                self.bound_displacement_cell_matrix_key
-            ] = bound_displacement_cell_glob
-            matrix_dictionary[
-                self.bound_displacement_face_matrix_key
-            ] = bound_displacement_face_glob
+            matrix_dictionary[self.bound_displacement_cell_matrix_key] = (
+                bound_displacement_cell_glob
+            )
+            matrix_dictionary[self.bound_displacement_face_matrix_key] = (
+                bound_displacement_face_glob
+            )
 
     def update_discretization(self, sd: pp.Grid, data: dict) -> None:
         """Update discretization.
@@ -1547,9 +1549,11 @@ class Mpsa(Discretization):
         # Define row and column indices to be used for normal vector matrix Rows are
         # based on sub-face numbers. Columns have nd elements for each sub-cell (to
         # store a vector) and is adjusted according to block sizes
-        _, cn = np.meshgrid(subcell_topology.subhfno, np.arange(nd))
-        sum_blocksz = np.cumsum(blocksz)
-        cn += pp.matrix_operations.rldecode(sum_blocksz - blocksz[0], blocksz)
+        _, cn = np.meshgrid(subcell_topology.subhfno, np.arange(nd, dtype=np.int32))
+        sum_blocksz = np.cumsum(blocksz, dtype=np.int32)
+        cn += pp.matrix_operations.rldecode(sum_blocksz - blocksz[0], blocksz).astype(
+            np.int32
+        )
         ind_ptr_n = np.hstack((np.arange(0, cn.size, nd), cn.size))
 
         # Distribute faces equally on the sub-faces, and store in a matrix
@@ -1562,10 +1566,12 @@ class Mpsa(Discretization):
         # Then row and columns for stiffness matrix. There are nd^2 elements in the
         # gradient operator, and so the structure is somewhat different from the normal
         # vectors
-        _, cc = np.meshgrid(subcell_topology.subhfno, np.arange(nd**2))
-        sum_blocksz = np.cumsum(blocksz**2)
-        cc += pp.matrix_operations.rldecode(sum_blocksz - blocksz[0] ** 2, blocksz)
-        ind_ptr_c = np.hstack((np.arange(0, cc.size, nd**2), cc.size))
+        _, cc = np.meshgrid(subcell_topology.subhfno, np.arange(nd**2, dtype=np.int32))
+        sum_blocksz = np.cumsum(blocksz**2, dtype=np.int32)
+        cc += pp.matrix_operations.rldecode(
+            sum_blocksz - blocksz[0] ** 2, blocksz
+        ).astype(np.int32)
+        ind_ptr_c = np.hstack((np.arange(0, cc.size, nd**2), cc.size)).astype(np.int32)
 
         # Splitt stiffness matrix into symmetric and anti-symmatric part
         sym_tensor, asym_tensor = self._split_stiffness_matrix(constit)
@@ -2025,26 +2031,3 @@ class Mpsa(Discretization):
         sub_bc.basis = bc.basis[:, :, face_map]
 
         return sub_bc
-
-    def _constit_for_subgrid(
-        self, constit: pp.FourthOrderTensor, loc_cells: np.ndarray
-    ) -> pp.FourthOrderTensor:
-        """Extract a constitutive law for a subgrid of the original grid.
-
-        Parameters:
-            constit: Constitutive law for the original grid.
-            loc_cells: Index of cells of the original grid from which the new
-                constitutive law should be picked.
-
-        Returns:
-            New constitutive law aimed at a smaller grid.
-
-        """
-        # Copy stiffness tensor, and restrict to local cells
-        loc_c = constit.copy()
-        loc_c.values = loc_c.values[::, ::, loc_cells]
-        # Also restrict the lambda and mu fields; we will copy the stiffness tensors
-        # later.
-        loc_c.lmbda = loc_c.lmbda[loc_cells]
-        loc_c.mu = loc_c.mu[loc_cells]
-        return loc_c

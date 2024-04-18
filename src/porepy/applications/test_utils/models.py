@@ -1,4 +1,5 @@
 """Utility methods for setting up models for testing."""
+
 from __future__ import annotations
 
 import inspect
@@ -36,8 +37,7 @@ class NoPhysics(  # type: ignore[misc]
 class MassBalance(  # type: ignore[misc]
     RectangularDomainThreeFractures,
     pp.fluid_mass_balance.SinglePhaseFlow,
-):
-    ...
+): ...
 
 
 class MomentumBalance(  # type: ignore[misc]
@@ -74,7 +74,7 @@ def model(
     """Setup for tests."""
     # Suppress output for tests
     fracture_indices = [i for i in range(num_fracs)]
-    params = {"suppress_export": True, "fracture_indices": fracture_indices}
+    params = {"times_to_export": [], "fracture_indices": fracture_indices}
 
     # To define the model we comine a geometry with a physics class.
     # First identify the two component classes from the user input, and then combine

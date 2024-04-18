@@ -18,6 +18,7 @@ viz: Visualization; paraview, matplotlib.
 isort:skip_file
 
 """
+
 import os, sys
 from pathlib import Path
 import configparser
@@ -124,7 +125,7 @@ from porepy.numerics.fv.mpsa import Mpsa
 from porepy.numerics.fv.fv_elliptic import FVElliptic
 from porepy.numerics.fv.tpfa import Tpfa
 from porepy.numerics.fv.mpfa import Mpfa
-from porepy.numerics.fv.biot import Biot, GradP, DivU, BiotStabilization
+from porepy.numerics.fv.biot import Biot
 
 # Virtual elements, elliptic
 from porepy.numerics.vem.dual_elliptic import project_flux

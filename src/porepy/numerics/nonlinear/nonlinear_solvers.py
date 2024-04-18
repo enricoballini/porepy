@@ -3,6 +3,7 @@ Nonlinear solvers to be used with model classes.
 Implemented classes
     NewtonSolver
 """
+
 import logging
 
 import numpy as np
@@ -117,6 +118,7 @@ class NewtonSolver:
 
                 if is_diverged:
                     model.after_nonlinear_failure(sol, errors, iteration_counter)
+                    break
                 elif is_converged:
                     model.after_nonlinear_convergence(sol, errors, iteration_counter)
 
