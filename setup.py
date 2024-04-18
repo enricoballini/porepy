@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os.path
+import os.path 
 from glob import glob
 from os.path import basename, splitext
 
