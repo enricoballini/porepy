@@ -87,7 +87,7 @@ if __name__ == "__main__":
 
     print("\nSCALING: ======================================")
     print("u_0 = ", u_0)
-    print("t_0 = ", u_0)
+    print("t_0 = ", t_0)
     print("gravity_number = ", gravity_number)
     print(
         "pay attention: gravity number is not influenced by Ka_0 and dynamic_viscosity_0"

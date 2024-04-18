@@ -177,6 +177,7 @@ class GeometryCase1Horizontal(pp.ModelGeometry):
 
     def meshing_arguments(self) -> dict[str, float]:
         """ """
+        self.cell_size = 0.05
         default_meshing_args: dict[str, float] = {
             "cell_size": self.cell_size / self.L_0,
             "cell_size_fracture": self.cell_size / self.L_0,
@@ -203,7 +204,9 @@ if __name__ == "__main__":
     L_0 = 1
     gravity_0 = 1
     dynamic_viscosity_0 = 1
-    rho_0 = 1  # |rho_phase_0-rho_phase_1|
+    rho_0 = (
+        1  # |rho_phase_0-rho_phase_1| # use 0.5 for the gravity number... it is clearer
+    )
     p_0 = 1
     Ka_0 = 1
     u_0 = Ka_0 * p_0 / (dynamic_viscosity_0 * L_0)
@@ -246,7 +249,7 @@ if __name__ == "__main__":
 
             self.mdg_ref = None  # fine mesh
             self.mdg = None  # coarse mesh
-            self.cell_size = 0.1  # 0.05
+            self.cell_size = None
 
             # scaling values: (not all of them are actually used inside model)
             self.L_0 = L_0
@@ -294,7 +297,7 @@ if __name__ == "__main__":
     folder_name = "./case_1/horizontal_hu/visualization"
 
     time_manager = two_phase_hu.TimeManagerPP(
-        schedule=np.array([0, 15]) / t_0,
+        schedule=np.array([0, 20]) / t_0,
         dt_init=4e-1 / t_0,
         dt_min_max=np.array([1e-3, 4e-1]) / t_0,
         constant_dt=False,

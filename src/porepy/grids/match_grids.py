@@ -7,6 +7,7 @@ mixed-dimensional grid. It is called mostly inside
 That is, the methods herein should as a rule not be invoked directly.
 
 """
+
 import logging
 from typing import Optional
 
@@ -309,6 +310,7 @@ def match_grids_along_1d_mortar(
         # and we verify that the nodes are indeed colinear
         if not pp.geometry_property_checks.points_are_collinear(nodes, tol=tol):
             raise ValueError("Nodes are not colinear")
+
         sort_ind = pp.map_geometry.sort_points_on_line(nodes, tol=tol)
         n = nodes[:, sort_ind]
         unique_nodes, _, _ = unique_columns_tol(n, tol=tol)

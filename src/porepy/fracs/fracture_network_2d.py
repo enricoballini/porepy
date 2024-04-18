@@ -1,6 +1,7 @@
 """
 Module contains class for representing a fracture network in a 2d domain.
 """
+
 from __future__ import annotations
 
 import copy
@@ -265,6 +266,7 @@ class FractureNetwork2d:
             MixedDimensionalGrid: Mixed-dimensional grid.
 
         """
+
         if file_name is None:
             file_name = "gmsh_frac_file.msh"
         # No constraints if not available.
@@ -295,7 +297,6 @@ class FractureNetwork2d:
             subdomains = porepy.fracs.simplex.line_grid_from_gmsh(
                 file_name, constraints=constraints
             )
-
         else:
             # Create list of grids
             subdomains = porepy.fracs.simplex.triangle_grid_from_gmsh(

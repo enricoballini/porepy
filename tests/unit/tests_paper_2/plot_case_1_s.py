@@ -38,8 +38,10 @@ y_list = [y_0, y_3, y_20]
 labels = ["$t = 0$", "$t = 0.3$", "$t = 2$"]
 colors = [
     np.array([0.2, 0.2, 0.2]),
-    np.array([0.7, 0.6, 0.5]),
-    np.array([0.9, 0.8, 0.5]),
+    # np.array([0.7, 0.6, 0.5]),
+    # np.array([0.9, 0.8, 0.5]),
+    "sienna",
+    "darkorange",
 ]
 
 fontsize = 28

@@ -88,7 +88,7 @@ if __name__ == "__main__":
 
     print("\nSCALING: ======================================")
     print("u_0 = ", u_0)
-    print("t_0 = ", u_0)
+    print("t_0 = ", t_0)
     print("gravity_number = ", gravity_number)
     print(
         "pay attention: gravity number is not influenced by Ka_0 and dynamic_viscosity_0"
@@ -167,8 +167,8 @@ if __name__ == "__main__":
 
     time_manager = two_phase_hu.TimeManagerPP(
         schedule=np.array([0, 100]) / t_0,
-        dt_init=3e-1 / t_0,
-        dt_min_max=np.array([1e-9, 3e-1]) / t_0,
+        dt_init=1e-1 / t_0,
+        dt_min_max=np.array([1e-9, 1e-1]) / t_0,
         constant_dt=False,
         recomp_factor=0.5,
         recomp_max=10,

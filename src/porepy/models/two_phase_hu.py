@@ -1450,10 +1450,13 @@ class SolutionStrategyPressureMass(pp.SolutionStrategy):
 
     def clean_working_directory(self) -> None:
         """ """
-        os.system("rm " + self.output_file_name)
-        os.system("rm " + self.mass_output_file_name)
-        os.system("rm " + self.flips_file_name)
-        os.system("rm -r " + self.beta_file_name + "/*")
+        # os.system("rm " + self.output_file_name)
+        # os.system("rm " + self.mass_output_file_name)
+        # os.system("rm " + self.flips_file_name)
+        # os.system("rm -r " + self.beta_file_name + "/*")
+        print(
+            "\n\n\nworking directory not cleaned --------------------------------------------\n\n\n"
+        )
 
     def set_equation_system_manager(self) -> None:
         """ """
@@ -2172,7 +2175,7 @@ class MyModelGeometry(pp.ModelGeometry):
 
         # frac1 = pp.PlaneFracture(np.array([[0.2, 0.7, 0.7, 0.2],[0.2, 0.2, 0.8, 0.8],[0.5, 0.5, 0.5, 0.5]]))
         # self._fractures: list = [frac1, frac2, frac3, frac4, frac5]
-        self._fractures = [frac3, frac6]
+        self._fractures = []  # [frac3, frac6]
 
     def meshing_arguments(self) -> dict[str, float]:
         """ """
@@ -2189,6 +2192,7 @@ class TimeManagerPP(pp.TimeManager):
         is_converged,
         iterations: Optional[int] = None,
         recompute_solution: bool = False,
+        threshold=1e-11,
     ):
         if self.time >= self.time_final:
             previous_dt = self.dt
@@ -2218,6 +2222,10 @@ class TimeManagerPP(pp.TimeManager):
         else:
             previous_dt = self.dt
             self.dt = self.dt / 2  # TODO: add "till dt > dt_min"
+            if self.dt < threshold:
+                warnings.warn("Timestep smaller than threshold")
+                sys.exit()  # TODO: do something more gentle...
+
             return (previous_dt, self.dt)
 
     def decrease_time(self) -> None:
@@ -2241,24 +2249,36 @@ class PartialFinalModel(
 if __name__ == "__main__":
     # Scaling:
     # there something conceptually wrong, scaling should be unrelated to units and easy to modify. Should be part of the model but with the current structure of the code it's too complex
+
+    print("\nSCALING: ======================================")
+    phi_0 = 1
     L_0 = 1
     gravity_0 = 1
     dynamic_viscosity_0 = 1
     rho_0 = 1  # |rho_phase_0-rho_phase_1|
     p_0 = 1
     Ka_0 = 1
+
+    # Gravity number:
     u_0 = Ka_0 * p_0 / (dynamic_viscosity_0 * L_0)
     t_0 = L_0 / u_0
 
     gravity_number = Ka_0 * rho_0 * gravity_0 / (dynamic_viscosity_0 * u_0)
 
-    print("\nSCALING: ======================================")
     print("u_0 = ", u_0)
-    print("t_0 = ", u_0)
+    print("t_0 = ", t_0)
     print("gravity_number = ", gravity_number)
     print(
         "pay attention: gravity number is not influenced by Ka_0 and dynamic_viscosity_0"
     )
+
+    # Eb Ar number: # checked: same Eb Ar number => same dynamics
+    p_0 = dynamic_viscosity_0**2 / Ka_0 / rho_0
+    u_0 = Ka_0 * p_0 / dynamic_viscosity_0 / L_0
+    t_0 = phi_0 * L_0 / u_0
+
+    eb_number = rho_0**2 * gravity_0 * L_0 * Ka_0 * phi_0 / dynamic_viscosity_0**2
+    print("Eb Ar number = ", eb_number)
     print("=========================================\n")
 
     fluid_constants = pp.FluidConstants({})
@@ -2276,8 +2296,8 @@ if __name__ == "__main__":
     folder_name = "./visualization"
 
     time_manager = TimeManagerPP(
-        schedule=np.array([0, 50]) / t_0,
-        dt_init=2.5e-2 / t_0,
+        schedule=np.array([0, 0.5]) / t_0,
+        dt_init=5e-2 / t_0,
         dt_min_max=np.array([1e-5, 5e-2]) / t_0,
         constant_dt=False,
         iter_max=20,
@@ -2288,7 +2308,7 @@ if __name__ == "__main__":
     params = {
         "material_constants": material_constants,
         "max_iterations": 10,
-        "nl_convergence_tol": 1e-6,
+        "nl_convergence_tol": 1e-4,
         "nl_divergence_tol": 1e5,
         "time_manager": time_manager,
         "folder_name": folder_name,

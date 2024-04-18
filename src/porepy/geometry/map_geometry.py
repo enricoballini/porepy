@@ -1,4 +1,5 @@
 """Collection of functions related to geometry mappings, rotations etc."""
+
 from __future__ import annotations
 
 from typing import Any, Optional
@@ -6,6 +7,8 @@ from typing import Any, Optional
 import numpy as np
 
 import porepy as pp
+
+import pdb
 
 
 def force_point_collinearity(

@@ -44,42 +44,56 @@ if __name__ == "__main__":
             output_file_ppu = "./case_1/horizontal_ppu/FLIPS"
             output_file_hu = "./case_1/horizontal_hu/FLIPS"
             save_folder = save_folder_root + "/horizontal"
-            x_ticks = np.array([0, 2, 4, 6, 8, 10, 12, 14])
+            t_scaling = 1
+            x_ticks = np.array([0, 4, 8, 12, 16, 20])
+            x_label = "time"
 
         if case_type == "vertical":
             name_root = "case_" + str(case_id) + "_vertical"
             output_file_hu = "./case_1/vertical_hu/FLIPS"
             output_file_ppu = "./case_1/vertical_ppu/FLIPS"
             save_folder = save_folder_root + "/vertical"
+            t_scaling = 1
             x_ticks = np.array([0, 2, 4, 6])
+            x_label = "time"
 
         if case_type == "slanted":
             name_root = "case_" + str(case_id) + "_slanted"
             output_file_ppu = "./case_1/slanted_ppu/FLIPS"
             output_file_hu = "./case_1/slanted_hu/FLIPS"
             save_folder = save_folder_root + "/slanted"
+            t_scaling = 1
             x_ticks = np.array([0, 2, 4, 6, 8, 10])
+            x_label = "time"
 
         if case_type == "slanted_non_conforming":
             name_root = "case_" + str(case_id) + "_slanted_non_conforming"
             output_file_ppu = "./case_1/slanted_ppu/non-conforming/FLIPS"
             output_file_hu = "./case_1/slanted_hu/non-conforming/FLIPS"
             save_folder = save_folder_root + "/slanted-non-conforming"
+            t_scaling = 1
             x_ticks = np.array([0, 2, 4, 6, 8, 10])
+            x_label = "time"
 
     if case_id == 2:
         name_root = "case_" + str(case_id)
         save_folder = "./case_2"
         output_file_ppu = "./case_2/ppu/FLIPS"
         output_file_hu = "./case_2/hu/FLIPS"
+        t_scaling = 1
         x_ticks = np.array([0, 0.01, 0.02, 0.03, 0.04, 0.05])
+        x_label = "time"
 
     if case_id in np.array([3, 6, 7, 8]):
         name_root = "case_" + str(case_id)
         save_folder = "./" + name_root  # dont ask me why...
         output_file_ppu = "./" + name_root + "/ppu/FLIPS"
         output_file_hu = "./" + name_root + "/hu/FLIPS"
-        x_ticks = np.array([0, 20, 40, 60, 80, 100])
+        t_scaling = 1e-2
+        x_ticks = (
+            np.array([0, 20, 40, 60, 80, 100]) * t_scaling
+        )  # pay attention to the scaling!
+        x_label = r"time $\times 10^2$"
 
     os.system("mkdir " + save_folder)
 
@@ -97,6 +111,9 @@ if __name__ == "__main__":
         output_file_hu
     )
 
+    time_ppu *= t_scaling
+    time_hu *= t_scaling
+
     plt.rc("text", usetex=True)
     plt.rc("font", family="serif")
     plt.rc("font", size=fontsize)
@@ -113,23 +130,23 @@ if __name__ == "__main__":
     ax_1.plot(
         time_ppu,
         global_cumulative_flips_ppu[0],
-        label="$darcy phase 0$",
-        linestyle="--",
+        label="$PPU - q_0$",
+        linestyle="-",
         color=my_orange,
         marker="",
     )
     ax_1.plot(
         time_ppu,
         global_cumulative_flips_ppu[1],
-        label="$darcy phase 1$",
-        linestyle="-",
+        label="$PPU - q_1$",
+        linestyle="--",
         color=my_orange,
         marker="",
     )
     ax_1.plot(
         time_hu,
         global_cumulative_flips_hu[0],
-        label="$q_T$",
+        label="$HU - q_T$",
         linestyle="-",
         color=my_blu,
         marker="",
@@ -137,7 +154,7 @@ if __name__ == "__main__":
     ax_1.plot(
         time_hu,
         global_cumulative_flips_hu[1],
-        label="$omega_0$",
+        label="$HU - \omega_0$",
         linestyle="--",
         color=my_blu,
         marker="",
@@ -150,7 +167,7 @@ if __name__ == "__main__":
     #     color=my_blu,
     #     marker="",
     # )
-    ax_1.set_xlabel("time", fontsize=fontsize)
+    ax_1.set_xlabel(x_label, fontsize=fontsize)
     ax_1.set_xticks(x_ticks)
 
     ax_1.grid(linestyle="--", alpha=0.5)
@@ -174,6 +191,7 @@ if __name__ == "__main__":
 
     handles = np.ravel(np.reshape(handles_all[:4], (1, 4)), order="F")
     labels = np.ravel(np.reshape(labels_all[:4], (1, 4)), order="F")
+
     fig, ax = plt.subplots(figsize=(25, 10))
     for h, l in zip(handles, labels):
         ax.plot(np.zeros(1), label=l)
@@ -183,7 +201,7 @@ if __name__ == "__main__":
         labels,
         fontsize=fontsize,
         loc="lower center",
-        ncol=3,
+        ncol=2,
         bbox_to_anchor=(-0.1, -0.65),
     )
 

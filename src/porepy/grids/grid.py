@@ -11,6 +11,7 @@ See documentation of class :class:`Grid` for further details.
     2016.
 
 """
+
 from __future__ import annotations
 
 import copy
@@ -24,6 +25,8 @@ from scipy import sparse as sps
 
 import porepy as pp
 from porepy.utils import mcolon, tags
+
+import pdb
 
 
 class Grid:
@@ -62,12 +65,31 @@ class Grid:
     __id: int
     """Name-mangled reference to assigned ID."""
 
-    def __new__(cls, *args, **kwargs) -> Grid:
-        """Make object and set ID by forwarding :attr:`_counter`."""
+    # def __new__(cls, *args, **kwargs) -> Grid:
+    #     """Make object and set ID by forwarding :attr:`_counter`."""
 
-        obj = object.__new__(cls)
-        obj.__id = next(cls._counter)
-        return obj
+    #     obj = object.__new__(cls)
+    #     obj.__id = next(cls._counter)
+
+    #     # print("hex(id(obj._counter)) = ", hex(id(obj._counter)))
+    #     # print("obj.__id = ", obj.__id)
+    #     # I dont know how to fix a bug. The moment I create the class grid I start the counter.
+    #     # The counter will be the same for every snapshot (unless you close and reopen the terminal, of course)
+    #     # putting the id inside __new__ is an elegant solution for people who dont have to create datasets...
+    #     # I will adopt a bandaid to redefine the subdomains ids after the generation of mdg
+    #     # NO I cant since __id is a class attribute, not a instance attribute
+    #     # this is EVIL
+
+    #     return obj
+
+    # @classmethod
+    # def change_id(cls, new_id):
+    #     """ """
+    #     cls.__id = new_id # not 100% clear why it doenst work
+
+    def change_id(self, new_id):
+        """ """
+        self.__id = new_id
 
     def __init__(
         self,
@@ -129,6 +151,8 @@ class Grid:
         constructor, computations of geometry etc.
 
         """
+
+        self.__id = next(self._counter)  ### EB
 
         if history is None:
             self.history = []

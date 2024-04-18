@@ -90,7 +90,7 @@ if __name__ == "__main__":
 
     print("\nSCALING: ======================================")
     print("u_0 = ", u_0)
-    print("t_0 = ", u_0)
+    print("t_0 = ", t_0)
     print("gravity_number = ", gravity_number)
     print(
         "pay attention: gravity number is not influenced by Ka_0 and dynamic_viscosity_0"
@@ -123,7 +123,7 @@ if __name__ == "__main__":
 
             self.mdg_ref = None  # fine mesh
             self.mdg = None  # coarse mesh
-            self.cell_size = 0.05
+            self.cell_size = None
 
             # scaling values: (not all of them are actually used inside model)
             self.L_0 = L_0
@@ -169,7 +169,7 @@ if __name__ == "__main__":
     folder_name = "./case_1/horizontal_ppu/visualization"
 
     time_manager = two_phase_hu.TimeManagerPP(
-        schedule=np.array([0, 15]) / t_0,
+        schedule=np.array([0, 20]) / t_0,
         dt_init=4e-1 / t_0,
         dt_min_max=np.array([1e-3, 4e-1]) / t_0,
         constant_dt=False,

@@ -118,7 +118,7 @@ s_17_ppu, y_17_ppu = load_s_at_timestep(17, "ppu", data_folder)
 s_17_hu, y_17_hu = load_s_at_timestep(17, "hu", data_folder)
 y_list = [y_17_ppu, y_17_hu]
 s_list = [s_17_ppu, s_17_hu]
-labels = ["PPU", "HU"]
+labels = ["$PPU$", "$HU$"]
 make_figure(s_list, y_list, 17, labels)
 
 
@@ -126,7 +126,7 @@ s_51_ppu, y_51_ppu = load_s_at_timestep(51, "ppu", data_folder)
 s_51_hu, y_51_hu = load_s_at_timestep(51, "hu", data_folder)
 y_list = [y_51_ppu, y_51_hu]
 s_list = [s_51_ppu, s_51_hu]
-labels = ["PPU", "HU"]
+labels = ["$PPU$", "$HU$"]
 make_figure(s_list, y_list, 51, labels)
 
 # 17 -> time = 6.8

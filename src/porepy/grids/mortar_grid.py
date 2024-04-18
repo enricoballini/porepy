@@ -2,6 +2,7 @@
 interfaces between two subdomains in the mixed-dimensional sense.
 
 """
+
 from __future__ import annotations
 
 import warnings
@@ -79,13 +80,18 @@ class MortarGrid:
 
     _counter = count(0)
     """Counter of instantiated mortar grids. See :meth:`__new__` and :meth:`id`."""
+    __id: int  ###
 
-    def __new__(cls, *args, **kwargs):
-        """Make object and set ID by forwarding :attr:`_counter`."""
+    # def __new__(cls, *args, **kwargs):
+    #     """Make object and set ID by forwarding :attr:`_counter`."""
 
-        obj = object.__new__(cls)
-        obj.__id = next(cls._counter)
-        return obj
+    #     obj = object.__new__(cls)
+    #     obj.__id = next(cls._counter)
+    #     return obj
+
+    def change_id(self, new_id):  ### EB
+        """ """
+        self.__id = new_id
 
     def __init__(
         self,
@@ -115,6 +121,8 @@ class MortarGrid:
         self.sides: np.ndarray = np.array(list(self.side_grids.keys()))
         """An array containing the enumeration of each side grid
         (keys of :attr:`side_grids`)."""
+
+        self.__id = next(self._counter)  ### EB
 
         if not (self.num_sides() == 1 or self.num_sides() == 2):
             raise ValueError("The number of sides have to be 1 or 2")
@@ -253,6 +261,9 @@ class MortarGrid:
             ValueError: If the mortar grid is not of dimension 0,1 or 2.
 
         """
+
+        pdb.set_trace()
+
         if tol is None:
             tol = self.tol
 
@@ -438,7 +449,10 @@ class MortarGrid:
         self._check_mappings()
 
     def update_primary(
-        self, g_new: pp.Grid, g_old: pp.Grid, tol: Optional[float] = None
+        self,
+        g_new: pp.Grid,
+        g_old: pp.Grid,
+        tol: Optional[float] = None,
     ) -> None:
         """Update the ``_primary_to_mortar_int`` map when the primary
         (higher-dimensional) grid is changed.

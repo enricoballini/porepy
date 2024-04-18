@@ -697,7 +697,7 @@ if __name__ == "__main__":
 
     print("\nSCALING: ======================================")
     print("u_0 = ", u_0)
-    print("t_0 = ", u_0)
+    print("t_0 = ", t_0)
     print("gravity_number = ", gravity_number)
     print(
         "pay attention: gravity number is not influenced by Ka_0 and dynamic_viscosity_0"
@@ -779,7 +779,7 @@ if __name__ == "__main__":
             self.output_file_name = "./OUTPUT_NEWTON_INFO_PPU"
             self.mass_output_file_name = "./MASS_OVER_TIME_PPU"
             self.flips_file_name = "./FLIPS_PPU"
-            self.beta_file_name = "./BETA" # not used
+            self.beta_file_name = "./BETA"  # not used
 
     model = FinalModel(params)
 

@@ -6,6 +6,7 @@ We provide basic Exporter functionality, but the user is free to override and ex
 this class to suit their needs. This could include, e.g., saving data to a database,
 or to a file format other than vtu.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -46,6 +47,23 @@ class DataSavingMixin:
         """Export the model state at a given time step, and log time."""
         if not self.suppress_export:
             self.exporter.write_vtu(self.data_to_export(), time_dependent=True)
+            if self.restart_options.get("restart", False):
+                # For a pvd file addressing all time steps (before and after restart
+                # time), resume based on restart input pvd file through append.
+                pvd_file = self.restart_options["pvd_file"]
+                self.exporter.write_pvd(append=True, from_pvd_file=pvd_file)
+            else:
+                self.exporter.write_pvd()
+            self.time_manager.write_time_information()
+
+    def save_data_time_step_time(self, time) -> None:
+        """Export the model state at a given time step, and log time.
+        EB: added time in vtu so you see the physical time in paraview
+        """
+        if not self.suppress_export:
+            self.exporter.write_vtu(
+                self.data_to_export(), time_dependent=True, time_step=time
+            )
             if self.restart_options.get("restart", False):
                 # For a pvd file addressing all time steps (before and after restart
                 # time), resume based on restart input pvd file through append.
@@ -128,7 +146,7 @@ class DataSavingMixin:
         vals = self.fluid.convert_units(vals_scaled, units, to_si=True)
         return vals
 
-    def initialize_data_saving(self) -> None:
+    def initialize_data_saving(self, exporter_folder=False) -> None:
         """Initialize data saving.
 
         This method is called by :meth:`prepare_simulation` to initialize the exporter,
@@ -136,15 +154,26 @@ class DataSavingMixin:
         appended in :meth:`save_data_time_step`).
 
         """
-        self.exporter = pp.Exporter(
-            self.mdg,
-            self.params["file_name"],
-            folder_name=self.params["folder_name"],
-            export_constants_separately=self.params.get(
-                "export_constants_separately", False
-            ),
-            length_scale=self.units.m,
-        )
+        if not exporter_folder:
+            self.exporter = pp.Exporter(
+                self.mdg,
+                self.params["file_name"],
+                folder_name=self.params["folder_name"],
+                export_constants_separately=self.params.get(
+                    "export_constants_separately", False
+                ),
+                length_scale=self.units.m,
+            )
+        else:
+            self.exporter = pp.Exporter(
+                self.mdg,
+                self.params["file_name"],
+                folder_name=exporter_folder,
+                export_constants_separately=self.params.get(
+                    "export_constants_separately", False
+                ),
+                length_scale=self.units.m,
+            )
 
     def load_data_from_vtu(
         self,

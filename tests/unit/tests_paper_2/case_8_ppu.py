@@ -11,7 +11,7 @@ import porepy.models.two_phase_ppu as two_phase_ppu
 import case_8_hu
 
 """
-- thisis case 3 with smaller timestep
+- thisis case 3 with smaller timestep. case 3 had dt = 3e-3. now (19/03/2024) case 3 = case 8
 """
 
 
@@ -88,7 +88,7 @@ if __name__ == "__main__":
 
     print("\nSCALING: ======================================")
     print("u_0 = ", u_0)
-    print("t_0 = ", u_0)
+    print("t_0 = ", t_0)
     print("gravity_number = ", gravity_number)
     print(
         "pay attention: gravity number is not influenced by Ka_0 and dynamic_viscosity_0"

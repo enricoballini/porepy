@@ -1,6 +1,7 @@
 """
 Module for creating simplex grids with fractures.
 """
+
 import logging
 import time
 from typing import Any, Dict, Tuple
@@ -96,6 +97,8 @@ def triangle_grid_from_gmsh(file_name, constraints=None, **kwargs):
             specified dimension, the inner list will be empty.
 
     """
+
+    print("\n inside triangle_grid_from_gmsh")
 
     if constraints is None:
         constraints = np.empty(0, dtype=int)

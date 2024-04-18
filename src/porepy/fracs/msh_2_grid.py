@@ -1,6 +1,7 @@
 """
 Module for converting gmsh output file to our grid structure.
 """
+
 from __future__ import annotations
 
 from typing import Optional, Union
@@ -78,7 +79,6 @@ def create_2d_grids(
             specified target tag.
 
     """
-
     if surface_tag is None:
         surface_tag = PhysicalNames.FRACTURE.value
 

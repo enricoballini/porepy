@@ -32,13 +32,15 @@ if __name__ == "__main__":
     if case_id == 1:
         case_type = sys.argv[2]  # "horizontal", "vertical", "slanted non conforming"
         save_folder_root = "./case_1"
+        t_scaling = 1
 
         if case_type == "horizontal":
             name_root = "case_" + str(case_id) + "_horizontal"
             output_file_ppu = "./case_1/horizontal_ppu/OUTPUT_NEWTON_INFO"
             output_file_hu = "./case_1/horizontal_hu//OUTPUT_NEWTON_INFO"
             save_folder = save_folder_root + "/horizontal"
-            x_ticks = np.array([0, 2, 4, 6, 8, 10, 12, 14])
+            x_ticks = np.array([0, 4, 8, 12, 16, 20])
+            x_label = "time"
 
         if case_type == "vertical":
             name_root = "case_" + str(case_id) + "_vertical"
@@ -46,6 +48,7 @@ if __name__ == "__main__":
             output_file_hu = "./case_1/vertical_hu//OUTPUT_NEWTON_INFO"
             save_folder = save_folder_root + "/vertical"
             x_ticks = np.array([0, 2, 4, 6])
+            x_label = "time"
 
         if case_type == "slanted":
             name_root = "case_" + str(case_id) + "_slanted"
@@ -53,6 +56,7 @@ if __name__ == "__main__":
             output_file_hu = "./case_1/slanted_hu//OUTPUT_NEWTON_INFO"
             save_folder = save_folder_root + "/slanted"
             x_ticks = np.array([0, 2, 4, 6, 8, 10])
+            x_label = "time"
 
         if case_type == "slanted_non_conforming":
             name_root = "case_" + str(case_id) + "_slanted_non_conforming"
@@ -60,6 +64,7 @@ if __name__ == "__main__":
             output_file_hu = "./case_1/slanted_hu/non-conforming/OUTPUT_NEWTON_INFO"
             save_folder = save_folder_root + "/slanted-non-conforming"
             x_ticks = np.array([0, 2, 4, 6, 8, 10])
+            x_label = "time"
 
     if case_id == 2:
         name_root = "case_" + str(case_id)
@@ -67,13 +72,19 @@ if __name__ == "__main__":
         output_file_ppu = "./case_2/ppu/OUTPUT_NEWTON_INFO"
         output_file_hu = "./case_2/hu/OUTPUT_NEWTON_INFO"
         x_ticks = np.array([0, 0.01, 0.02, 0.03, 0.04, 0.05])
+        x_label = "time"
+        t_scaling = 1
 
     if case_id in np.array([3, 6, 7, 8]):
         name_root = "case_" + str(case_id)
         save_folder = "./" + name_root
         output_file_ppu = "./" + name_root + "/ppu/OUTPUT_NEWTON_INFO"
         output_file_hu = "./" + name_root + "/hu/OUTPUT_NEWTON_INFO"
-        x_ticks = np.array([0, 20, 40, 60, 80, 100])
+        t_scaling = 1e-2
+        x_ticks = (
+            np.array([0, 20, 40, 60, 80, 100]) * t_scaling
+        )  # pay attention to the scaling!
+        x_label = r"time $\times 10^2$"
 
     os.system("mkdir " + save_folder)
 
@@ -103,6 +114,9 @@ if __name__ == "__main__":
         wasted_iterations_hu,
     ) = load_output_newton(output_file_hu)
 
+    time_ppu *= t_scaling
+    time_hu *= t_scaling
+
     plt.rc("text", usetex=True)
     plt.rc("font", family="serif")
     plt.rc("font", size=fontsize)
@@ -119,7 +133,7 @@ if __name__ == "__main__":
     ax_1.plot(
         time_ppu,
         time_chops_ppu,
-        label="$time chops ppu$",
+        label="$PPU$",
         linestyle="--",
         color=my_orange,
         marker="",
@@ -127,12 +141,12 @@ if __name__ == "__main__":
     ax_1.plot(
         time_hu,
         time_chops_hu,
-        label="$time chops hu$",
+        label="$HU$",
         linestyle="-",
         color=my_blu,
         marker="",
     )
-    ax_1.set_xlabel("time", fontsize=fontsize)
+    ax_1.set_xlabel(x_label, fontsize=fontsize)
     ax_1.set_xticks(x_ticks)
 
     ax_1.grid(linestyle="--", alpha=0.5)

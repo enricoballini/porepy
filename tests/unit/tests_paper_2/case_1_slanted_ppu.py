@@ -66,13 +66,58 @@ class InitialConditionCase1SlantedPPU(
             )
 
 
+class SolutionStrategyCase1SlantedPPU(two_phase_ppu.SolutionStrategyPressureMassPPU):
+
+    def prepare_simulation(self) -> None:
+        """ """
+        self.deform_grid = case_1_slanted_hu.SolutionStrategyCase1Slanted.deform_grid
+        self.compute_normals_tangents = (
+            case_1_slanted_hu.SolutionStrategyCase1Slanted.compute_normals_tangents
+        )
+
+        self.clean_working_directory()
+
+        self.set_geometry(mdg_ref=False)
+
+        self.deform_grid(self)
+
+        self.initialize_data_saving()
+
+        self.set_materials()
+
+        self.set_equation_system_manager()
+
+        self.add_equation_system_to_phases()
+        self.mixture.apply_constraint(self.ell)
+
+        self.create_variables()
+
+        self.initial_condition()
+        self.compute_mass()
+
+        self.reset_state_from_file()
+        self.set_equations()
+
+        self.set_discretization_parameters()
+        self.discretize()
+
+        self._initialize_linear_solver()
+        self.set_nonlinear_discretizations()
+
+        self.save_data_time_step()  # it is in pp.viz.data_saving_model_mixin
+
+        self.computations_for_hu()
+
+        # pp.plot_grid(self.mdg, alpha=0)
+
+
 class PartialFinalModel(
     two_phase_hu.PrimaryVariables,
     two_phase_ppu.EquationsPPU,
     case_1_slanted_hu.ConstitutiveLawCase1Slanted,
     two_phase_hu.BoundaryConditionsPressureMass,
     InitialConditionCase1SlantedPPU,
-    two_phase_ppu.SolutionStrategyPressureMassPPU,
+    SolutionStrategyCase1SlantedPPU,
     case_1_slanted_hu.GeometryCase1Slanted,
     pp.DataSavingMixin,
 ):
@@ -95,7 +140,7 @@ if __name__ == "__main__":
 
     print("\nSCALING: ======================================")
     print("u_0 = ", u_0)
-    print("t_0 = ", u_0)
+    print("t_0 = ", t_0)
     print("gravity_number = ", gravity_number)
     print(
         "pay attention: gravity number is not influenced by Ka_0 and dynamic_viscosity_0"

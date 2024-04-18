@@ -23,7 +23,7 @@ class SolutionStrategyCase3Domain(two_phase_hu.SolutionStrategyPressureMass):
         sys.exit()
 
 
-class GeometryCase3(pp.ModelGeometry):
+class GeometryCase3Domain(pp.ModelGeometry):
     def set_geometry(self) -> None:
         """ """
         self.set_domain()
@@ -32,19 +32,19 @@ class GeometryCase3(pp.ModelGeometry):
         self.fracture_network = pp.create_fracture_network(self.fractures, self.domain)
 
         self.mdg = pp.create_mdg(
-            "cartesian",
+            "simplex",
             self.meshing_arguments(),
             self.fracture_network,
             **self.meshing_kwargs(),
         )
         self.nd: int = self.mdg.dim_max()
 
-        exporter = pp.Exporter(self.mdg, "mdg_I_hope", "./case_3/domain")
+        exporter = pp.Exporter(self.mdg, "mdg_picture", "./case_3/domain")
         exporter.write_pvd()
         exporter.write_vtu()
 
-        print("\nDone!")
-        sys.exit()
+        self.nd: int = self.mdg.dim_max()
+        # pp.set_local_coordinate_projections(self.mdg) # dont know what is this, if it return an error uncomment it...
 
     def set_domain(self) -> None:
         """
@@ -62,12 +62,80 @@ class GeometryCase3(pp.ModelGeometry):
 
     def set_fractures(self) -> None:
         """ """
-        self._fractures: list = []
+
+        # R = pp.map_geometry.rotation_matrix(np.pi / 2, np.array([1, 0, 0]))
+
+        # pts_0 = np.array(
+        #     [[0.05, 0.25, 0.5], [0.95, 0.25, 0.5], [0.95, 2, 0.5], [0.05, 2, 0.5]]
+        # )
+        # frac_0 = pp.PlaneFracture(R @ pts_0.T)
+
+        # pts_1 = np.array(
+        #     [[0.5, 0.05, 0.95], [0.5, 0.05, 0.05], [0.5, 0.3, 0.05], [0.5, 0.3, 0.95]]
+        # )
+        # frac_1 = pp.PlaneFracture(R @ pts_1.T)
+
+        # pts_2 = np.array(
+        #     [[0.05, 1, 0.5], [0.95, 1, 0.5], [0.95, 2.2, 0.85], [0.05, 2.2, 0.85]]
+        # )
+        # frac_2 = pp.PlaneFracture(R @ pts_2.T)
+
+        # pts_3 = np.array(
+        #     [[0.05, 1, 0.48], [0.95, 1, 0.48], [0.95, 2.2, 0.14], [0.05, 2.2, 0.14]]
+        # )
+        # frac_3 = pp.PlaneFracture(R @ pts_3.T)
+
+        # pts_4 = np.array(
+        #     [[0.23, 1.9, 0.3], [0.23, 1.9, 0.7], [0.17, 2.2, 0.7], [0.17, 2.2, 0.3]]
+        # )
+        # frac_4 = pp.PlaneFracture(R @ pts_4.T)
+
+        # pts_5 = np.array(
+        #     [[0.17, 1.9, 0.3], [0.17, 1.9, 0.7], [0.23, 2.2, 0.7], [0.23, 2.2, 0.3]]
+        # )
+        # frac_5 = pp.PlaneFracture(R @ pts_5.T)
+
+        # pts_6 = np.array(
+        #     [[0.77, 1.9, 0.3], [0.77, 1.9, 0.7], [0.77, 2.2, 0.7], [0.77, 2.2, 0.3]]
+        # )
+        # frac_6 = pp.PlaneFracture(R @ pts_6.T)
+
+        # pts_7 = np.array(
+        #     [[0.83, 1.9, 0.3], [0.83, 1.9, 0.7], [0.83, 2.2, 0.7], [0.83, 2.2, 0.3]]
+        # )
+        # frac_7 = pp.PlaneFracture(R @ pts_7.T)
+
+        # frac_8_constr = pp.PlaneFracture(
+        #     R
+        #     @ np.array(
+        #         [
+        #             [0.0, self.z_cut, 0],  # it will be a z...
+        #             [1, self.z_cut, 0],
+        #             [1, self.z_cut, 1],
+        #             [0, self.z_cut, 1],
+        #         ]
+        #     ).T
+        # )
+
+        # self._fractures: list = [
+        #     frac_0,
+        #     frac_1,
+        #     frac_2,
+        #     frac_3,
+        #     frac_4,
+        #     frac_5,
+        #     frac_6,
+        #     frac_7,
+        #     frac_8_constr,
+        # ]
+
+        self._fractures = []
 
     def meshing_arguments(self) -> dict[str, float]:
         """ """
         default_meshing_args: dict[str, float] = {
-            "cell_size": 2.25 / self.L_0,
+            "cell_size": 0.3 / self.L_0,
+            "cell_size_fracture": 0.2 / self.L_0,
         }
         return self.params.get("meshing_arguments", default_meshing_args)
 
@@ -79,7 +147,7 @@ class PartialFinalModel(
     two_phase_hu.BoundaryConditionsPressureMass,
     case_3_hu.InitialConditionCase3,
     SolutionStrategyCase3Domain,
-    GeometryCase3,
+    GeometryCase3Domain,
     pp.DataSavingMixin,
 ):
     """ """
@@ -101,7 +169,7 @@ if __name__ == "__main__":
 
     print("\nSCALING: ======================================")
     print("u_0 = ", u_0)
-    print("t_0 = ", u_0)
+    print("t_0 = ", t_0)
     print("gravity_number = ", gravity_number)
     print(
         "pay attention: gravity number is not influenced by Ka_0 and dynamic_viscosity_0"
@@ -149,11 +217,11 @@ if __name__ == "__main__":
 
             self.xmin = 0.0 / self.L_0
             self.xmax = 1.0 / self.L_0
-            self.ymin = 0.0 / self.L_0
-            self.ymax = 1.0 / self.L_0
+            self.ymin = -1.0 / self.L_0
+            self.ymax = 0.0 / self.L_0
             self.zmin = 0.0 / self.L_0
             self.zmax = 2.25 / self.L_0
-            # self.z_cut = 0.8
+            self.z_cut = 0.8
 
             self.relative_permeability = (
                 pp.tobedefined.relative_permeability.rel_perm_quadratic
@@ -168,21 +236,22 @@ if __name__ == "__main__":
             self.sign_omega_0_prev = None
             self.sign_omega_1_prev = None
 
-            self.root_path = "./case_3/hu/domain/"
+            self.root_path = "./case_3/hu/"
 
             self.output_file_name = self.root_path + "OUTPUT_NEWTON_INFO"
             self.mass_output_file_name = self.root_path + "MASS_OVER_TIME"
             self.flips_file_name = self.root_path + "FLIPS"
             self.beta_file_name = self.root_path + "BETA"
 
-    os.system("mkdir -p ./case_3/hu/domain/")
-
-    folder_name = "./case_3/hu/domain/visualization"
+    # os.system("mkdir -p ./case_3/hu/")
+    # os.system("mkdir -p ./case_3/hu/BETA")
+    os.system("mkdir ./case_3/domain")
+    folder_name = "./case_3/hu/visualization"
 
     time_manager = two_phase_hu.TimeManagerPP(
-        schedule=np.array([0, 1]) / t_0,
-        dt_init=1 / t_0,
-        dt_min_max=np.array([1e-9, 1]) / t_0,
+        schedule=np.array([0, 100]) / t_0,
+        dt_init=1e-1 / t_0,
+        dt_min_max=np.array([1e-9, 1e-1]) / t_0,
         constant_dt=False,
         recomp_factor=0.5,
         recomp_max=10,

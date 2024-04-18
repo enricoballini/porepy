@@ -146,6 +146,8 @@ class SolutionStrategyCase1Slanted(two_phase_hu.SolutionStrategyPressureMass):
 
         self.computations_for_hu()
 
+        # pp.plot_grid(self.mdg, alpha=0)
+
     @staticmethod
     def compute_normals_tangents(g_new):
         """ """
@@ -420,6 +422,7 @@ class SolutionStrategyCase1Slanted(two_phase_hu.SolutionStrategyPressureMass):
 
         # update the whole grid bucket: -----------------------------------------------
         gb.replace_subdomains_and_interfaces({g_old: g_new})
+
         gb.compute_geometry()
 
         if mdg_ref:
@@ -504,7 +507,6 @@ class GeometryCase1Slanted(pp.ModelGeometry):
 
         pp.set_local_coordinate_projections(self.mdg)
 
-
     def set_domain(self) -> None:
         """ """
         self.size = 1
@@ -570,7 +572,7 @@ class PartialFinalModel(
     ConstitutiveLawCase1Slanted,
     two_phase_hu.BoundaryConditionsPressureMass,
     InitialConditionCase1Slanted,
-    two_phase_hu.SolutionStrategyPressureMass,
+    SolutionStrategyCase1Slanted,
     GeometryCase1Slanted,
     pp.DataSavingMixin,
 ):
@@ -593,7 +595,7 @@ if __name__ == "__main__":
 
     print("\nSCALING: ======================================")
     print("u_0 = ", u_0)
-    print("t_0 = ", u_0)
+    print("t_0 = ", t_0)
     print("gravity_number = ", gravity_number)
     print(
         "pay attention: gravity number is not influenced by Ka_0 and dynamic_viscosity_0"

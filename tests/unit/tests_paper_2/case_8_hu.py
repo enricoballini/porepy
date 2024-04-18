@@ -13,7 +13,7 @@ from flow_benchmark_3d import _flow_3d
 
 """
 
-- THIS is case 3 with smaller timestep. 
+- THIS is case 3 with smaller timestep. case 3 had dt = 3e-3. now (19/03/2024) case 3 has dt = 1e-3 so case 3 = case 8
 
 """
 
@@ -353,7 +353,7 @@ if __name__ == "__main__":
 
     print("\nSCALING: ======================================")
     print("u_0 = ", u_0)
-    print("t_0 = ", u_0)
+    print("t_0 = ", t_0)
     print("gravity_number = ", gravity_number)
     print(
         "pay attention: gravity number is not influenced by Ka_0 and dynamic_viscosity_0"
