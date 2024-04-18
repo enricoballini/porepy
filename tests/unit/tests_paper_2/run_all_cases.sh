@@ -4,30 +4,31 @@
 
 export OMP_NUM_THREADS=2
 
-# Case 1 horizontal 
-python3 case_1_horizontal_hu.py
-python3 case_1_horizontal_ppu.py
+# # Case 1 horizontal 
+# python3 case_1_horizontal_hu.py
+# python3 case_1_horizontal_ppu.py
 python3 plot_flip_flop.py 1 horizontal
 python3 plot_chops.py 1 horizontal
 python3 plot_newton.py 1 horizontal
+python3 plot_newton_case_1_hor.py 1 horizontal
 python3 plot_mass.py 1 horizontal
 # python3 plot_beta.py 1 horizontal
 
-# Case 1 vertical
-python3 case_1_vertical_hu.py
-python3 case_1_vertical_ppu.py
-python3 plot_flip_flop.py 1 vertical
-python3 plot_chops.py 1 vertical
-python3 plot_newton.py 1 vertical
-# python3 plot_beta.py 1 vertical
+# # Case 1 vertical
+# python3 case_1_vertical_hu.py
+# python3 case_1_vertical_ppu.py
+# python3 plot_flip_flop.py 1 vertical
+# python3 plot_chops.py 1 vertical
+# python3 plot_newton.py 1 vertical
+# # python3 plot_beta.py 1 vertical
 
-# Case 1 slanted non conforming
-python3 case_1_slanted_hu.py
-python3 case_1_slanted_ppu.py
-python3 plot_flip_flop.py 1 slanted_non_conforming
-python3 plot_chops.py 1 slanted_non_conforming
-python3 plot_newton.py 1 slanted_non_conforming
-# python3 plot_beta.py 1 slanted_non_conforming
+# # Case 1 slanted non conforming
+# python3 case_1_slanted_hu.py
+# python3 case_1_slanted_ppu.py
+# python3 plot_flip_flop.py 1 slanted_non_conforming
+# python3 plot_chops.py 1 slanted_non_conforming
+# python3 plot_newton.py 1 slanted_non_conforming
+# # python3 plot_beta.py 1 slanted_non_conforming
 
 # # Case 1 slanted convergence
 # python3 case_1_slanted_hu_convergence.py
