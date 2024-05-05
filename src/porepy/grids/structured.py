@@ -8,6 +8,7 @@ corresponding functions found in the
 developed by SINTEF ICT.
 
 """
+
 from __future__ import annotations
 
 from typing import Optional, Union
@@ -17,6 +18,8 @@ import scipy as sp
 import scipy.sparse as sps
 
 from porepy.grids.grid import Grid
+
+import pdb
 
 
 class TensorGrid(Grid):

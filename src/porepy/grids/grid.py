@@ -11,6 +11,7 @@ See documentation of class :class:`Grid` for further details.
     2016.
 
 """
+
 from __future__ import annotations
 
 import copy
@@ -24,6 +25,8 @@ from scipy import sparse as sps
 
 import porepy as pp
 from porepy.utils import mcolon, tags
+
+import pdb
 
 
 class Grid:
@@ -532,6 +535,7 @@ class Grid:
             parts (face and cell computations are an obvious solution).
 
         """
+
         num_face_nodes = self.face_nodes.nnz
         face_node_ptr = self.face_nodes.indptr
 
@@ -541,6 +545,7 @@ class Grid:
         # representation of an edge along the face (face_nodes[i] represents the edge
         # running from face_nodes[i] to face_nodes[i+1]).
         face_nodes = self.face_nodes.indices
+
         # For each node, index of its parent face
         face_node_ind = pp.matrix_operations.rldecode(
             np.arange(self.num_faces), num_nodes_per_face
@@ -598,6 +603,7 @@ class Grid:
 
         # Face normals are given as the sum of the sub-components
         face_normals = sub_normals * edge_2_face
+
         # Similar with face areas
         face_areas = edge_2_face.transpose() * sub_areas
 
@@ -612,7 +618,6 @@ class Grid:
                 axis=0,
             )
         )
-
         # Finally, face centers are the area weighted means of centroids of
         # the sub-faces
         face_centers = sub_areas * sub_centroids * edge_2_face / face_areas

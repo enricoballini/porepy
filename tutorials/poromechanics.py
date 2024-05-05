@@ -12,6 +12,8 @@ sys.path.remove("/home/inspiron/Desktop/PhD/porepy/src")
 sys.path.append("/home/inspiron/Desktop/PhD/eni_venv/porepy/src")
 
 import numpy as np
+import scipy as sp
+from scipy import sparse as sps
 import porepy as pp
 from porepy.applications.md_grids.model_geometries import (
     SquareDomainOrthogonalFractures,
@@ -543,21 +545,37 @@ class GeometryCloseToEni(
 
     def set_geometry(self) -> None:
         """ """
+        # cell_size_x = self.solid.convert_units(0.2, "m")
+        # cell_size_y = self.solid.convert_units(0.005, "m")
         cell_size_x = self.solid.convert_units(0.2, "m")
-        cell_size_y = self.solid.convert_units(0.005, "m")
-        meshing_params = {"cell_size_x": cell_size_x, "cell_size_y": cell_size_y}
+        cell_size_y = self.solid.convert_units(0.2, "m")
+        cell_size_z = self.solid.convert_units(0.02, "m")
+        meshing_params = {
+            "cell_size_x": cell_size_x,
+            "cell_size_y": cell_size_y,
+            "cell_size_z": cell_size_z,
+        }
 
         self.set_domain()
         self.set_fractures()
         # Create a fracture network.
         self.fracture_network = pp.create_fracture_network(self.fractures, self.domain)
 
-        self.mdg = pp.create_mdg(
-            grid_type="cartesian",
-            meshing_args=meshing_params,
-            fracture_network=self.fracture_network,
-            **self.meshing_kwargs(),
+        # self.mdg = pp.create_mdg(
+        #     grid_type="cartesian",
+        #     meshing_args=meshing_params,
+        #     fracture_network=self.fracture_network,
+        #     **self.meshing_kwargs(),
+        # )
+
+        eni_grid = self.load_eni_grid(
+            path_to_mat="/home/inspiron/Desktop/PhD/7-eni/enricoeni/Tesi/mrst-2023b/mrst_grid.mat"
         )
+
+        self.mdg = pp.MixedDimensionalGrid()
+        self.mdg.add_subdomains(eni_grid)
+        self.mdg.compute_geometry()  # let's do it another time...
+
         self.nd: int = self.mdg.dim_max()
 
         pp.set_local_coordinate_projections(self.mdg)
@@ -571,16 +589,57 @@ class GeometryCloseToEni(
             )
             self.well_network.mesh(self.mdg)
 
+        # pp.plot_grid(self.mdg, alpha=0, info="f")
+
     def set_domain(self) -> None:
         """ """
-        box = {"xmin": 0, "xmax": 10, "ymin": 0, "ymax": 1}
+        box = {"xmin": 0, "xmax": 10, "ymin": 0, "ymax": 1, "zmin": 0, "zmax": 1}
         self._domain = pp.domain.Domain(bounding_box=box)
 
     def set_fractures(self) -> None:
         """ """
         # [[x_min, x_max],[y_min, y_max]]
-        frac_1 = pp.LineFracture(np.array([[3, 3], [0, 0.5]]))
+        # frac_1 = pp.LineFracture(np.array([[3, 3], [0, 0.5]]))
+
+        # [[pt1], [pt2], [], []].T
+        frac_1 = pp.PlaneFracture(
+            np.array([[3, 0, 0], [3, 1, 0], [3, 1, 0.5], [3, 0, 0.5]]).T
+        )
         self._fractures = [frac_1]
+
+    def load_eni_grid(self, path_to_mat):
+        """
+        see files in read_ecl_grid
+        """
+        mrst_grid = sp.io.loadmat(path_to_mat)
+
+        nodes = mrst_grid["node_coord"].T.astype(np.float64)
+        fn_row = mrst_grid["fn_node_ind"].astype(np.int32).ravel() - 1
+        fn_data = np.ones(fn_row.size, dtype=bool)
+
+        indptr = mrst_grid["fn_indptr"].astype(np.int32).ravel() - 1
+        fn = sps.csc_matrix(
+            (fn_data, fn_row, indptr),
+            shape=(
+                fn_row.max() + 1,
+                indptr.shape[0] - 1,
+            ),  # indptr.shape[0] - 1 a caso...
+        )
+
+        cf_row = mrst_grid["cf_face_ind"].astype(np.int32).ravel() - 1
+        cf_col = mrst_grid["cf_cell_ind"].astype(np.int32).ravel() - 1
+        cf_data = mrst_grid["cf_sgn"].ravel().astype(np.float64)
+
+        cf = sps.coo_matrix(
+            (cf_data, (cf_row, cf_col)), shape=(cf_row.max() + 1, cf_col.max() + 1)
+        ).tocsc()
+
+        dim = nodes.shape[0]
+
+        g = pp.Grid(dim, nodes, fn, cf, "myname")
+        g.compute_geometry()
+
+        return g
 
 
 class FinalModel(
