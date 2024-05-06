@@ -1,8 +1,6 @@
-Create virtual enviroment (Optional):
+Create and activate virtual enviroment (Optional):
     
     python3 -m venv venv_name
-
-Activate the virtual enviroment (Optional):
     
     source ./venv_name/bin/activate
 
