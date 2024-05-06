@@ -1,9 +1,9 @@
 (Optional) Create virtual enviroment:
 python3 -m venv [venv_name]
 
-Activate the virtual enviroment:
-
-source ./venv_name/bin/activate
+    Activate the virtual enviroment:
+    
+    source ./venv_name/bin/activate
 
 # Install PorePy from source
     git clone https://github.com/enricoballini/porepy.git
