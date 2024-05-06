@@ -97,7 +97,7 @@ if __name__ == "__main__":
     (
         time_ppu,
         time_steps_ppu,
-        time_chops_ppu,
+        chops_ppu,
         cumulative_iterations_ppu,
         global_cumulative_iterations_ppu,
         last_iterations_ppu,
@@ -107,7 +107,7 @@ if __name__ == "__main__":
     (
         time_hu,
         time_steps_hu,
-        time_chops_hu,
+        chops_hu,
         cumulative_iterations_hu,
         global_cumulative_iterations_hu,
         last_iterations_hu,
@@ -116,6 +116,9 @@ if __name__ == "__main__":
 
     time_ppu *= t_scaling
     time_hu *= t_scaling
+
+    chops_ppu = np.cumsum(chops_ppu)
+    chops_hu = np.cumsum(chops_hu)
 
     plt.rc("text", usetex=True)
     plt.rc("font", family="serif")
@@ -132,7 +135,7 @@ if __name__ == "__main__":
 
     ax_1.plot(
         time_ppu,
-        time_chops_ppu,
+        chops_ppu,
         label="$PPU$",
         linestyle="--",
         color=my_orange,
@@ -140,7 +143,7 @@ if __name__ == "__main__":
     )
     ax_1.plot(
         time_hu,
-        time_chops_hu,
+        chops_hu,
         label="$HU$",
         linestyle="-",
         color=my_blu,

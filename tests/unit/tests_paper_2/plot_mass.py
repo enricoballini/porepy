@@ -77,7 +77,10 @@ if __name__ == "__main__":
     my_blu = [0.1, 0.1, 0.8]
 
     time_hu, mass_hu = load_output_mass(output_file_hu)
-    delta_mass_hu = mass_hu - mass_hu[0]
+    delta_mass_hu = np.abs(mass_hu - mass_hu[0])
+
+    # np.set_printoptions(precision=16)
+    # print(delta_mass_hu)
 
     plt.rc("text", usetex=True)
     plt.rc("font", family="serif")
@@ -95,15 +98,17 @@ if __name__ == "__main__":
     ax_1.plot(
         time_hu,
         delta_mass_hu,
-        label="$\Delta m$",
+        label="$|\Delta m|$",
         linestyle="-",
         color=my_blu,
         marker="",
     )
 
     ax_1.set_xlabel("time", fontsize=fontsize)
-    ax_1.set_ylabel("$\Delta m$", fontsize=fontsize)
+    ax_1.set_ylabel("$|\Delta m|$", fontsize=fontsize)
     ax_1.set_xticks(x_ticks)
+
+    ax_1.set_ylim([1.235e-14, 1.242e-14])  ### HARDOCODED FOR SLANTED
 
     ax_1.grid(linestyle="--", alpha=0.5)
 
