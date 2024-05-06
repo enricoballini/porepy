@@ -11,3 +11,4 @@ shapely
 six
 sympy
 typing_extensions
+deepdiff
