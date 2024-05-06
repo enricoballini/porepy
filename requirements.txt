@@ -4,7 +4,7 @@ matplotlib
 meshio >= 5.0
 networkx
 numba >= 0.56.3
-numpy==1.20
+numpy==1.23.5
 requests
 scipy
 shapely
