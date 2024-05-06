@@ -1072,7 +1072,7 @@ class EquationsTwoPhase(pp.BalanceEquation):
 ##############################################################################
 
 
-class ConstitutiveLawPressureMass(
+class ConstitutiveLawsTwoPhase(
     pp.constitutive_laws.DimensionReduction,
     pp.constitutive_laws.ConstantPorosity,
 ):
@@ -1197,9 +1197,9 @@ class BoundaryAndInitialConditions:
             )
 
             saturation_values = 0.0 * np.ones(sd.num_cells)
-            saturation_values[
-                np.where(sd.cell_centers[1] >= self.ymax / 2)
-            ] = 1.0  # TODO: HARDCODED for 2D
+            saturation_values[np.where(sd.cell_centers[1] >= self.ymax / 2)] = (
+                1.0  # TODO: HARDCODED for 2D
+            )
 
             if sd.dim == 1:  # TODO: HARDCODED for 2D
                 saturation_values = 0.8 * np.ones(sd.num_cells)
@@ -1253,6 +1253,65 @@ class BoundaryAndInitialConditions:
                     "interface_mortar_flux_phase_1": np.zeros(intf.num_cells),
                 },
             )
+
+
+##############################################################################
+# geometry:
+##############################################################################
+
+
+class GeometryTwoPhase(pp.ModelGeometry):
+    def set_geometry(self) -> None:
+        """ """
+
+        self.set_domain()
+        self.set_fractures()
+
+        self.fracture_network = pp.create_fracture_network(self.fractures, self.domain)
+
+        self.mdg = pp.create_mdg(
+            "simplex",
+            self.meshing_arguments(),
+            self.fracture_network,
+            **self.meshing_kwargs(),
+        )
+        self.nd: int = self.mdg.dim_max()
+
+        pp.set_local_coordinate_projections(self.mdg)
+
+        self.set_well_network()
+        if len(self.well_network.wells) > 0:
+            assert isinstance(self.fracture_network, pp.FractureNetwork3d)
+            pp.compute_well_fracture_intersections(
+                self.well_network, self.fracture_network
+            )
+            self.well_network.mesh(self.mdg)
+
+    def set_domain(self) -> None:
+        """ """
+        self.size = 1
+        bounding_box = {
+            "xmin": self.xmin,
+            "xmax": self.xmax,
+            "ymin": self.ymin,
+            "ymax": self.ymax,
+        }
+        self._domain = pp.Domain(bounding_box=bounding_box)
+
+    def set_fractures(self) -> None:
+        """ """
+        frac1 = pp.LineFracture(np.array([[0.2, 0.8], [0.6, 0.6]]))
+        frac2 = pp.LineFracture(np.array([[0.2, 0.8], [0.2, 0.8]]))
+
+        self._fractures: list = [frac1, frac2]
+
+    def meshing_arguments(self) -> dict[str, float]:
+        """ """
+        default_meshing_args: dict[str, float] = {
+            "cell_size": 0.1 / self.L_0,
+            "cell_size_fracture": 0.05 / self.L_0,
+        }
+        return self.params.get("meshing_arguments", default_meshing_args)
 
 
 ##############################################################################
@@ -1438,9 +1497,9 @@ class SolutionStrategyTwoPhase(pp.SolutionStrategy):
                 )
                 data["for_hu"]["left_restriction"] = left_restriction
                 data["for_hu"]["right_restriction"] = right_restriction
-                data["for_hu"][
-                    "expansion_matrix"
-                ] = pp.numerics.fv.hybrid_upwind_utils.expansion_matrix(sd)
+                data["for_hu"]["expansion_matrix"] = (
+                    pp.numerics.fv.hybrid_upwind_utils.expansion_matrix(sd)
+                )
 
                 pp.numerics.fv.hybrid_upwind_utils.compute_transmissibility_tpfa(
                     sd, data, keyword="flow"
@@ -1755,65 +1814,6 @@ class SolutionStrategyTwoPhase(pp.SolutionStrategy):
 
 
 ##############################################################################
-# geometry:
-##############################################################################
-
-
-class GeometryTwoPhase(pp.ModelGeometry):
-    def set_geometry(self) -> None:
-        """ """
-
-        self.set_domain()
-        self.set_fractures()
-
-        self.fracture_network = pp.create_fracture_network(self.fractures, self.domain)
-
-        self.mdg = pp.create_mdg(
-            "simplex",
-            self.meshing_arguments(),
-            self.fracture_network,
-            **self.meshing_kwargs(),
-        )
-        self.nd: int = self.mdg.dim_max()
-
-        pp.set_local_coordinate_projections(self.mdg)
-
-        self.set_well_network()
-        if len(self.well_network.wells) > 0:
-            assert isinstance(self.fracture_network, pp.FractureNetwork3d)
-            pp.compute_well_fracture_intersections(
-                self.well_network, self.fracture_network
-            )
-            self.well_network.mesh(self.mdg)
-
-    def set_domain(self) -> None:
-        """ """
-        self.size = 1
-        bounding_box = {
-            "xmin": self.xmin,
-            "xmax": self.xmax,
-            "ymin": self.ymin,
-            "ymax": self.ymax,
-        }
-        self._domain = pp.Domain(bounding_box=bounding_box)
-
-    def set_fractures(self) -> None:
-        """ """
-        frac1 = pp.LineFracture(1 * np.array([[0.2, 0.8], [0.6, 0.6]]))
-        frac2 = pp.LineFracture(np.array([[0.2, 0.8], [0.2, 0.8]]))
-
-        self._fractures: list = [frac1, frac2]
-
-    def meshing_arguments(self) -> dict[str, float]:
-        """ """
-        default_meshing_args: dict[str, float] = {
-            "cell_size": 0.1 / self.L_0,
-            "cell_size_fracture": 0.05 / self.L_0,
-        }
-        return self.params.get("meshing_arguments", default_meshing_args)
-
-
-##############################################################################
 # time stepping:
 ##############################################################################
 
@@ -1866,10 +1866,10 @@ class TimeManagerTwoPhase(pp.TimeManager):
 class PartialModel(
     PrimaryVariables,
     EquationsTwoPhase,
-    ConstitutiveLawPressureMass,
+    ConstitutiveLawsTwoPhase,
     BoundaryAndInitialConditions,
-    SolutionStrategyTwoPhase,
     GeometryTwoPhase,
+    SolutionStrategyTwoPhase,
     pp.DataSavingMixin,
 ):
     """ """

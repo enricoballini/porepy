@@ -46,8 +46,6 @@ class Phase(abc.ABC):
             s = self.equation_system.md_variable("saturation", subdomains)
         return s
 
-    # Physical properties: ----------------------------------------------------------------
-
     def mass_density(self, p: pp.ad.AdArray) -> pp.ad.AdArray:
         """ """
 
