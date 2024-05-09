@@ -389,21 +389,28 @@ class MomentumBalanceEquations(
         vals = []
         for sd in subdomains:
             # data = np.zeros((sd.num_cells, self.nd))
-            data = np.ones((sd.num_cells, self.nd))
+            # data = np.ones((sd.num_cells, self.nd))
+            data = np.stack(
+                (
+                    0 * np.ones(sd.num_cells),
+                    0 * np.ones(sd.num_cells),
+                    1 * np.ones(sd.num_cells),
+                ),
+                axis=1,
+            )
 
-            if sd.dim == 2:
-                # Selecting central cells
-                cell_centers = sd.cell_centers
-                indices = (
-                    (cell_centers[0] > (0.3 / units.m))
-                    & (cell_centers[0] < (0.7 / units.m))
-                    & (cell_centers[1] > (0.3 / units.m))
-                    & (cell_centers[1] < (0.7 / units.m))
-                )
+            # if sd.dim == 2:
+            #     cell_centers = sd.cell_centers
+            #     indices = (
+            #         (cell_centers[0] > (0.3 / units.m))
+            #         & (cell_centers[0] < (0.7 / units.m))
+            #         & (cell_centers[1] > (0.3 / units.m))
+            #         & (cell_centers[1] < (0.7 / units.m))
+            #     )
 
-                acceleration = self.solid.convert_units(-9.8, "m * s^-2")
-                force = self.solid.density() * acceleration
-                data[indices, 1] = force * sd.cell_volumes[indices]
+            #     acceleration = self.solid.convert_units(-9.8, "m * s^-2")
+            #     force = self.solid.density() * acceleration
+            #     data[indices, 1] = force * sd.cell_volumes[indices]
 
             vals.append(data)
         return pp.ad.DenseArray(np.concatenate(vals).ravel(), "body_force")
@@ -420,110 +427,6 @@ class ConstitutiveLawsMomentumBalance(
         """ """
         # Method from constitutive library's LinearElasticRock.
         return self.mechanical_stress(domains)
-
-
-class SolutionStrategyMomentumBalance(
-    pp.SolutionStrategy
-):  # ------------------------------------------------------------------------------------------------------------------
-    """ """
-
-    def __init__(self, params: Optional[dict] = None) -> None:
-        super().__init__(params)
-
-        self.displacement_variable: str = "u"
-        self.interface_displacement_variable: str = "u_interface"
-        self.contact_traction_variable: str = "t"
-        self.stress_keyword: str = "mechanics"
-
-    def initial_condition(self) -> None:
-        """ """
-        # Zero for displacement and initial bc values for Biot
-        super().initial_condition()
-
-        # Contact as initial guess. Ensure traction is consistent with zero jump, which
-        # follows from the default zeros set for all variables, specifically interface
-        # displacement, by super method.
-        num_frac_cells = sum(
-            sd.num_cells for sd in self.mdg.subdomains(dim=self.nd - 1)
-        )
-        traction_vals = np.zeros((self.nd, num_frac_cells))
-        traction_vals[-1] = self.solid.convert_units(-1, "Pa")
-        self.equation_system.set_variable_values(
-            traction_vals.ravel("F"),
-            [self.contact_traction_variable],
-            time_step_index=0,
-            iterate_index=0,
-        )
-
-    def set_discretization_parameters(self) -> None:
-        """ """
-
-        super().set_discretization_parameters()
-        for sd, data in self.mdg.subdomains(return_data=True):
-            if sd.dim == self.nd:
-                pp.initialize_data(
-                    sd,
-                    data,
-                    self.stress_keyword,
-                    {
-                        "bc": self.bc_type_mechanics(sd),
-                        "fourth_order_tensor": self.stiffness_tensor(sd),
-                    },
-                )
-
-    def contact_mechanics_numerical_constant(
-        self, subdomains: list[pp.Grid]
-    ) -> pp.ad.Scalar:
-        """ """
-        # The constant works as a scaling factor in the comparison between tractions and
-        # displacement jumps across fractures. In analogy with Hooke's law, the scaling
-        # constant is therefore proportional to the shear modulus and the inverse of a
-        # characteristic length of the fracture, where the latter has the interpretation
-        # of a gradient length.
-
-        shear_modulus = self.solid.shear_modulus()
-        characteristic_distance = (
-            self.solid.residual_aperture() + self.solid.fracture_gap()
-        )
-
-        # Physical interpretation (IS):
-        # As a crude way of making the fracture softer than the matrix, we scale by
-        # one order of magnitude.
-        # Alternative interpretation (EK):
-        # The scaling factor should not be too large, otherwise the contact problem
-        # may be discretized wrongly. I therefore introduce a safety factor here; its
-        # value is somewhat arbitrary.
-        softening_factor = 1e-1
-
-        val = softening_factor * shear_modulus / characteristic_distance
-
-        return pp.ad.Scalar(val, name="Contact_mechanics_numerical_constant")
-
-    def _is_nonlinear_problem(self) -> bool:
-        """ """
-        return self.mdg.dim_min() < self.nd
-
-    def after_simulation(self) -> None:
-        """ """
-
-        pdb.set_trace()
-        mpfa = self.stress_discretization(self.mdg.subdomains())
-
-        stress = data[pp.DISCRETIZATION_MATRICES][parameter_keyword][
-            mpsa_class.stress_matrix_key
-        ]
-        bound_stress = data[pp.DISCRETIZATION_MATRICES][parameter_keyword][
-            mpsa_class.bound_stress_matrix_key
-        ]
-
-        T = stress * u + bound_stress * u_b
-
-        T2d = np.reshape(T, (g.dim, -1), order="F")
-        u_b2d = np.reshape(u_b, (g.dim, -1), order="F")
-        assert np.allclose(np.abs(u_b2d[bound.is_neu]), np.abs(T2d[bound.is_neu]))
-
-        T = np.vstack((T2d, np.zeros(g.num_faces)))
-        pp.plot_grid(g, vector_value=T, figsize=(15, 12), alpha=0)
 
 
 class BoundaryConditionsMomentumBalance(
@@ -549,9 +452,23 @@ class BoundaryConditionsMomentumBalance(
         bounds = self.domain_boundary_sides(boundary_grid)
 
         values[0][bounds.west] += self.solid.convert_units(0, "m")
+        values[1][bounds.west] += self.solid.convert_units(0, "m")
+        values[2][bounds.west] += self.solid.convert_units(0, "m")
+
         values[0][bounds.east] += self.solid.convert_units(0, "m")
+        values[1][bounds.east] += self.solid.convert_units(0, "m")
+        values[2][bounds.east] += self.solid.convert_units(0, "m")
+
+        values[0][bounds.north] += self.solid.convert_units(0, "m")
         values[1][bounds.north] += self.solid.convert_units(0, "m")
+        values[2][bounds.north] += self.solid.convert_units(0, "m")
+
+        values[0][bounds.south] += self.solid.convert_units(0, "m")
         values[1][bounds.south] += self.solid.convert_units(0, "m")
+        values[2][bounds.south] += self.solid.convert_units(0, "m")
+
+        values[0][bounds.bottom] += self.solid.convert_units(0, "m")
+        values[1][bounds.bottom] += self.solid.convert_units(0, "m")
         values[2][bounds.bottom] += self.solid.convert_units(0, "m")
 
         return values.ravel("F")
@@ -562,15 +479,12 @@ class BoundaryConditionsMomentumBalance(
         this is what you need to modify to change bc part 2 of 2
         """
 
-        values = np.ones((self.nd, boundary_grid.num_cells))
+        values = 0 * np.ones((self.nd, boundary_grid.num_cells))
         bounds = self.domain_boundary_sides(boundary_grid)
 
-        # Assigning x-component values
-        values[0][bounds.north] *= self.solid.convert_units(0, "Pa")
-        # Assigning y-component values
-        values[1][bounds.north] *= self.solid.convert_units(0, "Pa")
-        # Assigning y-component values
-        values[2][bounds.north] *= self.solid.convert_units(0, "Pa")
+        values[0][bounds.top] *= self.solid.convert_units(0, "Pa")
+        values[1][bounds.top] *= self.solid.convert_units(0, "Pa")
+        values[2][bounds.top] *= self.solid.convert_units(0, "Pa")
 
         return values.ravel("F")
         # return np.zeros((self.nd, boundary_grid.num_cells)).ravel("F")
@@ -623,12 +537,14 @@ class GeometryCloseToEni(
         self.xmin = 0
         self.xmax = 12000
         self.ymin = 1500
-        self.ymax = 7000
+        # self.ymax = 7000
+        width = 1000  # step 250
+        self.ymax = self.ymin + width
         self.zmin = 2050
         self.zmax = 2650
 
         ind_cut = (
-            eni_grid.cell_centers[1, :] < self.ymin + 500
+            eni_grid.cell_centers[1, :] < self.ymin + width
         )  # + 2000 => 24000 cell, more or less the limit for my computer
         [_, eni_grid], _, _ = pp.partition.partition_grid(eni_grid, ind_cut)
 
@@ -655,11 +571,12 @@ class GeometryCloseToEni(
             ]
         )
 
-        self.fracture_faces = self.find_fracture_faces(eni_grid, polygon_vertices)
+        self.fracture_faces_id = self.find_fracture_faces(eni_grid, polygon_vertices)
         # self.plot_fracture_nodes(eni_grid)
+        self.create_frac_sd_for_plot(eni_grid, self.fracture_faces_id)
 
-        exporter = pp.Exporter(eni_grid, "eni_grid_cut")
-        exporter.write_vtu()
+        # exporter = pp.Exporter(eni_grid, "eni_grid_cut")
+        # exporter.write_vtu()
 
         self.mdg = pp.MixedDimensionalGrid()
         self.mdg.add_subdomains(eni_grid)
@@ -747,12 +664,19 @@ class GeometryCloseToEni(
         ]  # pay attention, the tolerance is high...
         return faces_on_frac_id
 
+    def create_frac_sd_for_plot(self, sd, faces_fract_id):
+        """ """
+        self.sd_fract, _, _ = pp.partition.extract_subgrid(
+            sd, faces_fract_id, faces=True
+        )
+        # pp.plot_grid(self.sd_fract, alpha=0)
+
     def plot_fracture_nodes(self, sd):
         """ """
         nodes_id = sd.face_nodes @ sp.sparse.coo_array(
             (
-                [True] * self.fracture_faces.shape[0],
-                (self.fracture_faces, np.zeros(self.fracture_faces.shape[0])),
+                [True] * self.fracture_faces_id.shape[0],
+                (self.fracture_faces_id, np.zeros(self.fracture_faces_id.shape[0])),
             ),
             shape=(sd.face_nodes.shape[1], 1),
         )
@@ -788,9 +712,6 @@ class GeometryCloseToEni(
                 "Domain must be either Grid or BoundaryGrid. Provided:", domain
             )
 
-        # Get domain boundary sides
-        # box = copy.deepcopy(self.domain.bounding_box)
-
         east = np.abs(self.xmax - face_centers[0]) <= tol
         west = np.abs(self.xmin - face_centers[0]) <= tol
         if self.mdg.dim_max() == 1:
@@ -815,15 +736,243 @@ class GeometryCloseToEni(
             #     face_centers[:, top_bottom_faces][2] > (self.zmin + self.zmax) / 2
             # ]
 
-            top = face_centers[2] > self.zmin - tol  ### da finire...
+            top = face_centers[2] > self.zmax - tol  ### da finire...
             bottom = face_centers[2] < self.zmin + tol  ###
 
-        # Create a namedtuple to store the arrays
         domain_sides = pp.domain.DomainSides(
             all_bf, east, west, north, south, top, bottom
         )
 
+        # fig = plt.figure()
+        # ax = fig.add_subplot(projection="3d")
+        # ax.scatter(
+        #     domain.cell_centers[0],
+        #     domain.cell_centers[1],
+        #     domain.cell_centers[2],
+        #     marker=".",
+        # )
+        # plt.show()
+
+        # fig = plt.figure()
+        # ax = fig.add_subplot(projection="3d")
+        # ax.scatter(
+        #     domain.cell_centers[0][west],
+        #     domain.cell_centers[1][west],
+        #     domain.cell_centers[2][west],
+        #     marker=".",
+        # )
+        # plt.title("west")
+        # plt.show()
+
+        # fig = plt.figure()
+        # ax = fig.add_subplot(projection="3d")
+        # ax.scatter(
+        #     domain.cell_centers[0][east],
+        #     domain.cell_centers[1][east],
+        #     domain.cell_centers[2][east],
+        #     marker=".",
+        # )
+        # plt.title("east")
+        # plt.show()
+
+        # fig = plt.figure()
+        # ax = fig.add_subplot(projection="3d")
+        # ax.scatter(
+        #     domain.cell_centers[0][south],
+        #     domain.cell_centers[1][south],
+        #     domain.cell_centers[2][south],
+        #     marker=".",
+        # )
+        # plt.title("south")
+        # plt.show()
+
+        # fig = plt.figure()
+        # ax = fig.add_subplot(projection="3d")
+        # ax.scatter(
+        #     domain.cell_centers[0][north],
+        #     domain.cell_centers[1][north],
+        #     domain.cell_centers[2][north],
+        #     marker=".",
+        # )
+        # plt.title("north")
+        # plt.show()
+
+        # fig = plt.figure()
+        # ax = fig.add_subplot(projection="3d")
+        # ax.scatter(
+        #     domain.cell_centers[0][bottom],
+        #     domain.cell_centers[1][bottom],
+        #     domain.cell_centers[2][bottom],
+        #     marker=".",
+        # )
+        # plt.title("bottom")
+        # plt.show()
+
+        # fig = plt.figure()
+        # ax = fig.add_subplot(projection="3d")
+        # ax.scatter(
+        #     domain.cell_centers[0][top],
+        #     domain.cell_centers[1][top],
+        #     domain.cell_centers[2][top],
+        #     marker=".",
+        # )
+        # plt.title("top")
+        # plt.show()
+
         return domain_sides
+
+
+class SolutionStrategyMomentumBalance(
+    pp.SolutionStrategy
+):  # ------------------------------------------------------------------------------------------------------------------
+    """ """
+
+    def __init__(self, params: Optional[dict] = None) -> None:
+        super().__init__(params)
+
+        self.displacement_variable: str = "u"
+        self.interface_displacement_variable: str = "u_interface"
+        self.contact_traction_variable: str = "t"
+        self.stress_keyword: str = "mechanics"
+
+    def initial_condition(self) -> None:
+        """ """
+        # Zero for displacement and initial bc values for Biot
+        super().initial_condition()
+
+        # Contact as initial guess. Ensure traction is consistent with zero jump, which
+        # follows from the default zeros set for all variables, specifically interface
+        # displacement, by super method.
+        num_frac_cells = sum(
+            sd.num_cells for sd in self.mdg.subdomains(dim=self.nd - 1)
+        )
+        traction_vals = np.zeros((self.nd, num_frac_cells))
+        traction_vals[-1] = self.solid.convert_units(-1, "Pa")
+        self.equation_system.set_variable_values(
+            traction_vals.ravel("F"),
+            [self.contact_traction_variable],
+            time_step_index=0,
+            iterate_index=0,
+        )
+
+    def set_discretization_parameters(self) -> None:
+        """ """
+
+        super().set_discretization_parameters()
+        for sd, data in self.mdg.subdomains(return_data=True):
+            if sd.dim == self.nd:
+                pp.initialize_data(
+                    sd,
+                    data,
+                    self.stress_keyword,
+                    {
+                        "bc": self.bc_type_mechanics(sd),
+                        "fourth_order_tensor": self.stiffness_tensor(sd),
+                    },
+                )
+
+    def contact_mechanics_numerical_constant(
+        self, subdomains: list[pp.Grid]
+    ) -> pp.ad.Scalar:
+        """ """
+        # The constant works as a scaling factor in the comparison between tractions and
+        # displacement jumps across fractures. In analogy with Hooke's law, the scaling
+        # constant is therefore proportional to the shear modulus and the inverse of a
+        # characteristic length of the fracture, where the latter has the interpretation
+        # of a gradient length.
+
+        shear_modulus = self.solid.shear_modulus()
+        characteristic_distance = (
+            self.solid.residual_aperture() + self.solid.fracture_gap()
+        )
+
+        # Physical interpretation (IS):
+        # As a crude way of making the fracture softer than the matrix, we scale by
+        # one order of magnitude.
+        # Alternative interpretation (EK):
+        # The scaling factor should not be too large, otherwise the contact problem
+        # may be discretized wrongly. I therefore introduce a safety factor here; its
+        # value is somewhat arbitrary.
+        softening_factor = 1e-1
+
+        val = softening_factor * shear_modulus / characteristic_distance
+
+        return pp.ad.Scalar(val, name="Contact_mechanics_numerical_constant")
+
+    def _is_nonlinear_problem(self) -> bool:
+        """ """
+        return self.mdg.dim_min() < self.nd
+
+    def after_simulation(self) -> None:
+        """ """
+
+        subdomains_data = self.mdg.subdomains(return_data=True)
+        subdomains = [subdomains_data[0][0]]
+        sd = subdomains[0]
+        data = subdomains_data[0][1]
+        boundary_grids = self.mdg.boundaries(return_data=False)
+
+        stress_tensor_grad = data[pp.DISCRETIZATION_MATRICES][self.stress_keyword][
+            "stress"
+        ]
+        bound_stress = data[pp.DISCRETIZATION_MATRICES][self.stress_keyword][
+            "bound_stress"
+        ]  # not 100% clear what is this tensor. It multiplies u_b that contains both dir and neumann
+
+        u = self.displacement(subdomains).evaluate(self.equation_system).val
+
+        # i think you have to join them:
+        u_b_displ = self.bc_values_displacement(boundary_grids[0])
+        u_b_stress = self.bc_values_stress(boundary_grids[0])
+
+        u_b = (
+            u_b_displ + u_b_stress
+        )  # they should be exclusive, either displ or stress is != 0
+
+        u_b_filled = np.zeros((self.nd, sd.num_faces))
+        u_b_filled[:, sd.get_all_boundary_faces()] = u_b.reshape((3, -1), order="F")
+        u_b_filled = u_b_filled.ravel("F")
+        T = stress_tensor_grad * u + bound_stress * u_b_filled
+
+        T_vect = np.reshape(T, (sd.dim, -1), order="F")
+        T_vect_frac = T_vect[:, self.fracture_faces_id]
+        print("\n T_vect_frac = ", T_vect_frac)
+
+        # pp.plot_grid(sd, vector_value=T_vect, figsize=(15, 12), alpha=0)
+        # pp.plot_grid(self.sd_fract, T_vect_frac, alpha=0) # NO, for pp self.sd_fract is 2D, T_vect_frac is 3D, so they don't match
+
+        exporter = pp.Exporter(self.sd_fract, "sd_fract")
+        exporter.write_vtu(
+            [
+                (self.sd_fract, "T_x", T_vect_frac[0]),
+                (self.sd_fract, "T_y", T_vect_frac[1]),
+                (self.sd_fract, "T_z", T_vect_frac[2]),
+            ]
+        )
+
+        normal = sd.face_normals[:, self.fracture_faces_id][
+            :, 0
+        ]  # the fracture is planar, i take the first vecor as ref
+        normal = normal / np.linalg.norm(normal, ord=2)
+        normal_projection = pp.map_geometry.normal_matrix(normal=normal)
+        tangential_projetion = pp.map_geometry.tangent_matrix(normal=normal)
+
+        T_normal = normal_projection @ T_vect_frac
+        T_normal_norm = np.linalg.norm(T_normal.T, ord=2, axis=1)
+        T_tangential = tangential_projetion @ T_vect_frac
+        T_tangential_norm = np.linalg.norm(T_tangential.T, ord=2, axis=1)
+
+        assert np.all(
+            np.isclose(
+                np.sqrt(T_tangential_norm**2 + T_normal_norm**2),
+                np.linalg.norm(T_vect_frac.T, axis=1),
+                rtol=0,
+                atol=1e-8,
+            )
+        )
+
+        exporter = pp.Exporter(model.mdg, file_name="eni_case", folder_name="./")
+        exporter.write_vtu("u")
 
 
 class FinalModel(
@@ -831,8 +980,8 @@ class FinalModel(
     VariablesMomentumBalance,
     ConstitutiveLawsMomentumBalance,
     BoundaryConditionsMomentumBalance,
-    SolutionStrategyMomentumBalance,
     GeometryCloseToEni,
+    SolutionStrategyMomentumBalance,
     pp.DataSavingMixin,
 ):
     pass
@@ -850,151 +999,4 @@ pp.run_time_dependent_model(model, {})
 #     title="Displacement",
 # )
 
-exporter = pp.Exporter(model.mdg, file_name="TMP", folder_name="./")
-exporter.write_vtu("u")
-
-print("\Done!")
-pdb.set_trace()
-
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-
-
-class PressureSourceBC:
-    def bc_type_darcy_flux(self, sd: pp.Grid) -> pp.BoundaryCondition:
-        """Assign Dirichlet boundary condition to the north boundary and Neumann
-        everywhere else.
-
-        """
-        bounds = self.domain_boundary_sides(sd)
-        bc = pp.BoundaryCondition(sd, bounds.north, "dir")
-        return bc
-
-    def fluid_source(self, subdomains: list[pp.Grid]) -> pp.ad.Operator:
-        """Assign fracture source."""
-        # Retrieve internal sources (jump in mortar fluxes) from the base class
-        internal_sources: pp.ad.Operator = super().fluid_source(subdomains)
-
-        # Retrieve external (integrated) sources from the exact solution.
-        values = []
-        src_value: float = self.fluid.convert_units(0.1, "kg * m^-3 * s^-1")
-        for sd in subdomains:
-            if sd.dim == self.mdg.dim_max():
-                values.append(np.zeros(sd.num_cells))
-            else:
-                values.append(np.ones(sd.num_cells) * src_value)
-
-        external_sources = pp.wrap_as_ad_array(np.concatenate(values))
-
-        # Add up both contributions
-        source = internal_sources + external_sources
-        source.set_name("fluid sources")
-
-        return source
-
-
-from porepy.models.fluid_mass_balance import SinglePhaseFlow
-
-
-class PoromechanicsSourceBC(
-    PressureSourceBC,
-    SquareDomainOrthogonalFractures,
-    SinglePhaseFlow,
-):
-    """Adding geometry, boundary conditions and source to the default model."""
-
-    def meshing_arguments(self) -> dict:
-        cell_size = self.solid.convert_units(0.1, "m")
-        return {"cell_size": cell_size}
-
-
-model = PoromechanicsSourceBC()
-pp.run_time_dependent_model(model, {})
-pp.plot_grid(
-    model.mdg,
-    cell_value=model.pressure_variable,
-    figsize=(10, 8),
-    linewidth=0.25,
-    title="Pressure field",
-)
-
-
-from porepy.models.poromechanics import Poromechanics
-
-
-class PoromechanicsSourceBC(
-    PressureSourceBC,
-    BodyForceMixin,
-    SquareDomainOrthogonalFractures,
-    Poromechanics,
-):
-    """Adding geometry, boundary conditions and source to the default model."""
-
-    def meshing_arguments(self) -> dict:
-        cell_size = self.solid.convert_units(0.1, "m")
-        return {"cell_size": cell_size}
-
-
-model = PoromechanicsSourceBC()
-pp.run_time_dependent_model(model, {})
-pp.plot_grid(
-    model.mdg,
-    cell_value=model.pressure_variable,
-    vector_value=model.displacement_variable,
-    figsize=(10, 8),
-    title="Pressure and displacement",
-)
-
-
-# You may notice that the base class `Poromechanics` is defined by combining several mixins:
-
-
-import inspect
-
-
-print(inspect.getsource(Poromechanics))
-
-
-# Each of these mixins is a combination of the flow and the mechanics mixins. For instance:
-
-from porepy.models.poromechanics import EquationsPoromechanics
-
-
-print(inspect.getsource(EquationsPoromechanics))
-
-
-# Thereby, the philosophy of multiple inheritance and mixins helps to modularize and reuse
-#  a significant part of code.
-
-# # What we have explored
-# We set up and ran a poromechanics simulation using the body force and source mixin classes originally designed for uncoupled problems.
+print("\nDone!")
