@@ -3,6 +3,7 @@ boundary of a domain in the form of a grid. The intention is to use this class t
 boundary conditions in cases where constitutive laws are defined on the boundary.
 
 """
+
 from __future__ import annotations
 
 from itertools import count
@@ -13,6 +14,8 @@ import scipy.sparse as sps
 
 import porepy as pp
 from porepy.numerics.linalg.matrix_operations import sparse_kronecker_product
+
+import pdb
 
 
 class BoundaryGrid:

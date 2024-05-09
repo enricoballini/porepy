@@ -2,6 +2,7 @@ import os
 import sys
 import pdb
 import inspect
+import copy
 from functools import partial
 from typing import Callable, Optional, Sequence, cast
 
@@ -14,6 +15,7 @@ sys.path.append("/home/inspiron/Desktop/PhD/eni_venv/porepy/src")
 import numpy as np
 import scipy as sp
 from scipy import sparse as sps
+from matplotlib import pyplot as plt
 import porepy as pp
 from porepy.applications.md_grids.model_geometries import (
     SquareDomainOrthogonalFractures,
@@ -21,6 +23,7 @@ from porepy.applications.md_grids.model_geometries import (
 
 from porepy.models import constitutive_laws
 from porepy.fracs.fracture_network_3d import FractureNetwork3d
+
 
 os.system("clear")
 
@@ -385,7 +388,8 @@ class MomentumBalanceEquations(
         units = self.units
         vals = []
         for sd in subdomains:
-            data = np.zeros((sd.num_cells, self.nd))
+            # data = np.zeros((sd.num_cells, self.nd))
+            data = np.ones((sd.num_cells, self.nd))
 
             if sd.dim == 2:
                 # Selecting central cells
@@ -499,6 +503,28 @@ class SolutionStrategyMomentumBalance(
         """ """
         return self.mdg.dim_min() < self.nd
 
+    def after_simulation(self) -> None:
+        """ """
+
+        pdb.set_trace()
+        mpfa = self.stress_discretization(self.mdg.subdomains())
+
+        stress = data[pp.DISCRETIZATION_MATRICES][parameter_keyword][
+            mpsa_class.stress_matrix_key
+        ]
+        bound_stress = data[pp.DISCRETIZATION_MATRICES][parameter_keyword][
+            mpsa_class.bound_stress_matrix_key
+        ]
+
+        T = stress * u + bound_stress * u_b
+
+        T2d = np.reshape(T, (g.dim, -1), order="F")
+        u_b2d = np.reshape(u_b, (g.dim, -1), order="F")
+        assert np.allclose(np.abs(u_b2d[bound.is_neu]), np.abs(T2d[bound.is_neu]))
+
+        T = np.vstack((T2d, np.zeros(g.num_faces)))
+        pp.plot_grid(g, vector_value=T, figsize=(15, 12), alpha=0)
+
 
 class BoundaryConditionsMomentumBalance(
     pp.BoundaryConditionMixin
@@ -516,12 +542,38 @@ class BoundaryConditionsMomentumBalance(
         return bc
 
     def bc_values_displacement(self, boundary_grid: pp.BoundaryGrid) -> np.ndarray:
-        """ """
-        return np.zeros((self.nd, boundary_grid.num_cells)).ravel("F")
+        """
+        this is what you need to modify to change bc part 1 of 2
+        """
+        values = np.zeros((self.nd, boundary_grid.num_cells))
+        bounds = self.domain_boundary_sides(boundary_grid)
+
+        values[0][bounds.west] += self.solid.convert_units(0, "m")
+        values[0][bounds.east] += self.solid.convert_units(0, "m")
+        values[1][bounds.north] += self.solid.convert_units(0, "m")
+        values[1][bounds.south] += self.solid.convert_units(0, "m")
+        values[2][bounds.bottom] += self.solid.convert_units(0, "m")
+
+        return values.ravel("F")
+        # return np.zeros((self.nd, boundary_grid.num_cells)).ravel("F")
 
     def bc_values_stress(self, boundary_grid: pp.BoundaryGrid) -> np.ndarray:
-        """ """
-        return np.zeros((self.nd, boundary_grid.num_cells)).ravel("F")
+        """
+        this is what you need to modify to change bc part 2 of 2
+        """
+
+        values = np.ones((self.nd, boundary_grid.num_cells))
+        bounds = self.domain_boundary_sides(boundary_grid)
+
+        # Assigning x-component values
+        values[0][bounds.north] *= self.solid.convert_units(0, "Pa")
+        # Assigning y-component values
+        values[1][bounds.north] *= self.solid.convert_units(0, "Pa")
+        # Assigning y-component values
+        values[2][bounds.north] *= self.solid.convert_units(0, "Pa")
+
+        return values.ravel("F")
+        # return np.zeros((self.nd, boundary_grid.num_cells)).ravel("F")
 
     def update_all_boundary_conditions(self) -> None:
         """Set values for the displacement and the stress on boundaries."""
@@ -546,21 +598,17 @@ class GeometryCloseToEni(
     def set_geometry(self) -> None:
         """ """
         # cell_size_x = self.solid.convert_units(0.2, "m")
-        # cell_size_y = self.solid.convert_units(0.005, "m")
-        cell_size_x = self.solid.convert_units(0.2, "m")
-        cell_size_y = self.solid.convert_units(0.2, "m")
-        cell_size_z = self.solid.convert_units(0.02, "m")
-        meshing_params = {
-            "cell_size_x": cell_size_x,
-            "cell_size_y": cell_size_y,
-            "cell_size_z": cell_size_z,
-        }
+        # cell_size_y = self.solid.convert_units(0.2, "m")
+        # cell_size_z = self.solid.convert_units(0.02, "m")
+        # meshing_params = {
+        #     "cell_size_x": cell_size_x,
+        #     "cell_size_y": cell_size_y,
+        #     "cell_size_z": cell_size_z,
+        # }
 
         self.set_domain()
-        self.set_fractures()
-        # Create a fracture network.
-        self.fracture_network = pp.create_fracture_network(self.fractures, self.domain)
-
+        # self.set_fractures()
+        # self.fracture_network = pp.create_fracture_network(self.fractures, self.domain)
         # self.mdg = pp.create_mdg(
         #     grid_type="cartesian",
         #     meshing_args=meshing_params,
@@ -572,9 +620,51 @@ class GeometryCloseToEni(
             path_to_mat="/home/inspiron/Desktop/PhD/7-eni/enricoeni/Tesi/mrst-2023b/mrst_grid.mat"
         )
 
+        self.xmin = 0
+        self.xmax = 12000
+        self.ymin = 1500
+        self.ymax = 7000
+        self.zmin = 2050
+        self.zmax = 2650
+
+        ind_cut = (
+            eni_grid.cell_centers[1, :] < self.ymin + 500
+        )  # + 2000 => 24000 cell, more or less the limit for my computer
+        [_, eni_grid], _, _ = pp.partition.partition_grid(eni_grid, ind_cut)
+
+        polygon_vertices = np.array(
+            [
+                [  # x
+                    4874.16,
+                    4874.16,
+                    5913.4,
+                    5913.4,
+                ],
+                [  # y
+                    1500,
+                    3500,
+                    3500,
+                    1500,
+                ],
+                [  # z
+                    2650,
+                    2650,
+                    2050,
+                    2050,
+                ],
+            ]
+        )
+
+        self.fracture_faces = self.find_fracture_faces(eni_grid, polygon_vertices)
+        # self.plot_fracture_nodes(eni_grid)
+
+        exporter = pp.Exporter(eni_grid, "eni_grid_cut")
+        exporter.write_vtu()
+
         self.mdg = pp.MixedDimensionalGrid()
         self.mdg.add_subdomains(eni_grid)
-        self.mdg.compute_geometry()  # let's do it another time...
+        self.mdg.compute_geometry()
+        self.mdg.set_boundary_grid_projections()  # I added it. Where should it called normally?
 
         self.nd: int = self.mdg.dim_max()
 
@@ -589,11 +679,16 @@ class GeometryCloseToEni(
             )
             self.well_network.mesh(self.mdg)
 
-        # pp.plot_grid(self.mdg, alpha=0, info="f")
-
     def set_domain(self) -> None:
         """ """
-        box = {"xmin": 0, "xmax": 10, "ymin": 0, "ymax": 1, "zmin": 0, "zmax": 1}
+        box = {
+            "xmin": 0,
+            "xmax": 1,
+            "ymin": 0,
+            "ymax": 1,
+            "zmin": 0,
+            "zmax": 1,
+        }  # TODO: remove it
         self._domain = pp.domain.Domain(bounding_box=box)
 
     def set_fractures(self) -> None:
@@ -641,6 +736,95 @@ class GeometryCloseToEni(
 
         return g
 
+    def find_fracture_faces(self, sd, vertices_polygon):
+        """ """
+        points = sd.face_centers
+        distances, _, _ = pp.distances.points_polygon(
+            points, vertices_polygon, tol=1e-5
+        )
+        faces_on_frac_id = np.where(np.isclose(0, distances, rtol=0, atol=1e-1))[
+            0
+        ]  # pay attention, the tolerance is high...
+        return faces_on_frac_id
+
+    def plot_fracture_nodes(self, sd):
+        """ """
+        nodes_id = sd.face_nodes @ sp.sparse.coo_array(
+            (
+                [True] * self.fracture_faces.shape[0],
+                (self.fracture_faces, np.zeros(self.fracture_faces.shape[0])),
+            ),
+            shape=(sd.face_nodes.shape[1], 1),
+        )
+        nodes = sd.nodes[:, np.ravel(nodes_id.todense())]
+        fig = plt.figure()
+        ax = fig.add_subplot(projection="3d")
+        ax.scatter(nodes[0], nodes[1], nodes[2], marker=".")
+        plt.show()
+
+    def domain_boundary_sides(
+        self, domain: pp.Grid | pp.BoundaryGrid, tol: Optional[float] = 1e-10
+    ) -> pp.domain.DomainSides:
+        """
+        # z pointing downwards
+
+        # west -> towards negative x
+        # east -> towards positive x
+        # south -> neg y
+        # north -> pos y
+        # top -> neg z
+        # bottom -> positive z
+        """
+        if isinstance(domain, pp.Grid):
+            face_centers = domain.face_centers
+            num_faces = domain.num_faces
+            all_bf = domain.get_boundary_faces()
+        elif isinstance(domain, pp.BoundaryGrid):
+            face_centers = domain.cell_centers
+            num_faces = domain.num_cells
+            all_bf = np.arange(num_faces)
+        else:
+            raise ValueError(
+                "Domain must be either Grid or BoundaryGrid. Provided:", domain
+            )
+
+        # Get domain boundary sides
+        # box = copy.deepcopy(self.domain.bounding_box)
+
+        east = np.abs(self.xmax - face_centers[0]) <= tol
+        west = np.abs(self.xmin - face_centers[0]) <= tol
+        if self.mdg.dim_max() == 1:
+            north = np.zeros(num_faces, dtype=bool)
+            south = north.copy()
+        else:
+            north = np.abs(self.ymax - face_centers[1]) <= tol
+            south = np.abs(self.ymin - face_centers[1]) <= tol
+        if self.mdg.dim_max() < 3:
+            top = np.zeros(num_faces, dtype=bool)
+            bottom = top.copy()
+        else:
+            # print(domain)
+            # non_horizontal_normals_idx = np.where(domain.face_normals[2] != 0)[0]
+            # top_bottom_faces = np.intersect1d(
+            #     non_horizontal_normals_idx, all_bf
+            # )  # all_bf = all_bf_idx
+            # top = top_bottom_faces[
+            #     face_centers[:, top_bottom_faces][2] < (self.zmin + self.zmax) / 2
+            # ]
+            # bottom = top_bottom_faces[
+            #     face_centers[:, top_bottom_faces][2] > (self.zmin + self.zmax) / 2
+            # ]
+
+            top = face_centers[2] > self.zmin - tol  ### da finire...
+            bottom = face_centers[2] < self.zmin + tol  ###
+
+        # Create a namedtuple to store the arrays
+        domain_sides = pp.domain.DomainSides(
+            all_bf, east, west, north, south, top, bottom
+        )
+
+        return domain_sides
+
 
 class FinalModel(
     MomentumBalanceEquations,
@@ -667,7 +851,7 @@ pp.run_time_dependent_model(model, {})
 # )
 
 exporter = pp.Exporter(model.mdg, file_name="TMP", folder_name="./")
-exporter.write_vtu()
+exporter.write_vtu("u")
 
 print("\Done!")
 pdb.set_trace()
