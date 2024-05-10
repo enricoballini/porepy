@@ -41,7 +41,7 @@ A, b = mpsa_class.assemble_matrix_rhs(g, data)
 
 u = np.linalg.solve(A.A, b)
 
-pp.plot_grid(g, cell_value=u[1::2], plot_2d=True)
+# pp.plot_grid(g, cell_value=u[1::2], plot_2d=True)
 
 stress = data[pp.DISCRETIZATION_MATRICES][parameter_keyword][
     mpsa_class.stress_matrix_key

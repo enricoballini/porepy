@@ -531,43 +531,77 @@ class GeometryCloseToEni(
         # )
 
         eni_grid = self.load_eni_grid(
-            path_to_mat="/home/inspiron/Desktop/PhD/7-eni/enricoeni/Tesi/mrst-2023b/mrst_grid.mat"
+            path_to_mat="/home/inspiron/Desktop/PhD/eni_venv/egridtoporepy/mrst_grid"
         )
 
-        self.xmin = 0
-        self.xmax = 12000
-        self.ymin = 1500
-        # self.ymax = 7000
-        width = 1000  # step 250
+        # old grid:
+        # self.xmin = 0
+        # self.xmax = 12000
+        # self.ymin = 1500
+        # # self.ymax = 7000
+        # width = 1000  # step 250
+        # self.ymax = self.ymin + width
+        # self.zmin = 2050
+        # self.zmax = 2650
+
+        self.xmin = -1000
+        self.xmax = 3000
+        self.ymin = -500
+        # self.ymax = 1500
+        width = 125  # 525  # old_grid: step 250 # new_grid step 125
         self.ymax = self.ymin + width
-        self.zmin = 2050
-        self.zmax = 2650
+        self.zmin = 0
+        self.zmax = 2500
 
         ind_cut = (
             eni_grid.cell_centers[1, :] < self.ymin + width
-        )  # + 2000 => 24000 cell, more or less the limit for my computer
+        )  # old_grid: + 2000 => 24000 cell, more or less the limit for my computer
         [_, eni_grid], _, _ = pp.partition.partition_grid(eni_grid, ind_cut)
+
+        # old grid:
+        # polygon_vertices = np.array(
+        #     [
+        #         [  # x
+        #             4874.16,
+        #             4874.16,
+        #             5913.4,
+        #             5913.4,
+        #         ],
+        #         [  # y
+        #             1500,
+        #             3500,
+        #             3500,
+        #             1500,
+        #         ],
+        #         [  # z
+        #             2650,
+        #             2650,
+        #             2050,
+        #             2050,
+        #         ],
+        #     ]
+        # )
 
         polygon_vertices = np.array(
             [
-                [  # x
-                    4874.16,
-                    4874.16,
-                    5913.4,
-                    5913.4,
-                ],
-                [  # y
+                [
+                    535.51,
+                    535.51,
+                    976.327,
+                    976.327,
+                ],  # x
+                [
+                    -500,
                     1500,
-                    3500,
-                    3500,
                     1500,
-                ],
-                [  # z
-                    2650,
-                    2650,
-                    2050,
-                    2050,
-                ],
+                    -500,
+                ],  # y
+                [
+                    0,
+                    0,
+                    2500,
+                    2500,
+                ],  # z
             ]
         )
 
@@ -614,10 +648,10 @@ class GeometryCloseToEni(
         # frac_1 = pp.LineFracture(np.array([[3, 3], [0, 0.5]]))
 
         # [[pt1], [pt2], [], []].T
-        frac_1 = pp.PlaneFracture(
-            np.array([[3, 0, 0], [3, 1, 0], [3, 1, 0.5], [3, 0, 0.5]]).T
-        )
-        self._fractures = [frac_1]
+        # frac_1 = pp.PlaneFracture(
+        #     np.array([[3, 0, 0], [3, 1, 0], [3, 1, 0.5], [3, 0, 0.5]]).T
+        # )
+        self._fractures = []
 
     def load_eni_grid(self, path_to_mat):
         """
@@ -662,6 +696,7 @@ class GeometryCloseToEni(
         faces_on_frac_id = np.where(np.isclose(0, distances, rtol=0, atol=1e-1))[
             0
         ]  # pay attention, the tolerance is high...
+        # print("\n faces_on_frac_id.shape = ", faces_on_frac_id.shape)
         return faces_on_frac_id
 
     def create_frac_sd_for_plot(self, sd, faces_fract_id):
@@ -736,8 +771,8 @@ class GeometryCloseToEni(
             #     face_centers[:, top_bottom_faces][2] > (self.zmin + self.zmax) / 2
             # ]
 
-            top = face_centers[2] > self.zmax - tol  ### da finire...
-            bottom = face_centers[2] < self.zmin + tol  ###
+            top = face_centers[2] > self.zmax - tol
+            bottom = face_centers[2] < self.zmin + tol
 
         domain_sides = pp.domain.DomainSides(
             all_bf, east, west, north, south, top, bottom
@@ -920,8 +955,8 @@ class SolutionStrategyMomentumBalance(
         ]  # not 100% clear what is this tensor. It multiplies u_b that contains both dir and neumann
 
         u = self.displacement(subdomains).evaluate(self.equation_system).val
+        # same of np.linalg.solve(self.linear_system[0], self.linear_system[1]) => no reshape problems
 
-        # i think you have to join them:
         u_b_displ = self.bc_values_displacement(boundary_grids[0])
         u_b_stress = self.bc_values_stress(boundary_grids[0])
 
@@ -936,10 +971,15 @@ class SolutionStrategyMomentumBalance(
 
         T_vect = np.reshape(T, (sd.dim, -1), order="F")
         T_vect_frac = T_vect[:, self.fracture_faces_id]
-        print("\n T_vect_frac = ", T_vect_frac)
+        # print("\n T_vect_frac = ", T_vect_frac)
 
         # pp.plot_grid(sd, vector_value=T_vect, figsize=(15, 12), alpha=0)
-        # pp.plot_grid(self.sd_fract, T_vect_frac, alpha=0) # NO, for pp self.sd_fract is 2D, T_vect_frac is 3D, so they don't match
+        # pp.plot_grid(
+        #     self.sd_fract, T_vect_frac, alpha=0
+        # )  # NO, for pp self.sd_fract is 2D, T_vect_frac is 3D, so they don't match, see below
+        # T_vect_frac_filled = np.zeros((self.nd, sd.num_faces))
+        # T_vect_frac_filled[:, self.fracture_faces_id] = T_vect_frac
+        # pp.plot_grid(sd, vector_value=10000 * T_vect_frac_filled, alpha=0) # there is an eror in paraview... don't trust it
 
         exporter = pp.Exporter(self.sd_fract, "sd_fract")
         exporter.write_vtu(
