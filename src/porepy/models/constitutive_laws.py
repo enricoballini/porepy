@@ -1,4 +1,5 @@
 """Library of constitutive equations."""
+
 from __future__ import annotations
 
 from functools import partial
@@ -7,6 +8,8 @@ from typing import Callable, Literal, Optional, Sequence, Union, cast
 import numpy as np
 
 import porepy as pp
+
+import pdb
 
 number = pp.number
 Scalar = pp.ad.Scalar

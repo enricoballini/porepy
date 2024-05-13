@@ -1,6 +1,7 @@
 import os
 import sys
 import pdb
+import warnings
 import inspect
 import copy
 from functools import partial
@@ -24,6 +25,7 @@ from porepy.applications.md_grids.model_geometries import (
 from porepy.models import constitutive_laws
 from porepy.fracs.fracture_network_3d import FractureNetwork3d
 
+Scalar = pp.ad.Scalar
 
 os.system("clear")
 
@@ -167,8 +169,15 @@ class MomentumBalanceEquations(
         # surface term (stress), so we need to multiply by -1.
         stress = pp.ad.Scalar(-1) * self.stress(subdomains)
         body_force = self.body_force(subdomains)
+        grad_pressure = self.pressure_source(subdomains)
+        source_term = body_force + grad_pressure
+
         equation = self.balance_equation(
-            subdomains, accumulation, stress, body_force, dim=self.nd
+            subdomains=subdomains,
+            accumulation=accumulation,
+            surface_term=stress,
+            source=source_term,
+            dim=self.nd,
         )
         equation.set_name("momentum_balance_equation")
         return equation
@@ -390,11 +399,23 @@ class MomentumBalanceEquations(
         for sd in subdomains:
             # data = np.zeros((sd.num_cells, self.nd))
             # data = np.ones((sd.num_cells, self.nd))
+            # data = np.stack(
+            #     (
+            #         0 * np.ones(sd.num_cells),
+            #         0 * np.ones(sd.num_cells),
+            #         1 * np.ones(sd.num_cells),
+            #     ),
+            #     axis=1,
+            # )
+
+            acceleration = self.solid.convert_units(9.8, "m * s^-2")
+            volume_force = self.solid_density([sd]) * acceleration
+
             data = np.stack(
                 (
-                    0 * np.ones(sd.num_cells),
-                    0 * np.ones(sd.num_cells),
-                    1 * np.ones(sd.num_cells),
+                    np.zeros(sd.num_cells),
+                    np.zeros(sd.num_cells),
+                    volume_force.evaluate(self.equation_system) * sd.cell_volumes,
                 ),
                 axis=1,
             )
@@ -408,20 +429,130 @@ class MomentumBalanceEquations(
             #         & (cell_centers[1] < (0.7 / units.m))
             #     )
 
-            #     acceleration = self.solid.convert_units(-9.8, "m * s^-2")
-            #     force = self.solid.density() * acceleration
-            #     data[indices, 1] = force * sd.cell_volumes[indices]
+            # acceleration = self.solid.convert_units(-9.8, "m * s^-2")
+            # force = self.solid.density() * acceleration
+            # data[indices, 1] = force * sd.cell_volumes[indices]
 
             vals.append(data)
         return pp.ad.DenseArray(np.concatenate(vals).ravel(), "body_force")
 
+    def pressure_source(self, subdomains) -> pp.ad.Operator:
+        """ """
+        if len(subdomains) > 1:
+            raise NotImplementedError("inside pressure_source, only one 3D domain")
+        sd = subdomains[0]
 
-class ConstitutiveLawsMomentumBalance(
+        fake_vals = np.zeros(sd.num_cells)
+        fake_vals[self.reservoir_cell_ids] = (
+            sd.cell_centers[0, self.reservoir_cell_ids] ** 2 * 2
+        )
+        print(max(fake_vals) / 1e5)
+        pressure_vals = fake_vals
+
+        discr = pp.Biot()
+        data = {
+            pp.PARAMETERS: {
+                "mechanics": {
+                    "bc": self.bc_type_mechanics(sd),
+                    "fourth_order_tensor": self.stiffness_tensor(sd),
+                    "biot_alpha": 1,
+                }
+            },
+            pp.DISCRETIZATION_MATRICES: {"mechanics": {}, "flow": {}},
+        }
+        discr.discretize(sd, data)
+
+        grad_p = data[pp.DISCRETIZATION_MATRICES]["mechanics"]["grad_p"]
+
+        # discr = pp.ad.BiotAd(self.stress_keyword, subdomains)
+        # grad_pressure = discr.grad_p @ fluid_pressure
+
+        grad_pressure = pp.ad.DenseArray(grad_p @ pressure_vals, "grad_pressure_source")
+        div_grad_pressure = pp.ad.Divergence(subdomains, dim=self.nd) @ grad_pressure
+        return div_grad_pressure
+
+
+class ConstitutiveLawsMomentumBalanceEni(
     constitutive_laws.LinearElasticSolid,
     constitutive_laws.FractureGap,
     constitutive_laws.FrictionBound,
     constitutive_laws.DimensionReduction,
 ):  # -----------------------------------------------------------------------------------------------------------------
+    def solid_density(self, subdomains: list[pp.Grid]) -> pp.ad.Scalar:
+        """Constant solid density."""
+
+        # return Scalar(self.convert_units(2600, "kg * m^-3"), "solid_density")
+        for sd in subdomains:
+            if sd.dim == 3:
+                vals = 2600 * np.ones(subdomains[0].num_cells)
+            else:
+                print("\n\n inside solid_density, there should be only one 3D grid")
+        return pp.ad.DenseArray(vals, "solid_density")
+
+    def youngs_modulus(self, subdomains: list[pp.Grid]) -> pp.ad.Operator:
+        """Young's modulus [Pa]."""
+
+        for sd in subdomains:
+            if sd.dim == 3:
+                E = 5.71e10 * np.ones(sd.num_cells)  # Pa
+                E[self.reservoir_cell_ids] = 1e9
+            else:
+                print("\n\ninside young_modulus, there should be only one 3D grid")
+
+        return pp.ad.DenseArray(E, "youngs_modulus")
+
+    def poisson_ratio(self, subdomains: list[pp.Grid]) -> pp.ad.Operator:
+        """Poisson's ration.
+        EB added it. Where is it in pp?
+        """
+
+        for sd in subdomains:
+            if sd.dim == 3:
+                nu = 0.25 * np.ones(sd.num_cells)
+            else:
+                print("\n\ninside poisson_ratio, there should be only one 3D grid")
+
+        return pp.ad.DenseArray(nu, "youngs_modulus")
+
+    def shear_modulus(self, subdomains: list[pp.Grid]) -> pp.ad.Operator:
+        """Shear modulus [Pa].
+        mu = G = second Lame's param = shear modulus
+        """
+        mu = self.youngs_modulus(subdomains) / (
+            pp.ad.Scalar(2) * (pp.ad.Scalar(1) + self.poisson_ratio(subdomains))
+        )
+        mu.set_name("shear_modulus")
+        return mu
+
+    def lame_lambda(self, subdomains: list[pp.Grid]) -> pp.ad.Operator:
+        """Lame's first parameter [Pa]."""
+        lmbda = (self.youngs_modulus(subdomains) * self.poisson_ratio(subdomains)) / (
+            (pp.ad.Scalar(1) + self.poisson_ratio(subdomains))
+            * (pp.ad.Scalar(1) - pp.ad.Scalar(2) * self.poisson_ratio(subdomains))
+        )
+        lmbda.set_name("lame_lambda")
+        return lmbda
+
+    def stiffness_tensor(self, subdomain: pp.Grid) -> pp.FourthOrderTensor:
+        """Stiffness tensor [Pa]."""
+        lmbda = self.lame_lambda([subdomain])  # this is first Lame's param
+        mu = self.shear_modulus([subdomain])
+        # this is second Lame's param
+
+        # TODO: no point in working with opertors up to here
+        lmbda = lmbda.evaluate(self.equation_system)
+        mu = mu.evaluate(self.equation_system)
+
+        return pp.FourthOrderTensor(mu, lmbda)
+
+    def bulk_modulus(self, subdomains: list[pp.Grid]) -> pp.ad.Operator:
+        """Bulk modulus [Pa].
+        OK
+        i dont use it
+        """
+        warnings.warning("\n\nYOU SHOULD NOT USE bulk_modulus")
+        val = self.solid.lame_lambda() + 2 / 3 * self.solid.shear_modulus()
+        return Scalar(val, "bulk_modulus")
 
     def stress(self, domains: pp.SubdomainsOrBoundaries) -> pp.ad.Operator:
         """ """
@@ -452,23 +583,23 @@ class BoundaryConditionsMomentumBalance(
         bounds = self.domain_boundary_sides(boundary_grid)
 
         values[0][bounds.west] += self.solid.convert_units(0, "m")
-        values[1][bounds.west] += self.solid.convert_units(0, "m")
-        values[2][bounds.west] += self.solid.convert_units(0, "m")
+        # values[1][bounds.west] += self.solid.convert_units(0, "m")
+        # values[2][bounds.west] += self.solid.convert_units(0, "m")
 
         values[0][bounds.east] += self.solid.convert_units(0, "m")
-        values[1][bounds.east] += self.solid.convert_units(0, "m")
-        values[2][bounds.east] += self.solid.convert_units(0, "m")
+        # values[1][bounds.east] += self.solid.convert_units(0, "m")
+        # values[2][bounds.east] += self.solid.convert_units(0, "m")
 
-        values[0][bounds.north] += self.solid.convert_units(0, "m")
+        # values[0][bounds.north] += self.solid.convert_units(0, "m")
         values[1][bounds.north] += self.solid.convert_units(0, "m")
-        values[2][bounds.north] += self.solid.convert_units(0, "m")
+        # values[2][bounds.north] += self.solid.convert_units(0, "m")
 
-        values[0][bounds.south] += self.solid.convert_units(0, "m")
+        # values[0][bounds.south] += self.solid.convert_units(0, "m")
         values[1][bounds.south] += self.solid.convert_units(0, "m")
-        values[2][bounds.south] += self.solid.convert_units(0, "m")
+        # values[2][bounds.south] += self.solid.convert_units(0, "m")
 
-        values[0][bounds.bottom] += self.solid.convert_units(0, "m")
-        values[1][bounds.bottom] += self.solid.convert_units(0, "m")
+        # values[0][bounds.bottom] += self.solid.convert_units(0, "m")
+        # values[1][bounds.bottom] += self.solid.convert_units(0, "m")
         values[2][bounds.bottom] += self.solid.convert_units(0, "m")
 
         return values.ravel("F")
@@ -548,10 +679,22 @@ class GeometryCloseToEni(
         self.xmax = 3000
         self.ymin = -500
         # self.ymax = 1500
-        width = 125  # 525  # old_grid: step 250 # new_grid step 125
+        width = (
+            550  # 1625  # 525  # 125  # 525  # old_grid: step 250 # new_grid step 125
+        )
         self.ymax = self.ymin + width
         self.zmin = 0
         self.zmax = 2500
+
+        self.reservoir_z_left_top = 1450  # from paper
+        self.reservoir_z_left_bottom = 1550
+        self.reservoir_x_west = 0
+        self.reservoir_x_east = 2000
+        self.reservoir_y_south = 0
+        self.reservoir_y_north = 1000
+
+        self.reservoir_z_right_top = 1450 + 50 * np.sin(80 * np.pi / 180)  # from paper
+        self.reservoir_z_right_bottom = 1550 + 50 * np.sin(80 * np.pi / 180)
 
         ind_cut = (
             eni_grid.cell_centers[1, :] < self.ymin + width
@@ -608,6 +751,8 @@ class GeometryCloseToEni(
         self.fracture_faces_id = self.find_fracture_faces(eni_grid, polygon_vertices)
         # self.plot_fracture_nodes(eni_grid)
         self.create_frac_sd_for_plot(eni_grid, self.fracture_faces_id)
+
+        self.reservoir_cell_ids = self.find_reservoir_cells(eni_grid, polygon_vertices)
 
         # exporter = pp.Exporter(eni_grid, "eni_grid_cut")
         # exporter.write_vtu()
@@ -696,8 +841,64 @@ class GeometryCloseToEni(
         faces_on_frac_id = np.where(np.isclose(0, distances, rtol=0, atol=1e-1))[
             0
         ]  # pay attention, the tolerance is high...
-        # print("\n faces_on_frac_id.shape = ", faces_on_frac_id.shape)
         return faces_on_frac_id
+
+    def find_reservoir_cells(self, sd, vertices_polygon):
+        """ """
+        points = sd.cell_centers
+        distances, _, _ = pp.distances.points_polygon_signed(
+            points, vertices_polygon, tol=1e-5
+        )
+        left_ids = np.where(distances < 0)[0]
+        right_ids = np.where(distances >= 0)[0]
+
+        # z bounds:
+        # pay attention, you work with indices of a subset
+        reservoir_ids_z_bnd_left = np.arange(sd.num_cells)[left_ids][
+            np.where(
+                np.logical_and(
+                    points[2][left_ids] > self.reservoir_z_left_top,
+                    points[2][left_ids] < self.reservoir_z_left_bottom,
+                )
+            )[0]
+        ]
+
+        reservoir_ids_z_bnd_right = np.arange(sd.num_cells)[right_ids][
+            np.where(
+                np.logical_and(
+                    points[2][right_ids] > self.reservoir_z_right_top,
+                    points[2][right_ids] < self.reservoir_z_right_bottom,
+                )
+            )[0]
+        ]
+
+        # x bounds:
+        reservoir_ids_x_bnd = np.where(
+            np.logical_and(
+                points[0] > self.reservoir_x_west,
+                points[0] < self.reservoir_x_east,
+            )
+        )[0]
+
+        # y bounds:
+        reservoir_ids_y_bnd = np.where(
+            np.logical_and(
+                points[1] > self.reservoir_y_south,
+                points[1] < self.reservoir_y_north,
+            )
+        )[0]
+
+        reservoir_ids_z_bnd = np.concatenate(
+            (reservoir_ids_z_bnd_left, reservoir_ids_z_bnd_right)
+        )
+        tmp = np.intersect1d(reservoir_ids_z_bnd, reservoir_ids_x_bnd)
+        self.reservoir_cell_ids = np.intersect1d(tmp, reservoir_ids_y_bnd)
+
+        subgrid, _, _ = pp.partition.extract_subgrid(
+            sd, self.reservoir_cell_ids, faces=False
+        )
+        exporter = pp.Exporter(subgrid, "reservoir")
+        exporter.write_vtu()
 
     def create_frac_sd_for_plot(self, sd, faces_fract_id):
         """ """
@@ -870,6 +1071,32 @@ class SolutionStrategyMomentumBalance(
         self.contact_traction_variable: str = "t"
         self.stress_keyword: str = "mechanics"
 
+    def prepare_simulation(self) -> None:
+        """ """
+        self.clean_working_directory()
+
+        self.set_materials()
+        self.set_geometry()
+        self.initialize_data_saving()
+
+        self.set_equation_system_manager()
+        self.create_variables()
+        self.initial_condition()
+        self.reset_state_from_file()
+        self.set_equations()
+
+        self.set_discretization_parameters()
+        self.discretize()
+        self._initialize_linear_solver()
+        self.set_nonlinear_discretizations()
+
+        self.save_data_time_step()
+
+    def clean_working_directory(self):
+        """ """
+        os.system("rm *.pvd *.vtu")
+        os.system("rm -r visualization")
+
     def initial_condition(self) -> None:
         """ """
         # Zero for displacement and initial bc values for Biot
@@ -940,6 +1167,14 @@ class SolutionStrategyMomentumBalance(
 
     def after_simulation(self) -> None:
         """ """
+        # no way, the lynear system is too big
+        # A = self.linear_system[0]
+        # eigvals, _ = sp.sparse.linalg.eigs(A, k=int(A.shape[0] / 100))
+        # print(max(eigvals))
+        # print(min(eigvals))
+        # _, sss, _ = sp.sparse.linalg.svds(A, k=int(A.shape[0] / 1000))
+        # cond = np.linalg.cond(A.todense(), p=2)
+        # print("condition number K2 = ", cond)
 
         subdomains_data = self.mdg.subdomains(return_data=True)
         subdomains = [subdomains_data[0][0]]
@@ -1002,14 +1237,14 @@ class SolutionStrategyMomentumBalance(
         T_tangential = tangential_projetion @ T_vect_frac
         T_tangential_norm = np.linalg.norm(T_tangential.T, ord=2, axis=1)
 
-        assert np.all(
-            np.isclose(
-                np.sqrt(T_tangential_norm**2 + T_normal_norm**2),
-                np.linalg.norm(T_vect_frac.T, axis=1),
-                rtol=0,
-                atol=1e-8,
-            )
-        )
+        # assert np.all(
+        #     np.isclose(
+        #         np.sqrt(T_tangential_norm**2 + T_normal_norm**2),
+        #         np.linalg.norm(T_vect_frac.T, axis=1),
+        #         rtol=0,
+        #         atol=1e-8,
+        #     )
+        # )
 
         exporter = pp.Exporter(model.mdg, file_name="eni_case", folder_name="./")
         exporter.write_vtu("u")
@@ -1018,7 +1253,7 @@ class SolutionStrategyMomentumBalance(
 class FinalModel(
     MomentumBalanceEquations,
     VariablesMomentumBalance,
-    ConstitutiveLawsMomentumBalance,
+    ConstitutiveLawsMomentumBalanceEni,
     BoundaryConditionsMomentumBalance,
     GeometryCloseToEni,
     SolutionStrategyMomentumBalance,
@@ -1028,15 +1263,15 @@ class FinalModel(
 
 
 model = FinalModel()
-pp.run_time_dependent_model(model, {})
 
-# pp.plot_grid(
-#     model.mdg,
-#     vector_value=model.displacement_variable,
-#     rgb=[1, 1, 1],
-#     figsize=(10, 8),
-#     linewidth=0.3,
-#     title="Displacement",
-# )
+# for i in dir(model):
+#     print(i)
+
+# print("\n\n")
+# print(model.params)
+# print(model.units)
+
+
+pp.run_time_dependent_model(model, {})
 
 print("\nDone!")

@@ -34,6 +34,8 @@ import scipy.sparse as sps
 import porepy as pp
 from porepy.numerics.discretization import Discretization
 
+import pdb
+
 # Module-wide logger
 logger = logging.getLogger(__name__)
 
