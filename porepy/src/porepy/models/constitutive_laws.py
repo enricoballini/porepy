@@ -2231,6 +2231,9 @@ class LinearElasticMechanicalStress:
         # The latter is found by projecting the displacement on the interfaces to the
         # subdomains, and let these act as Dirichlet boundary conditions on the
         # subdomains.
+
+        # EB, i'm comfused, isnt this the face traction? why is it called stress?
+
         stress = (
             discr.stress @ self.displacement(domains)
             + discr.bound_stress @ boundary_operator
