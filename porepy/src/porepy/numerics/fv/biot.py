@@ -22,6 +22,7 @@ mechanics, but will turn into a standard poro-elasticity equation for non-fractu
 domains).
 
 """
+
 from __future__ import annotations
 
 import logging
@@ -317,6 +318,7 @@ class Biot(pp.Mpsa):
                 for specification.
 
         """
+
         parameter_dictionary: dict[str, Any] = sd_data[pp.PARAMETERS][
             self.mechanics_keyword
         ]
@@ -482,6 +484,7 @@ class Biot(pp.Mpsa):
             active_bound_displacement_pressure += (
                 face_map_vec * loc_bound_displacement_pressure * cell_map_scalar
             )
+
             logger.info(f"Done with subproblem {reg_i}. Elapsed time {time() - tic}")
             # Done with this subdomain, move on to the next one
 
@@ -566,25 +569,25 @@ class Biot(pp.Mpsa):
             matrices_f[self.stabilization_matrix_key][update_cell_ind] = stabilization[
                 update_cell_ind
             ]
-            matrices_m[self.bound_displacement_cell_matrix_key][
-                update_face_ind
-            ] = bound_displacement_cell[update_face_ind]
-            matrices_m[self.bound_displacement_face_matrix_key][
-                update_face_ind
-            ] = bound_displacement_face[update_face_ind]
-            matrices_m[self.bound_pressure_matrix_key][
-                update_face_ind
-            ] = bound_displacement_pressure[update_face_ind]
+            matrices_m[self.bound_displacement_cell_matrix_key][update_face_ind] = (
+                bound_displacement_cell[update_face_ind]
+            )
+            matrices_m[self.bound_displacement_face_matrix_key][update_face_ind] = (
+                bound_displacement_face[update_face_ind]
+            )
+            matrices_m[self.bound_pressure_matrix_key][update_face_ind] = (
+                bound_displacement_pressure[update_face_ind]
+            )
         else:
             matrices_m[self.stress_matrix_key] = stress
             matrices_m[self.bound_stress_matrix_key] = bound_stress
             matrices_m[self.grad_p_matrix_key] = grad_p
-            matrices_m[
-                self.bound_displacement_cell_matrix_key
-            ] = bound_displacement_cell
-            matrices_m[
-                self.bound_displacement_face_matrix_key
-            ] = bound_displacement_face
+            matrices_m[self.bound_displacement_cell_matrix_key] = (
+                bound_displacement_cell
+            )
+            matrices_m[self.bound_displacement_face_matrix_key] = (
+                bound_displacement_face
+            )
             matrices_m[self.bound_pressure_matrix_key] = bound_displacement_pressure
 
             matrices_f[self.div_u_matrix_key] = div_u
@@ -643,11 +646,11 @@ class Biot(pp.Mpsa):
         bound_exclusion_mech = pp.fvutils.ExcludeBoundaries(
             subcell_topology, bound_mech, nd
         )
-
         # Call core part of MPSA
         hook, igrad, cell_node_blocks = self._create_inverse_gradient_matrix(
             sd, constit, subcell_topology, bound_exclusion_mech, eta, inverter
         )
+
         num_sub_cells = cell_node_blocks.shape[0]
         # Right-hand side terms for the stress discretization
         rhs_cells: sps.spmatrix = self._create_rhs_cell_center(

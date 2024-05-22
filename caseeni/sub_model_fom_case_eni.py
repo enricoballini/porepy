@@ -4,14 +4,20 @@ import pdb
 import warnings
 import inspect
 import copy
+import time
 from functools import partial
 from typing import Callable, Optional, Sequence, cast
 
-# sys.path.remove("/home/inspiron/Desktop/PhD/porepy/src")
+
 # sys.path.remove("/usr/lib/python310.zip") # I'd like to remove all the paths outside eni_env, but I need them. Not clear why
 # sys.path.remove("/usr/lib/python3.10")
 # sys.path.remove("/usr/lib/python3.10/lib-dynload")
-sys.path.append("/home/inspiron/Desktop/PhD/eni_venv/porepy/src")
+if "/home/inspiron/Desktop/PhD/porepy/src" in sys.path:
+    sys.path.remove("/home/inspiron/Desktop/PhD/porepy/src")
+    sys.path.append("/home/inspiron/Desktop/PhD/eni_venv/porepy/src")
+
+# sys.path.append("/g100_work/pMI24_MatBa/eballin1/eni_venv/porepy/src")
+
 
 import numpy as np
 import scipy as sp
@@ -27,10 +33,11 @@ from porepy.fracs.fracture_network_3d import FractureNetwork3d
 
 Scalar = pp.ad.Scalar
 
-os.system("clear")
+# os.system("clear")
 
-print("pp.__file__ = ", pp.__file__)
+# print("pp.__file__ = ", pp.__file__)
 # print("np.__file__ = ", np.__file__)
+# print("__name__ = ", __name__)
 
 
 class VariablesMomentumBalance:
@@ -138,6 +145,7 @@ class MomentumBalanceEquations(
         matrix_subdomains = self.mdg.subdomains(dim=self.nd)
         fracture_subdomains = self.mdg.subdomains(dim=self.nd - 1)
         interfaces = self.mdg.interfaces(dim=self.nd - 1, codim=1)
+
         matrix_eq = self.momentum_balance_equation(matrix_subdomains)
         fracture_eq_normal = self.normal_fracture_deformation_equation(
             fracture_subdomains
@@ -146,6 +154,7 @@ class MomentumBalanceEquations(
             fracture_subdomains
         )
         intf_eq = self.interface_force_balance_equation(interfaces)
+
         self.equation_system.set_equation(
             matrix_eq, matrix_subdomains, {"cells": self.nd}
         )
@@ -334,12 +343,11 @@ class MomentumBalanceEquations(
         if len(subdomains) > 1:
             raise NotImplementedError("inside pressure_source, only one 3D domain")
         sd = subdomains[0]
-
+        pressure_vals = self.echelon_pressure
         fake_vals = np.zeros(sd.num_cells)
         fake_vals[self.reservoir_cell_ids] = (
             sd.cell_centers[0, self.reservoir_cell_ids] ** 2 * 2
         )
-        print(max(fake_vals) / 1e5)
         pressure_vals = fake_vals
 
         discr = pp.Biot()
@@ -349,16 +357,18 @@ class MomentumBalanceEquations(
                     "bc": self.bc_type_mechanics(sd),
                     "fourth_order_tensor": self.stiffness_tensor(sd),
                     "biot_alpha": 1,
+                    "inverter": "python",  # numba returns errors, sometimes...
                 }
             },
             pp.DISCRETIZATION_MATRICES: {"mechanics": {}, "flow": {}},
         }
-        discr.discretize(sd, data)
 
+        discr.discretize(sd, data)
         grad_p = data[pp.DISCRETIZATION_MATRICES]["mechanics"]["grad_p"]
 
         grad_pressure = pp.ad.DenseArray(grad_p @ pressure_vals, "grad_pressure_source")
         div_grad_pressure = pp.ad.Divergence(subdomains, dim=self.nd) @ grad_pressure
+        div_grad_pressure.set_name("div_grad_pressure")
         return div_grad_pressure
 
 
@@ -393,7 +403,7 @@ class ConstitutiveLawsMomentumBalanceEni(
         for sd in subdomains:
             if sd.dim == 3:
                 E = 5.71e10 * np.ones(sd.num_cells)  # Pa
-                E[self.reservoir_cell_ids] = 1e9
+                E[self.reservoir_cell_ids] = 1e9  # *self.mu_param[0]
             else:
                 print("\n\ninside young_modulus, there should be only one 3D grid")
 
@@ -531,9 +541,7 @@ class GeometryCloseToEni(
     def set_geometry(self) -> None:
         """ """
         self.set_domain()
-        eni_grid = self.load_eni_grid(
-            path_to_mat="/home/inspiron/Desktop/PhD/eni_venv/egridtoporepy/mrst_grid"
-        )
+        eni_grid = self.load_eni_grid(path_to_mat="../egridtoporepy/mrst_grid")
 
         self.xmin = -1000
         self.xmax = 3000
@@ -728,7 +736,9 @@ class GeometryCloseToEni(
         subgrid, _, _ = pp.partition.extract_subgrid(
             sd, self.reservoir_cell_ids, faces=False
         )
-        exporter = pp.Exporter(subgrid, "reservoir")
+        exporter = pp.Exporter(
+            subgrid, "reservoir" + self.subscript, folder_name=self.save_folder
+        )
         exporter.write_vtu()
 
     def create_frac_sd_for_plot(self, sd, faces_fract_id):
@@ -895,14 +905,15 @@ class SolutionStrategyMomentumBalance(
 
         self.set_materials()
         self.set_geometry()
-        self.initialize_data_saving()
-
+        self.initialize_data_saving(
+            exporter_folder=self.exporter_folder, subscript=self.subscript
+        )
         self.set_equation_system_manager()
         self.create_variables()
         self.initial_condition()
         self.reset_state_from_file()
-        self.set_equations()
 
+        self.set_equations()
         self.set_discretization_parameters()
         self.discretize()
         self._initialize_linear_solver()
@@ -946,6 +957,9 @@ class SolutionStrategyMomentumBalance(
                         "fourth_order_tensor": self.stiffness_tensor(sd),
                     },
                 )
+                data[pp.PARAMETERS]["mechanics"][
+                    "inverter"
+                ] = "python"  # see pp.matrix_operations.invert_diagonal_blocks
 
     def contact_mechanics_numerical_constant(
         self, subdomains: list[pp.Grid]
@@ -1013,7 +1027,11 @@ class SolutionStrategyMomentumBalance(
         # T_vect_frac_filled[:, self.fracture_faces_id] = T_vect_frac
         # pp.plot_grid(sd, vector_value=10000 * T_vect_frac_filled, alpha=0) # there is an eror in paraview... don't trust it
 
-        exporter = pp.Exporter(self.sd_fract, "sd_fract")
+        exporter = pp.Exporter(
+            self.sd_fract,
+            file_name="sd_fract" + self.subscript,
+            folder_name=self.save_folder,
+        )
         exporter.write_vtu(
             [
                 (self.sd_fract, "T_x", T_vect_frac[0]),
@@ -1047,12 +1065,12 @@ class SolutionStrategyMomentumBalance(
         # sigma_tensor = self.stress(subdomains).evaluate(self.equation_system).val  # NO!
         # is it possible?
 
-        # useless export: --------------------------------------
-        exporter = pp.Exporter(model.mdg, file_name="eni_case", folder_name="./")
-        exporter.write_vtu("u")
+        # # useless export: --------------------------------------
+        # exporter = pp.Exporter(self.mdg, file_name="eni_case", folder_name="./")
+        # exporter.write_vtu("u")
 
 
-class ModelCaseEni(
+class SubModelCaseEni(
     MomentumBalanceEquations,
     VariablesMomentumBalance,
     ConstitutiveLawsMomentumBalanceEni,
@@ -1065,9 +1083,13 @@ class ModelCaseEni(
 
 
 if __name__ == "__main__":
-    model = ModelCaseEni()
+    model = SubModelCaseEni()
     model.mu_param = None
-    model.save_folder = None
-    pp.run_time_dependent_model(model, {})
+    model.echelon_pressure = None
+    model.save_folder = "./"
+    model.exporter_folder = "./"
+    model.subscript = "_00.00"
 
+    # pp.run_time_dependent_model(model, {}) # same output of run_stationary....
+    pp.run_stationary_model(model, {})
     print("\nDone!")

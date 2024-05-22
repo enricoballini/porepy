@@ -7,6 +7,7 @@ The implementation is based on the weakly symmetric version of MPSA, described i
         IJNME, 2017.
 
 """
+
 from __future__ import annotations
 
 import logging
@@ -19,12 +20,13 @@ import scipy.sparse as sps
 import porepy as pp
 from porepy.numerics.discretization import Discretization
 
+import pdb
+
 # Module-wide logger
 logger = logging.getLogger(__name__)
 
 
 class Mpsa(Discretization):
-
     """Implementation of the Multi-point stress approximation.
 
     The method can be used directly on a single grid, by calling ``:meth:discretize``
@@ -316,24 +318,24 @@ class Mpsa(Discretization):
             matrix_dictionary[self.stress_matrix_key][update_ind] = stress_glob[
                 update_ind
             ]
-            matrix_dictionary[self.bound_stress_matrix_key][
-                update_ind
-            ] = bound_stress_glob[update_ind]
-            matrix_dictionary[self.bound_displacement_cell_matrix_key][
-                update_ind
-            ] = bound_displacement_cell_glob[update_ind]
-            matrix_dictionary[self.bound_displacement_face_matrix_key][
-                update_ind
-            ] = bound_displacement_face_glob[update_ind]
+            matrix_dictionary[self.bound_stress_matrix_key][update_ind] = (
+                bound_stress_glob[update_ind]
+            )
+            matrix_dictionary[self.bound_displacement_cell_matrix_key][update_ind] = (
+                bound_displacement_cell_glob[update_ind]
+            )
+            matrix_dictionary[self.bound_displacement_face_matrix_key][update_ind] = (
+                bound_displacement_face_glob[update_ind]
+            )
         else:
             matrix_dictionary[self.stress_matrix_key] = stress_glob
             matrix_dictionary[self.bound_stress_matrix_key] = bound_stress_glob
-            matrix_dictionary[
-                self.bound_displacement_cell_matrix_key
-            ] = bound_displacement_cell_glob
-            matrix_dictionary[
-                self.bound_displacement_face_matrix_key
-            ] = bound_displacement_face_glob
+            matrix_dictionary[self.bound_displacement_cell_matrix_key] = (
+                bound_displacement_cell_glob
+            )
+            matrix_dictionary[self.bound_displacement_face_matrix_key] = (
+                bound_displacement_face_glob
+            )
 
     def update_discretization(self, sd: pp.Grid, data: dict) -> None:
         """Update discretization.
@@ -832,7 +834,6 @@ class Mpsa(Discretization):
         )
 
         # Right hand side for cell center variables
-
         return hook, igrad, cell_node_blocks
 
     def _create_rhs_cell_center(
@@ -1597,13 +1598,13 @@ class Mpsa(Discretization):
             Inverse of the local system.
 
         """
-
         # Mappings to convert linear system to block diagonal form
         rows2blk_diag, cols2blk_diag, size_of_blocks = self._block_diagonal_structure(
             sub_cell_index, cell_node_blocks, nno_unique, bound_exclusion, nd
         )
 
         grad = rows2blk_diag * grad_eqs * cols2blk_diag
+
         # Compute inverse gradient operator, and map back again
         igrad = (
             cols2blk_diag

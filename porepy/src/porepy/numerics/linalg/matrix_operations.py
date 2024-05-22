@@ -1,6 +1,7 @@
 """
 module for operations on sparse matrices
 """
+
 from __future__ import annotations
 
 from typing import Optional, Union
@@ -10,6 +11,8 @@ import scipy.sparse as sps
 from typing_extensions import Literal
 
 from porepy.utils.mcolon import mcolon
+
+import pdb
 
 
 def zero_columns(A: sps.csc_matrix, cols: np.ndarray) -> None:
@@ -695,6 +698,7 @@ def invert_diagonal_blocks(
     # Remove blocks of size 0
     s = s[s > 0]
     # Variable to check if we have tried and failed with numba
+
     if method == "numba" or method is None:
         try:
             inv_vals = invert_diagonal_blocks_numba(mat, s)

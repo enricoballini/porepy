@@ -1,4 +1,5 @@
 """ This module contains functions to run stationary and time-dependent models."""
+
 from __future__ import annotations
 
 import logging
@@ -20,6 +21,8 @@ else:
     _IS_TQDM_AVAILABLE = True
 
 import porepy as pp
+
+import pdb
 
 # Module-wide logger
 logger = logging.getLogger(__name__)
