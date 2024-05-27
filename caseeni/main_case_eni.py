@@ -9,18 +9,7 @@ import time
 import numpy as np
 
 """
-torc>>> torch.__version__
-'1.13.1+cu117'
->>> import torchvision
->>> torchvision.__version__
-'0.14.1+cu117'
->>> import torchaudio
->>> torchaudio.__version__
-'0.13.1+cu117'
-
-from https://pytorch.org/get-started/previous-versions/ :
-
-pip3 install torch==1.13.1+cu117 torchvision==0.14.1+cu117 torchaudio==0.13.1 --extra-index-url https://download.pytorch.org/whl/cu117
+https://pytorch.org/get-started/previous-versions/
 """
 
 if "/home/inspiron/Desktop/PhD/porepy/src" in sys.path:
@@ -29,13 +18,13 @@ if "/home/inspiron/Desktop/PhD/porepy/src" in sys.path:
 
 sys.path.append("/g100_work/pMI24_MatBa/eballin1/eni_venv/porepy/src")  # Cineca G100
 
-sys.path.append("/home/inspiron/Desktop/PhD")
+sys.path.append("/home/inspiron/Desktop/PhD/mypythonmodules")
 sys.path.append("../")  # Cineca G100
 
 # import torch
 
 # from pprom import ppromode
-from pprom.ppromode import offline_ode
+from ppromode import offline_ode
 import model_fom_case_eni
 import model_nn_case_eni
 
@@ -49,16 +38,23 @@ os.system("clear")
 """
 """
 
-# data_folder = "./data"
-# idx_mu = 000
-# save_folder = "./results/" + str(idx_mu)
+data_folder = "./data"
+idx_mu = 99999
+save_folder = "./results"  # /mech/" + str(idx_mu)
 
-# offline = model_fom_case_eni.ModelCaseEni(data_folder=data_folder)
-# mu_param = np.array([0.2])
-# offline.solve_one_instance_ti_tf(mu_param, save_folder, idx_mu)
+time_final_training = 40 * 365.25
+timestep = time_final_training / 40
+np.savetxt(data_folder + "/TIMESTEP", np.array([timestep]))
+np.savetxt(
+    data_folder + "/TIMES",
+    np.arange(0, time_final_training + timestep, timestep),
+)
+offline = model_fom_case_eni.ModelCaseEni(data_folder=data_folder)
+mu_param = np.array([0.2])  # fake
+offline.run_one_simulation(data_folder, save_folder, idx_mu, mu_param)
 
-# print("\n\n\n\n\n Part 1 Done!\n\n\n")
-# stop
+print("\n\n\n\n\n Part 1 Done!\n\n\n")
+stop
 
 #####################################################################################################
 
@@ -79,7 +75,13 @@ os.system("mkdir -p " + results_folder)
 
 
 # settings:
-parameters_range = np.array([[np.log(5e-3), -0.15], [np.log(2e3), 0.05]])
+# Ka, K_\perp, Yung modulus, Cm, injection_rate
+parameters_range = np.array(
+    [
+        [np.log(1e-2), np.log(1e-6), 1e9, -1, 1.0e6],
+        [np.log(1e5), np.log(1e-1), 5.71e10, 1, 1.5e6],
+    ]
+)
 num_params = parameters_range.shape[1]
 
 training_dataset_id = np.arange(0, 1)
@@ -103,11 +105,16 @@ offline_data_class.sample_parameters(
     atol=1e-5,
 )
 
-t_0 = 1e-2
-timestep = 1e-4 / t_0
-timestep_nn = 8 * timestep
-time_final_training = 160 * timestep
-time_final_test = 200 * timestep
+model_fom.run_one_simulation_no_python(
+    np.load(data_folder + "/mu_param_0.npy"), data_folder, idx_mu=0
+)
+
+
+t_0 = 1
+time_final_training = 20 * 365.25 / t_0  # 20 years, leap year included
+timestep = time_final_training / 40 / t_0
+timestep_nn = 1 * timestep
+time_final_test = time_final_training
 
 np.savetxt(data_folder + "/TIMESTEP", np.array([timestep]))
 np.savetxt(data_folder + "/TIMESTEP_NN", np.array([timestep_nn]))
@@ -122,7 +129,9 @@ np.savetxt(
 
 t1 = time.time()
 idx_to_generate = np.arange(0, num_snap_to_generate)
-idx_to_generate = np.array([0])
+# idx_to_generate = np.array([0])
+
+
 offline_data_class.generate_snapshots(model_fom, idx_to_generate, n_proc=6)
 print("\nTOTAL TIME = ", time.time() - t1)
 

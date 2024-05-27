@@ -546,9 +546,9 @@ class GeometryCloseToEni(
         self.xmin = -1000
         self.xmax = 3000
         self.ymin = -500
-        # self.ymax = 1500
+        self.ymax = 1500
         width = 550  # 1625  # 525  # 125  # step 125
-        self.ymax = self.ymin + width
+        # self.ymax = self.ymin + width
         self.zmin = 0
         self.zmax = 2500
 
@@ -562,10 +562,10 @@ class GeometryCloseToEni(
         self.reservoir_z_right_top = 1450 + 50 * np.sin(80 * np.pi / 180)  # from paper
         self.reservoir_z_right_bottom = 1550 + 50 * np.sin(80 * np.pi / 180)
 
-        ind_cut = (
-            eni_grid.cell_centers[1, :] < self.ymin + width
-        )  # old_grid: + 2000 => 24000 cell, more or less the limit for my computer
-        [_, eni_grid], _, _ = pp.partition.partition_grid(eni_grid, ind_cut)
+        # ind_cut = (
+        #     eni_grid.cell_centers[1, :] < self.ymin + width
+        # )  # old_grid: + 2000 => 24000 cell, more or less the limit for my computer
+        # [_, eni_grid], _, _ = pp.partition.partition_grid(eni_grid, ind_cut)
 
         polygon_vertices = np.array(
             [
@@ -901,10 +901,14 @@ class SolutionStrategyMomentumBalance(
 
     def prepare_simulation(self) -> None:
         """ """
+
+        t1 = time.time()
+
         self.clean_working_directory()
 
         self.set_materials()
         self.set_geometry()
+
         self.initialize_data_saving(
             exporter_folder=self.exporter_folder, subscript=self.subscript
         )
@@ -920,6 +924,9 @@ class SolutionStrategyMomentumBalance(
         self.set_nonlinear_discretizations()
 
         self.save_data_time_step()
+
+        print("\n\n\n ONE RUN TIME = ", time.time() - t1)
+        print("\n\n\n")
 
     def clean_working_directory(self):
         """ """
