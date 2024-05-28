@@ -413,7 +413,7 @@ class ConstitutiveLawsMomentumBalanceEni(
 
         for sd in subdomains:
             if sd.dim == 3:
-                nu = 0.25 * np.ones(sd.num_cells)
+                nu = self.nu * np.ones(sd.num_cells)
             else:
                 print("\n\ninside poisson_ratio, there should be only one 3D grid")
 
@@ -1093,6 +1093,7 @@ if __name__ == "__main__":
     model.save_folder = "./"
     model.exporter_folder = "./"
     model.subscript = "_00.00"
+    model.nu = 0.5
 
     # pp.run_time_dependent_model(model, {}) # same output of run_stationary....
     pp.run_stationary_model(model, {})

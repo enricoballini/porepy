@@ -42,7 +42,7 @@ else:
 
     for id_mu in all_id_mu:
         data_folder = data_folder_fluid + "/" + str(id_mu)
-        file_name = data_folder + "/IDK_TODO"
+        file_name = data_folder + "/*."
         read_and_save_pressures(file_name, timestep)
 
 

@@ -33,7 +33,7 @@ os.system("clear")
 
 data_folder = "./data"
 idx_mu = 99999
-save_folder = "./results"  # /mech/" + str(idx_mu)
+save_folder = "./results"
 
 time_final_training = 40 * 365.25
 timestep = time_final_training / 40
@@ -43,7 +43,7 @@ np.savetxt(
     np.arange(0, time_final_training + timestep, timestep),
 )
 offline = model_fom_case_eni.ModelCaseEni(data_folder=data_folder)
-mu_param = np.array([0.2])  # fake
+mu_param = np.array([np.log(1e5), np.log(1e-1), 5.71e10, 5.71e10, 1.0, 1.5e6, 703000.0])
 # offline.run_one_simulation(data_folder, save_folder, idx_mu, mu_param)
 offline.run_one_simulation_no_python(data_folder, data_folder, idx_mu, mu_param)
 
@@ -69,11 +69,12 @@ os.system("mkdir -p " + results_folder)
 
 
 # settings:
-# Ka, K_\perp, Yung modulus, Cm, injection_rate
+#  0    1           2                           3               4       5               6
+# Ka, K_\perp, Yung modulus outside, Young's modulus reservoir, Cm, injection_rate, production_rate
 parameters_range = np.array(
     [
-        [np.log(1e-2), np.log(1e-6), 1e9, -1, 1.0e6],
-        [np.log(1e5), np.log(1e-1), 5.71e10, 1, 1.5e6],
+        [np.log(1e-2), np.log(1e-6), 1e9, 1e9, 1.0, 1.0e6, 2 * 703000.0],
+        [np.log(1e5), np.log(1e-1), 5.71e10, 5.71e10, 1.0, 1.5e6, 2 * 703000.0],
     ]
 )
 num_params = parameters_range.shape[1]
@@ -104,27 +105,9 @@ model_fom.run_one_simulation_no_python(
 )
 
 
-t_0 = 1
-time_final_training = 20 * 365.25 / t_0  # 20 years, leap year included
-timestep = time_final_training / 40 / t_0
-timestep_nn = 1 * timestep
-time_final_test = time_final_training
-
-np.savetxt(data_folder + "/TIMESTEP", np.array([timestep]))
-np.savetxt(data_folder + "/TIMESTEP_NN", np.array([timestep_nn]))
-np.savetxt(
-    data_folder + "/TRAINING_TIMES",
-    np.arange(0, time_final_training + timestep_nn, timestep_nn),
-)
-np.savetxt(
-    data_folder + "/TEST_TIMES",
-    np.arange(0, time_final_test + timestep_nn, timestep_nn),
-)
-
 t1 = time.time()
 idx_to_generate = np.arange(0, num_snap_to_generate)
 # idx_to_generate = np.array([0])
-
 
 offline_data_class.generate_snapshots(model_fom, idx_to_generate, n_proc=6)
 print("\nTOTAL TIME = ", time.time() - t1)
