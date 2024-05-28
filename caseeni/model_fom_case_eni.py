@@ -5,7 +5,7 @@ import warnings
 import inspect
 import copy
 import shutil
-import fileinput
+
 
 from functools import partial
 from typing import Callable, Optional, Sequence, cast
@@ -14,25 +14,26 @@ from typing import Callable, Optional, Sequence, cast
 import numpy as np
 import scipy as sp
 
-if "/home/inspiron/Desktop/PhD/porepy/src" in sys.path:
-    sys.path.remove("/home/inspiron/Desktop/PhD/porepy/src")
-    sys.path.append("/home/inspiron/Desktop/PhD/eni_venv/porepy/src")
-# sys.path.append("/g100_work/pMI24_MatBa/eballin1/eni_venv/porepy/src")
 
+my_modules_path = "/home/inspiron/Desktop/PhD/mypythonmodules"
+sentinel = False
+for i in sys.path:
+    if i == my_modules_path:
+        sentinel = True
+if not sentinel:
+    sys.path.append(my_modules_path)
+    sys.path.append("/g100_work/pMI24_MatBa/eballin1/mypythonmodules")  # Cineca G100
+import ppromode
+
+sys.append(
+    "/home/inspiron/Desktop/PhD/porepy/src"
+)  # lets add pp in mypythonmodules in G100
 import porepy as pp
 
 import sub_model_fom_case_eni
 
 """
 """
-
-
-def replace_all(file_name, search_pattern, replace_patter):
-    """ """
-    for line in fileinput.input(file_name, inplace=1):
-        if search_pattern in line:
-            line = line.replace(search_pattern, replace_patter)
-        sys.stdout.write(line)
 
 
 class ModelCaseEni:
@@ -90,7 +91,7 @@ class ModelCaseEni:
         - TODO: find a better way to write mu_param in the input file
         """
 
-        # modifiy .DATA
+        # modify .DATA
         save_folder = save_folder_root + "/fluid/" + str(idx_mu)
         try:
             os.mkdir(save_folder)
@@ -137,8 +138,8 @@ class ModelCaseEni:
             + ".DATA"
         )
         search_pattern = " W1 GAS OPEN RATE 1.3e6 190 /"  # PAY ATTENTION HERE...
-        replace_pattern = " W1 GAS OPEN RATE " + str(mu_param[4]) + " 190 /"
-        replace_all(file_name, search_pattern, replace_pattern)
+        replacement_pattern = " W1 GAS OPEN RATE " + str(mu_param[4]) + " 190 /"
+        ppromode.replace_pattern(file_name, search_pattern, replacement_pattern)
 
         # prepare run working folder
         shutil.copy(

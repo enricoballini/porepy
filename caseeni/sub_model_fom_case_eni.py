@@ -9,14 +9,11 @@ from functools import partial
 from typing import Callable, Optional, Sequence, cast
 
 
-# sys.path.remove("/usr/lib/python310.zip") # I'd like to remove all the paths outside eni_env, but I need them. Not clear why
-# sys.path.remove("/usr/lib/python3.10")
-# sys.path.remove("/usr/lib/python3.10/lib-dynload")
 if "/home/inspiron/Desktop/PhD/porepy/src" in sys.path:
     sys.path.remove("/home/inspiron/Desktop/PhD/porepy/src")
     sys.path.append("/home/inspiron/Desktop/PhD/eni_venv/porepy/src")
 
-# sys.path.append("/g100_work/pMI24_MatBa/eballin1/eni_venv/porepy/src")
+sys.path.append("/g100_work/pMI24_MatBa/eballin1/mypythonmodules")
 
 
 import numpy as np

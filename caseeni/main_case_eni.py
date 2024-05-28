@@ -12,14 +12,8 @@ import numpy as np
 https://pytorch.org/get-started/previous-versions/
 """
 
-if "/home/inspiron/Desktop/PhD/porepy/src" in sys.path:
-    sys.path.remove("/home/inspiron/Desktop/PhD/porepy/src")
-    sys.path.append("/home/inspiron/Desktop/PhD/eni_venv/porepy/src")
-
-sys.path.append("/g100_work/pMI24_MatBa/eballin1/eni_venv/porepy/src")  # Cineca G100
-
 sys.path.append("/home/inspiron/Desktop/PhD/mypythonmodules")
-sys.path.append("../")  # Cineca G100
+sys.path.append("/g100_work/pMI24_MatBa/eballin1/mypythonmodules")  # Cineca G100
 
 # import torch
 
@@ -29,7 +23,6 @@ import model_fom_case_eni
 import model_nn_case_eni
 
 import sub_model_fom_case_eni
-import porepy as pp
 
 
 os.system("clear")
@@ -51,7 +44,8 @@ np.savetxt(
 )
 offline = model_fom_case_eni.ModelCaseEni(data_folder=data_folder)
 mu_param = np.array([0.2])  # fake
-offline.run_one_simulation(data_folder, save_folder, idx_mu, mu_param)
+# offline.run_one_simulation(data_folder, save_folder, idx_mu, mu_param)
+offline.run_one_simulation_no_python(data_folder, data_folder, idx_mu, mu_param)
 
 print("\n\n\n\n\n Part 1 Done!\n\n\n")
 stop
