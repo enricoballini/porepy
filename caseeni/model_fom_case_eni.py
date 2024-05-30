@@ -267,5 +267,5 @@ class ModelCaseEni:
             + ".EGRID",
         )
 
-        os.system("cd " + data_folder_root + "/" + str(idx_mu))
-        os.system("runPBSechelon case2skew.DATA")
+        os.system("cd " + data_folder_root + "/fluid/" + str(idx_mu) + " && runPBSEchelon case2skew.DATA")
+        print(str(idx_mu) + " launced!")
