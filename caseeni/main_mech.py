@@ -29,27 +29,27 @@ os.system("clear")
 """
 """
 
-data_folder = "./data"
-save_folder = "./results"
-os.system("mkdir -p " + data_folder + "/fluid")
-os.system("mkdir -p " + data_folder + "/mech")
-os.system("mkdir " + save_folder)
-idx_mu = 99999
+# data_folder = "./data"
+# save_folder = "./results"
+# os.system("mkdir -p " + data_folder + "/fluid")
+# os.system("mkdir -p " + data_folder + "/mech")
+# os.system("mkdir " + save_folder)
+# idx_mu = 99999
 
-time_final_training = 40 * 365.25
-timestep = time_final_training / 40
-np.savetxt(data_folder + "/TIMESTEP", np.array([timestep]))
-np.savetxt(
-    data_folder + "/TIMES",
-    np.arange(0, time_final_training + timestep, timestep),
-)
-offline = model_fom_case_eni.ModelCaseEni(data_folder=data_folder)
-mu_param = np.array([np.log(1e5), np.log(1e-1), 5.71e10, 5.71e10, 1.0, 1.5e6, 703000.0])
-# offline.run_one_simulation(data_folder, save_folder, idx_mu, mu_param)
-offline.run_one_simulation_no_python(data_folder, data_folder, idx_mu, mu_param)
+# time_final_training = 40 * 365.25
+# timestep = time_final_training / 40
+# np.savetxt(data_folder + "/TIMESTEP", np.array([timestep]))
+# np.savetxt(
+#     data_folder + "/TIMES",
+#     np.arange(0, time_final_training + timestep, timestep),
+# )
+# offline = model_fom_case_eni.ModelCaseEni(data_folder=data_folder)
+# mu_param = np.array([np.log(1e5), np.log(1e-1), 5.71e10, 5.71e10, 1.0, 1.5e6, 703000.0])
+# # offline.run_one_simulation(data_folder, save_folder, idx_mu, mu_param)
+# offline.run_one_simulation_no_python(data_folder, data_folder, idx_mu, mu_param)
 
-print("\n\n\n\n\n Part 1 Done!\n\n\n")
-stop
+# print("\n\n\n\n\n Part 1 Done!\n\n\n")
+# stop
 
 #####################################################################################################
 
@@ -102,20 +102,17 @@ offline_data_class.sample_parameters(
     atol=1e-5,
 )
 
-model_fom.run_one_simulation_no_python(
-    np.load(data_folder + "/mu_param_0.npy"), data_folder, idx_mu=0
-)
-
 
 t1 = time.time()
 idx_to_generate = np.arange(0, num_snap_to_generate)
 # idx_to_generate = np.array([0])
 
-offline_data_class.generate_snapshots(model_fom, idx_to_generate, n_proc=6)
+# offline_data_class.generate_snapshots(model_fom, idx_to_generate, n_proc=6)
+offline_data_class.generate_snapshots_no_python(model_fom, idx_to_generate, n_proc=6)
 print("\nTOTAL TIME = ", time.time() - t1)
 
 
-print("\n\n\n\n\n Part 1 Done!\n\n\n")
+print("\n\n\n\n\n Done!\n\n\n")
 stop
 
 
