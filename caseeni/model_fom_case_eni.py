@@ -28,7 +28,6 @@ import ppromode
 sys.path.append("../porepy/src")  # lets add pp in mypythonmodules in G100
 
 
-
 """
 """
 
