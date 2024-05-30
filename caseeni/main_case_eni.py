@@ -14,8 +14,8 @@ https://pytorch.org/get-started/previous-versions/
 
 sys.path.append("/home/inspiron/Desktop/PhD/mypythonmodules")
 sys.path.append("/g100_work/pMI24_MatBa/eballin1/mypythonmodules")  # Cineca G100
+sys.path.append("../../mypythonmodules") # hpc5 (and others for the future)
 
-# import torch
 
 # from pprom import ppromode
 from ppromode import offline_ode
