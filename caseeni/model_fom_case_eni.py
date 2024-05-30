@@ -266,5 +266,18 @@ class ModelCaseEni:
             + ".EGRID",
         )
 
-        os.system("cd " + data_folder_root + "/fluid/" + str(idx_mu) + " && runPBSEchelon case2skew.DATA")
+        shutil.copy(
+            save_folder_root + "/fluid/" + "GRID3D.GRDECL",
+            save_folder_root + "/fluid/" + str(idx_mu) + "/" + "GRID3D"
+            # + str(idx_mu)
+            + ".GRDECL",
+        )  # no idea, echelon looks for it
+
+        os.system(
+            "cd "
+            + data_folder_root
+            + "/fluid/"
+            + str(idx_mu)
+            + " && runPBSEchelon case2skew.DATA"
+        )
         print(str(idx_mu) + " launced!")
