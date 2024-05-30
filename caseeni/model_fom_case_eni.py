@@ -26,9 +26,8 @@ if not sentinel:
 import ppromode
 
 sys.path.append("../porepy/src")  # lets add pp in mypythonmodules in G100
-import porepy as pp
 
-import sub_model_fom_case_eni
+
 
 """
 """
@@ -78,6 +77,10 @@ class ModelCaseEni:
         """
         - TODO: data folder and save folder are concept not totally clear, improve
         """
+
+        import porepy as pp
+        import sub_model_fom_case_eni
+
         times = np.loadtxt(
             data_folder_root + "/TIMES"
         )  # in this case, I dont have timestep chops, so I save only one TIMES file

@@ -22,8 +22,6 @@ from ppromode import offline_ode
 import model_fom_case_eni
 import model_nn_case_eni
 
-import sub_model_fom_case_eni
-
 
 os.system("clear")
 
@@ -32,8 +30,11 @@ os.system("clear")
 """
 
 data_folder = "./data"
-idx_mu = 99999
 save_folder = "./results"
+os.system("mkdir -p " + data_folder + "/fliud")
+os.system("mkdir -p " + data_folder + "/mech")
+os.system("mkdir " + save_folder)
+idx_mu = 99999
 
 time_final_training = 40 * 365.25
 timestep = time_final_training / 40
@@ -63,7 +64,8 @@ alpha_5 = 1
 data_folder = "./data"
 results_folder = "./results"
 
-os.system("mkdir -p " + data_folder)
+os.system("mkdir -p " + data_folder + "/fluid")
+os.system("mkdir -p " + data_folder + "/mech")
 os.system("rm -r " + results_folder)
 os.system("mkdir -p " + results_folder)
 
