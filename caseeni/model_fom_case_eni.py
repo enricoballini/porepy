@@ -15,19 +15,17 @@ import numpy as np
 import scipy as sp
 
 
-my_modules_path = "/home/inspiron/Desktop/PhD/mypythonmodules"
+my_modules_path = "../../mypythonmodules"
 sentinel = False
 for i in sys.path:
     if i == my_modules_path:
         sentinel = True
 if not sentinel:
     sys.path.append(my_modules_path)
-    sys.path.append("/g100_work/pMI24_MatBa/eballin1/mypythonmodules")  # Cineca G100
+    # sys.path.append("/g100_work/pMI24_MatBa/eballin1/mypythonmodules")  # Cineca G100
 import ppromode
 
-sys.path.append(
-    "/home/inspiron/Desktop/PhD/porepy/src"
-)  # lets add pp in mypythonmodules in G100
+sys.path.append("../porepy/src")  # lets add pp in mypythonmodules in G100
 import porepy as pp
 
 import sub_model_fom_case_eni

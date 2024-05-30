@@ -9,12 +9,18 @@ from functools import partial
 from typing import Callable, Optional, Sequence, cast
 
 
-if "/home/inspiron/Desktop/PhD/porepy/src" in sys.path:
-    sys.path.remove("/home/inspiron/Desktop/PhD/porepy/src")
-    sys.path.append("/home/inspiron/Desktop/PhD/eni_venv/porepy/src")
+# if "/home/inspiron/Desktop/PhD/porepy/src" in sys.path:
+#     sys.path.remove("/home/inspiron/Desktop/PhD/porepy/src")
+#     sys.path.append("/home/inspiron/Desktop/PhD/eni_venv/porepy/src")
 
-sys.path.append("/g100_work/pMI24_MatBa/eballin1/mypythonmodules")
-
+pp_path = "../porepy/src"
+sentinel = False
+for i in sys.path:
+    if i == pp_path:
+        sentinel = True
+if not sentinel:
+    sys.path.append(pp_path)
+    # sys.path.append("/g100_work/pM
 
 import numpy as np
 import scipy as sp
