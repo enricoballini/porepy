@@ -31,7 +31,7 @@ os.system("clear")
 
 data_folder = "./data"
 save_folder = "./results"
-os.system("mkdir -p " + data_folder + "/fliud")
+os.system("mkdir -p " + data_folder + "/fluid")
 os.system("mkdir -p " + data_folder + "/mech")
 os.system("mkdir " + save_folder)
 idx_mu = 99999
