@@ -13,7 +13,7 @@ import numpy as np
 
 sys.path.append("../../mypythonmodules") 
 
-from nnrom.ppromode import offline_ode
+from nnrom.dlromode import offline_ode
 import model_fom_case_eni
 
 

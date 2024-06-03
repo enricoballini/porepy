@@ -7,7 +7,7 @@ from ecl import EclipseFile
 os.system("clear")
 
 
-def read_and_save_pressures(file_name, timestep):
+def read_and_save_pressures(data_folder, file_name, timestep):
     """ """
     with EclipseFile(file_name, "UNRST") as store:
         total = store.cnt["SEQNUM  "]  ### num timesteps ? and why does it have spaces??
@@ -29,8 +29,8 @@ if __name__ == "__main__":
     # basically for testing...
     id_mu = 99999
     data_folder = data_folder_fluid + "/" + str(id_mu)
-    file_name = data_folder + "/*."
-    read_and_save_pressures(file_name, timestep)
+    file_name = data_folder + "/case2skew"
+    read_and_save_pressures(data_folder, file_name, timestep)
 
 else:
     training_dataset_id = np.loadtxt(data_folder_root + "/training_dataset_id")
