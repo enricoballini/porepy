@@ -14,7 +14,7 @@ https://pytorch.org/get-started/previous-versions/
 
 sys.path.append("../../mypythonmodules") 
 
-from ppromode import offline_ode
+from nnrom.dlromode import offline_ode
 import model_fom_case_eni
 
 
@@ -24,27 +24,19 @@ os.system("clear")
 """
 print("\n THIS IS MAIN FLUID \n")
 
-# data_folder = "./data"
-# save_folder = "./results"
-# os.system("mkdir -p " + data_folder + "/fluid")
-# os.system("mkdir -p " + data_folder + "/mech")
-# os.system("mkdir " + save_folder)
-# idx_mu = 99999
+data_folder = "./data"
+save_folder = "./results"
+os.system("mkdir -p " + data_folder + "/fluid")
+os.system("mkdir -p " + data_folder + "/mech")
+os.system("mkdir " + save_folder)
+idx_mu = 99999 # "baseline"
 
-# time_final_training = 40 * 365.25
-# timestep = time_final_training / 40
-# np.savetxt(data_folder + "/TIMESTEP", np.array([timestep]))
-# np.savetxt(
-#     data_folder + "/TIMES",
-#     np.arange(0, time_final_training + timestep, timestep),
-# )
-# offline = model_fom_case_eni.ModelCaseEni(data_folder=data_folder)
-# mu_param = np.array([np.log(1e5), np.log(1e-1), 5.71e10, 5.71e10, 1.0, 1.5e6, 703000.0])
-# # offline.run_one_simulation(data_folder, save_folder, idx_mu, mu_param)
-# offline.run_one_simulation_no_python(data_folder, data_folder, idx_mu, mu_param)
+offline = model_fom_case_eni.ModelCaseEni(data_folder=data_folder, save_folder=data_folder)
+mu_param = np.array([np.log(1e1), np.log(1e0), 1, 5.71e10, 1.0, 1.3e6, 703000.0])
+offline.run_one_simulation_no_python(data_folder, data_folder, idx_mu, mu_param)
 
-# print("\n\n\n\n\n Part 1 Done!\n\n\n")
-# stop
+print("\n\n\n\n\n Part 1 fluid Done!\n\n\n")
+stop
 
 #####################################################################################################
 
@@ -60,12 +52,13 @@ os.system("mkdir -p " + results_folder)
 
 
 # settings:
-#  0    1           2                           3               4       5               6
-# Ka, K_\perp, Yung modulus outside, Young's modulus reservoir, Cm, injection_rate, production_rate
+#  0                 1              2                           3               4       5               6
+# Ka multiplier, K_\perp mult, Yung modulus ratio, Young's modulus reservoir, Cm, injection_rate, production_rate
+# ech,              ech,            pp,                     pp,             , ech,           ech,        ech,
 parameters_range = np.array(
     [
-        [np.log(1e-2), np.log(1e-6), 1e9, 1e9, 1.0, 1.0e6, 2 * 703000.0],
-        [np.log(1e5), np.log(1e-1), 5.71e10, 5.71e10, 1.0, 1.5e6, 2 * 703000.0],
+        [np.log(1e-1), np.log(1e-6), 1, 5.71e9, 1.0, 1.0e6, 703000.0],
+        [np.log(1e2), np.log(1e1), 25, 5.71e11, 1.0, 1.5e6, 703000.0],
     ]
 )
 num_params = parameters_range.shape[1]

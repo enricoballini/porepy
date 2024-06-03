@@ -48,15 +48,31 @@ EQUALS
  ACTNUM 1 /
 /
 
- 
 INCLUDE
  PERMX.INC /
+ --- 
+ MULTIPLY
+  PERMX __PERMEABILITY_X_MULTIPLIER__ /
+  /
  
 INCLUDE
  PERMY.INC /
 
 INCLUDE
  PERMZ.INC /
+
+ MULTIPLY
+  PERMX 10 /
+  /
+ 
+ COPY
+   PERMX PERMZ /
+   PERMX PERMY /
+   /
+   MULTIPLY
+    PERMZ 0.2 /
+    /
+
 
 INCLUDE
  PORO.INC /
@@ -71,7 +87,7 @@ INCLUDE
 INCLUDE 
  FLUXNUM.INC /
 MULTFLT
---        fault multiplier ###
+--        fault multiplier 
  DIRECT   __TRANSMISS_PERP__  /
 /
 
@@ -124,6 +140,8 @@ PVTW
 --rocknum=1 -> caprock+outside
 --rocknum=2 -> reservoir
 
+-- ROCK (p. 458) 
+-- REF_PRESS (reference pressure) ROCK_COMP (rock_compressibility)
 ROCK
 150.0  1.46e-05 /
 150.0  7.30e-06 /
@@ -281,22 +299,22 @@ WINJGAS
 -- W1 GAS OPEN RATE 9.373e4 1*180 /
 --/
 
---- ###
+--- 
 WCONPROD
- W1 OPEN GRAT __PRODUCTION_RATE__ 2*10 /
+ W1 OPEN GRAT 2* __PRODUCTION_RATE__ 2* 10 /
 / 
 
---- ###
+--- 
 TSTEP
  __TIME_PRODUCTION__/ 
 --- 1.8436 kg/sm3 *1.e6 sm3 = 1863.6 tonn/day
 --target 0.7 *(1.3)  mtpa 
 
---- ###
+--- 
 WCONINJE
- W1 GAS OPEN RATE __INJECTION_RATE__ 1*190 /
+ W1 GAS OPEN RATE __INJECTION_RATE__ 1* 190 /
 /
 
---- ###
+--- 
 TSTEP
  __TIME_INJECTION__/ 

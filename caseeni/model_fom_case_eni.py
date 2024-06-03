@@ -22,10 +22,9 @@ for i in sys.path:
         sentinel = True
 if not sentinel:
     sys.path.append(my_modules_path)
-    # sys.path.append("/g100_work/pMI24_MatBa/eballin1/mypythonmodules")  # Cineca G100
-import ppromode
+from nnrom.utilsode.misc_ode import replace_pattern
 
-sys.path.append("../porepy/src")  # lets add pp in mypythonmodules in G100
+sys.path.append("../porepy/src") 
 
 
 """
@@ -33,9 +32,10 @@ sys.path.append("../porepy/src")  # lets add pp in mypythonmodules in G100
 
 
 class ModelCaseEni:
-    def __init__(self, data_folder):
+    def __init__(self, data_folder, save_folder):
         """ """
         self.data_folder = data_folder
+        self.save_folder = save_folder
 
         self.write_common_data()
 
@@ -131,7 +131,7 @@ class ModelCaseEni:
 
         phi_ave = (
             np.sum(phi) / phi.shape[0]
-        )  # HARDOCED, and not consistent with previous choice...
+        )  # phi 2 = reservoir = 0.2 # HARDOCED, and not consistent with previous choice...
         nu = np.loadtxt(data_folder_root + "/mech/NU")
         c_pp = (1 + nu) * (1 - 2 * nu) / ((1 - nu) * E_ave * phi)
 
@@ -160,31 +160,31 @@ class ModelCaseEni:
 
         search_pattern = "__TIME_PRODUCTION__"
         replacement_pattern = str(np.loadtxt(data_folder_root + "/TIME_PRODUCTION"))
-        ppromode.replace_pattern(file_name, search_pattern, replacement_pattern)
+        replace_pattern(file_name, search_pattern, replacement_pattern)
 
         search_pattern = "__TIME_INJECTION__"
         replacement_pattern = str(np.loadtxt(data_folder_root + "/TIME_INJECTION"))
-        ppromode.replace_pattern(file_name, search_pattern, replacement_pattern)
+        replace_pattern(file_name, search_pattern, replacement_pattern)
 
         search_pattern = "__PRODUCTION_RATE__"
         replacement_pattern = str(mu_param[6])
-        ppromode.replace_pattern(file_name, search_pattern, replacement_pattern)
+        replace_pattern(file_name, search_pattern, replacement_pattern)
 
         search_pattern = "__INJECTION_RATE__"
         replacement_pattern = str(mu_param[5])
-        ppromode.replace_pattern(file_name, search_pattern, replacement_pattern)
+        replace_pattern(file_name, search_pattern, replacement_pattern)
+
+        search_pattern = "__PERMEABILITY_X_MULTIPLIER__"
+        replacement_pattern = str(np.exp(mu_param[0]))
+        replace_pattern(file_name, search_pattern, replacement_pattern)
 
         search_pattern = "__TRANSMISS_PERP__"
-        replacement_pattern = str(mu_param[1])
-        ppromode.replace_pattern(file_name, search_pattern, replacement_pattern)
+        replacement_pattern = str(np.exp(mu_param[1]))
+        replace_pattern(file_name, search_pattern, replacement_pattern)
 
         # search_pattern = ""
         # replacement_pattern = ""
-        # ppromode.replace_pattern(file_name, search_pattern, replacement_pattern)
-
-        # search_pattern = ""
-        # replacement_pattern = ""
-        # ppromode.replace_pattern(file_name, search_pattern, replacement_pattern)
+        # replace_pattern(file_name, search_pattern, replacement_pattern)
 
         # prepare run working folder
         shutil.copy(

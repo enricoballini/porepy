@@ -29,7 +29,8 @@ if __name__ == "__main__":
     # basically for testing...
     id_mu = 99999
     data_folder = data_folder_fluid + "/" + str(id_mu)
-    file_name = data_folder + "/PP"
+    file_name = data_folder + "/*."
+    read_and_save_pressures(file_name, timestep)
 
 else:
     training_dataset_id = np.loadtxt(data_folder_root + "/training_dataset_id")

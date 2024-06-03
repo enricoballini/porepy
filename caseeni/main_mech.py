@@ -9,18 +9,12 @@ import time
 import numpy as np
 
 """
-https://pytorch.org/get-started/previous-versions/
 """
 
-# sys.path.append("/home/inspiron/Desktop/PhD/mypythonmodules")
-# sys.path.append("/g100_work/pMI24_MatBa/eballin1/mypythonmodules")  # Cineca G100
-sys.path.append("../../mypythonmodules")  # hpc5 (and others for the future)
+sys.path.append("../../mypythonmodules") 
 
-
-# from pprom import ppromode
-from ppromode import offline_ode
+from nnrom.ppromode import offline_ode
 import model_fom_case_eni
-import model_nn_case_eni
 
 
 os.system("clear")
@@ -29,27 +23,18 @@ os.system("clear")
 """
 """
 
-# data_folder = "./data"
-# save_folder = "./results"
-# os.system("mkdir -p " + data_folder + "/fluid")
-# os.system("mkdir -p " + data_folder + "/mech")
-# os.system("mkdir " + save_folder)
-# idx_mu = 99999
+print("\n THIS IS MAIN MECH, to be run after main_fluid.py \n")
 
-# time_final_training = 40 * 365.25
-# timestep = time_final_training / 40
-# np.savetxt(data_folder + "/TIMESTEP", np.array([timestep]))
-# np.savetxt(
-#     data_folder + "/TIMES",
-#     np.arange(0, time_final_training + timestep, timestep),
-# )
-# offline = model_fom_case_eni.ModelCaseEni(data_folder=data_folder)
-# mu_param = np.array([np.log(1e5), np.log(1e-1), 5.71e10, 5.71e10, 1.0, 1.5e6, 703000.0])
-# # offline.run_one_simulation(data_folder, save_folder, idx_mu, mu_param)
-# offline.run_one_simulation_no_python(data_folder, data_folder, idx_mu, mu_param)
+data_folder = "./data"
+save_folder = "./results"
+idx_mu = 99999
 
-# print("\n\n\n\n\n Part 1 Done!\n\n\n")
-# stop
+offline = model_fom_case_eni.ModelCaseEni(data_folder=data_folder, save_folder=data_folder)
+mu_param = np.array([np.log(1e1), np.log(1e0), 1, 5.71e10, 1.0, 1.3e6, 703000.0])
+offline.run_one_simulation(data_folder, save_folder, idx_mu, mu_param)
+
+print("\n\n\n\n\n Part 1 mech Done!\n\n\n")
+stop
 
 #####################################################################################################
 
