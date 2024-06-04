@@ -556,7 +556,7 @@ class GeometryCloseToEni(
 
     def set_geometry(self) -> None:
         """ """
-        cut = False
+        cut = True
 
         self.set_domain()
         eni_grid = self.load_eni_grid(path_to_mat="./data/mrst_grid")
@@ -565,7 +565,7 @@ class GeometryCloseToEni(
         self.xmax = 3000
         self.ymin = -500
         self.ymax = 1500
-        width = 550  # 1625  # 525  # 125  # step 125
+        width = 550  # step 125
         if cut:
             self.ymax = self.ymin + width
         self.zmin = 0
@@ -639,7 +639,7 @@ class GeometryCloseToEni(
         # self.plot_fracture_nodes(eni_grid)
         self.create_frac_sd_for_plot(eni_grid, self.fracture_faces_id)
 
-        self.reservoir_cell_ids = self.find_reservoir_cells(eni_grid, polygon_vertices)
+        self.find_reservoir_cells(eni_grid, polygon_vertices)
 
     def set_domain(self) -> None:
         """ """
@@ -1070,9 +1070,37 @@ class SolutionStrategyMomentumBalance(
         #     )
         # )
 
-        # # useless export: --------------------------------------
-        # exporter = pp.Exporter(self.mdg, file_name="eni_case", folder_name="./")
-        # exporter.write_vtu("u")
+        # export: --------------------------------------
+        exporter = pp.Exporter(sd, file_name="data", folder_name=self.exporter_folder)
+        exporter.write_vtu(
+            [
+                (
+                    sd,
+                    "Young's modulus",
+                    self.youngs_modulus(subdomains).evaluate(self.equation_system),
+                ),
+                (
+                    sd,
+                    "solid_density",
+                    self.solid_density(subdomains).evaluate(self.equation_system),
+                ),
+                (
+                    sd,
+                    "water_density",
+                    self.water_density(subdomains).evaluate(self.equation_system),
+                ),
+                (
+                    sd,
+                    "poisson_ratio",
+                    self.poisson_ratio(subdomains).evaluate(self.equation_system),
+                ),
+                (
+                    sd,
+                    "shear_modulus",
+                    self.shear_modulus(subdomains).evaluate(self.equation_system),
+                ),
+            ]
+        )
 
     # def prepare_model_for_postprocess(self):
     #     """ """
@@ -1093,7 +1121,7 @@ class SubModelCaseEni(
 
 if __name__ == "__main__":
     model = SubModelCaseEni()
-    model.mu_param = np.array([None, None, 1.0, 5.71e9])
+    model.mu_param = np.array([None, None, 3, 5.71e9])
     model.echelon_pressure = None
     model.save_folder = "./data/mech/99999"
     model.exporter_folder = "./data/mech/99999"
