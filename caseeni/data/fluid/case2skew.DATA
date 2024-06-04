@@ -143,8 +143,10 @@ PVTW
 -- ROCK (p. 458) 
 -- REF_PRESS (reference pressure) ROCK_COMP (rock_compressibility)
 ROCK
-150.0  1.46e-05 /
-150.0  7.30e-06 /
+150.0  __ROCK_COMPRESSIBILITY_1__ /
+150.0  __ROCK_COMPRESSIBILITY_2__ /
+-- compressibility was: 1.46e-5
+-- and 7.30e-6
 
 --GROCK
 --0.0  3.807e+05  0.200000 /

@@ -1,6 +1,7 @@
 import os
 import sys
 import pdb
+import pickle
 import warnings
 import inspect
 import copy
@@ -346,12 +347,20 @@ class MomentumBalanceEquations(
         if len(subdomains) > 1:
             raise NotImplementedError("inside pressure_source, only one 3D domain")
         sd = subdomains[0]
+
         pressure_vals = self.echelon_pressure
-        fake_vals = np.zeros(sd.num_cells)
-        fake_vals[self.reservoir_cell_ids] = (
-            sd.cell_centers[0, self.reservoir_cell_ids] ** 2 * 2
-        )
-        pressure_vals = fake_vals
+
+        if pressure_vals is None:
+            print("\nusing fake fluid pressure values")
+            fake_vals = np.zeros(sd.num_cells)
+            fake_vals[self.reservoir_cell_ids] = (
+                sd.cell_centers[0, self.reservoir_cell_ids] ** 2 * 2
+            )
+            pressure_vals = fake_vals
+
+        if isinstance(pressure_vals, str):  # reference solution
+            if pressure_vals == "gravity_only":
+                pressure_vals = np.zeros(sd.num_cells)
 
         discr = pp.Biot()
         data = {
@@ -405,8 +414,8 @@ class ConstitutiveLawsMomentumBalanceEni(
 
         for sd in subdomains:
             if sd.dim == 3:
-                E = 5.71e10 * np.ones(sd.num_cells)  # Pa
-                E[self.reservoir_cell_ids] = 1e9  # *self.mu_param[0]
+                E = self.mu_param[2] * self.mu_param[3] * np.ones(sd.num_cells)  # Pa
+                E[self.reservoir_cell_ids] = self.mu_param[3]
             else:
                 print("\n\ninside young_modulus, there should be only one 3D grid")
 
@@ -535,6 +544,10 @@ class BoundaryConditionsMomentumBalance(
 class GeometryCloseToEni(
     pp.ModelGeometry
 ):  # ----------------------------------------------------------------------------------------------------------------------------------
+    def __init__(self):
+        """ """
+        print("\n__init__ of Geometry\n")
+
     def meshing_arguments(self) -> dict[str, float]:
         """ """
         cell_size = self.solid.convert_units(0.05, "m")
@@ -543,15 +556,18 @@ class GeometryCloseToEni(
 
     def set_geometry(self) -> None:
         """ """
+        cut = False
+
         self.set_domain()
-        eni_grid = self.load_eni_grid(path_to_mat="../egridtoporepy/mrst_grid")
+        eni_grid = self.load_eni_grid(path_to_mat="./data/mrst_grid")
 
         self.xmin = -1000
         self.xmax = 3000
         self.ymin = -500
         self.ymax = 1500
         width = 550  # 1625  # 525  # 125  # step 125
-        # self.ymax = self.ymin + width
+        if cut:
+            self.ymax = self.ymin + width
         self.zmin = 0
         self.zmax = 2500
 
@@ -564,11 +580,37 @@ class GeometryCloseToEni(
 
         self.reservoir_z_right_top = 1450 + 50 * np.sin(80 * np.pi / 180)  # from paper
         self.reservoir_z_right_bottom = 1550 + 50 * np.sin(80 * np.pi / 180)
+        if cut:
+            ind_cut = (
+                eni_grid.cell_centers[1, :] < self.ymin + width
+            )  # old_grid: + 2000 => 24000 cell, more or less the limit for my computer
+            [_, eni_grid], _, _ = pp.partition.partition_grid(eni_grid, ind_cut)
 
-        # ind_cut = (
-        #     eni_grid.cell_centers[1, :] < self.ymin + width
-        # )  # old_grid: + 2000 => 24000 cell, more or less the limit for my computer
-        # [_, eni_grid], _, _ = pp.partition.partition_grid(eni_grid, ind_cut)
+        self.eni_grid = eni_grid
+        # exporter = pp.Exporter(eni_grid, folder_name="./", file_name="ENIGRID")
+        # exporter.write_vtu()
+
+        self.mdg = pp.MixedDimensionalGrid()
+        self.mdg.add_subdomains(eni_grid)
+        self.mdg.compute_geometry()
+        self.mdg.set_boundary_grid_projections()  # I added it. Where should it be called normally?
+
+        self.nd: int = self.mdg.dim_max()
+
+        pp.set_local_coordinate_projections(self.mdg)
+
+        # self.set_well_network()
+        # if len(self.well_network.wells) > 0:
+        #     # Compute intersections
+        #     assert isinstance(self.fracture_network, FractureNetwork3d)
+        #     pp.compute_well_fracture_intersections(
+        #         self.well_network, self.fracture_network
+        #     )
+        #     self.well_network.mesh(self.mdg)
+
+    def set_geometry_part_2(self):
+        """ """
+        eni_grid = self.eni_grid
 
         polygon_vertices = np.array(
             [
@@ -598,24 +640,6 @@ class GeometryCloseToEni(
         self.create_frac_sd_for_plot(eni_grid, self.fracture_faces_id)
 
         self.reservoir_cell_ids = self.find_reservoir_cells(eni_grid, polygon_vertices)
-
-        self.mdg = pp.MixedDimensionalGrid()
-        self.mdg.add_subdomains(eni_grid)
-        self.mdg.compute_geometry()
-        self.mdg.set_boundary_grid_projections()  # I added it. Where should it be called normally?
-
-        self.nd: int = self.mdg.dim_max()
-
-        pp.set_local_coordinate_projections(self.mdg)
-
-        self.set_well_network()
-        if len(self.well_network.wells) > 0:
-            # Compute intersections
-            assert isinstance(self.fracture_network, FractureNetwork3d)
-            pp.compute_well_fracture_intersections(
-                self.well_network, self.fracture_network
-            )
-            self.well_network.mesh(self.mdg)
 
     def set_domain(self) -> None:
         """ """
@@ -904,13 +928,11 @@ class SolutionStrategyMomentumBalance(
 
     def prepare_simulation(self) -> None:
         """ """
-
-        t1 = time.time()
-
         self.clean_working_directory()
 
         self.set_materials()
         self.set_geometry()
+        self.set_geometry_part_2()
 
         self.initialize_data_saving(
             exporter_folder=self.exporter_folder, subscript=self.subscript
@@ -927,9 +949,6 @@ class SolutionStrategyMomentumBalance(
         self.set_nonlinear_discretizations()
 
         self.save_data_time_step()
-
-        print("\n\n\n ONE RUN TIME = ", time.time() - t1)
-        print("\n\n\n")
 
     def clean_working_directory(self):
         """ """
@@ -1011,9 +1030,6 @@ class SolutionStrategyMomentumBalance(
             "bound_stress"
         ]  # not 100% clear what is this tensor. It multiplies u_b that contains both dir and neumann
 
-        u = self.displacement(subdomains).evaluate(self.equation_system).val
-        # same of np.linalg.solve(self.linear_system[0], self.linear_system[1]) => no reshape problems
-
         u_b_displ = self.bc_values_displacement(boundary_grids[0])
         u_b_stress = self.bc_values_stress(boundary_grids[0])
 
@@ -1024,43 +1040,26 @@ class SolutionStrategyMomentumBalance(
         u_b_filled = np.zeros((self.nd, sd.num_faces))
         u_b_filled[:, sd.get_all_boundary_faces()] = u_b.reshape((3, -1), order="F")
         u_b_filled = u_b_filled.ravel("F")
-        T = stress_tensor_grad * u + bound_stress * u_b_filled
 
-        T_vect = np.reshape(T, (sd.dim, -1), order="F")
-        T_vect_frac = T_vect[:, self.fracture_faces_id]
-
-        # pp.plot_grid(sd, vector_value=T_vect, figsize=(15, 12), alpha=0)
-        # pp.plot_grid(
-        #     self.sd_fract, T_vect_frac, alpha=0
-        # )  # NO, for pp self.sd_fract is 2D, T_vect_frac is 3D, so they don't match, see below
-        # T_vect_frac_filled = np.zeros((self.nd, sd.num_faces))
-        # T_vect_frac_filled[:, self.fracture_faces_id] = T_vect_frac
-        # pp.plot_grid(sd, vector_value=10000 * T_vect_frac_filled, alpha=0) # there is an eror in paraview... don't trust it
-
-        exporter = pp.Exporter(
-            self.sd_fract,
-            file_name="sd_fract" + self.subscript,
-            folder_name=self.save_folder,
-        )
-        exporter.write_vtu(
-            [
-                (self.sd_fract, "T_x", T_vect_frac[0]),
-                (self.sd_fract, "T_y", T_vect_frac[1]),
-                (self.sd_fract, "T_z", T_vect_frac[2]),
-            ]
-        )
+        u = self.displacement(subdomains).evaluate(self.equation_system).val
 
         normal = sd.face_normals[:, self.fracture_faces_id][
             :, 0
         ]  # the fracture is planar, i take the first vecor as ref
-        normal = normal / np.linalg.norm(normal, ord=2)
-        normal_projection = pp.map_geometry.normal_matrix(normal=normal)
-        tangential_projetion = pp.map_geometry.tangent_matrix(normal=normal)
 
-        T_normal = normal_projection @ T_vect_frac
-        T_normal_norm = np.linalg.norm(T_normal.T, ord=2, axis=1)
-        T_tangential = tangential_projetion @ T_vect_frac
-        T_tangential_norm = np.linalg.norm(T_tangential.T, ord=2, axis=1)
+        # need to save data for computing fault traction as post process
+
+        np.save(self.save_folder + "/displacement", u)
+        np.save(self.save_folder + "/displacement_boundary", u_b_filled)
+        sp.sparse.save_npz(self.save_folder + "/stress_tensor_grad", stress_tensor_grad)
+        sp.sparse.save_npz(self.save_folder + "/bound_stress", bound_stress)
+        np.save(self.save_folder + "/normal", normal)
+        np.save(self.save_folder + "/fracture_faces_id", self.fracture_faces_id)
+
+        with open(self.save_folder + "/sd_fract.pkl", "wb") as fle:
+            pickle.dump(self.sd_fract, fle)
+
+        # same of np.linalg.solve(self.linear_system[0], self.linear_system[1]) => no reshape problems
 
         # assert np.all(
         #     np.isclose(
@@ -1071,13 +1070,13 @@ class SolutionStrategyMomentumBalance(
         #     )
         # )
 
-        # stress tensor (sigma) computation: ------------------------------------------------
-        # sigma_tensor = self.stress(subdomains).evaluate(self.equation_system).val  # NO!
-        # is it possible?
-
         # # useless export: --------------------------------------
         # exporter = pp.Exporter(self.mdg, file_name="eni_case", folder_name="./")
         # exporter.write_vtu("u")
+
+    # def prepare_model_for_postprocess(self):
+    #     """ """
+    #     self.prepare_simulation()
 
 
 class SubModelCaseEni(
@@ -1085,8 +1084,8 @@ class SubModelCaseEni(
     VariablesMomentumBalance,
     ConstitutiveLawsMomentumBalanceEni,
     BoundaryConditionsMomentumBalance,
-    GeometryCloseToEni,
     SolutionStrategyMomentumBalance,
+    GeometryCloseToEni,  # Pay attention, I added a init here
     pp.DataSavingMixin,
 ):
     pass
@@ -1094,12 +1093,12 @@ class SubModelCaseEni(
 
 if __name__ == "__main__":
     model = SubModelCaseEni()
-    model.mu_param = None
+    model.mu_param = np.array([None, None, 1.0, 5.71e9])
     model.echelon_pressure = None
-    model.save_folder = "./"
-    model.exporter_folder = "./"
-    model.subscript = "_00.00"
-    model.nu = 0.5
+    model.save_folder = "./data/mech/99999"
+    model.exporter_folder = "./data/mech/99999"
+    model.subscript = ""
+    model.nu = 0.25
 
     # pp.run_time_dependent_model(model, {}) # same output of run_stationary....
     pp.run_stationary_model(model, {})

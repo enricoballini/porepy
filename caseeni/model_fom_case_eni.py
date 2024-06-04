@@ -24,7 +24,7 @@ if not sentinel:
     sys.path.append(my_modules_path)
 from nnrom.utilsode.misc_ode import replace_pattern
 
-sys.path.append("../porepy/src") 
+sys.path.append("../porepy/src")
 
 
 """
@@ -65,6 +65,22 @@ class ModelCaseEni:
             self.data_folder + "/TEST_TIMES",
             np.arange(0, time_final_test + timestep_nn, timestep_nn),
         )
+
+    def run_ref_mechanics(self):
+        """reference solution or initial state"""
+        import porepy as pp
+        import sub_model_fom_case_eni
+
+        model = sub_model_fom_case_eni.SubModelCaseEni()
+        model.mu_param = np.array([None, None, 1.0, 5.71e10])  # E ratio, E reservoir
+        model.echelon_pressure = "gravity_only"
+        os.system("mkdir ./data/mech/ref")
+        model.save_folder = "./data/mech/ref"
+        model.exporter_folder = "./data/mech/ref"
+        model.subscript = ""
+        model.nu = 0.25
+
+        pp.run_stationary_model(model, {})
 
     def run_one_simulation(
         self,
@@ -122,18 +138,18 @@ class ModelCaseEni:
         """
 
         # pore compressibility, c_pp
-        E_ave = (mu_param[3] + mu_param[4]) / 2  # bad approximation
+        E_ave = mu_param[4]  # I dont need an ave since I simulate only the reservoir
         with open(data_folder_root + "/fluid/PORO.INC") as f:
             lines = f.read().splitlines()[
                 1:-2
             ]  # HARDCODED: first an last two elements are strings
             phi = np.array(lines, dtype=np.float32)
 
-        phi_ave = (
-            np.sum(phi) / phi.shape[0]
-        )  # phi 2 = reservoir = 0.2 # HARDOCED, and not consistent with previous choice...
+        # phi_ave = np.sum(phi) / phi.shape[0]  # phi 2 = reservoir = 0.2 #
+        phi_ave = np.max(phi)  # HARDCODED
+
         nu = np.loadtxt(data_folder_root + "/mech/NU")
-        c_pp = (1 + nu) * (1 - 2 * nu) / ((1 - nu) * E_ave * phi)
+        c_pp = (1 + nu) * (1 - 2 * nu) / ((1 - nu) * E_ave * phi_ave)
 
         # modify .DATA and prepare running folder
         save_folder = save_folder_root + "/fluid/" + str(idx_mu)
@@ -182,9 +198,13 @@ class ModelCaseEni:
         replacement_pattern = str(np.exp(mu_param[1]))
         replace_pattern(file_name, search_pattern, replacement_pattern)
 
-        # search_pattern = ""
-        # replacement_pattern = ""
-        # replace_pattern(file_name, search_pattern, replacement_pattern)
+        search_pattern = "__ROCK_COMPRESSIBILITY_1__"
+        replacement_pattern = str(c_pp)
+        replace_pattern(file_name, search_pattern, replacement_pattern)
+
+        search_pattern = "__ROCK_COMPRESSIBILITY_2__"
+        replacement_pattern = str(c_pp)
+        replace_pattern(file_name, search_pattern, replacement_pattern)
 
         # prepare run working folder
         shutil.copy(

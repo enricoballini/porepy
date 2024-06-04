@@ -13,7 +13,7 @@
 	 
 #SBATCH --mem=60GB # default is 7800MB per core https://wiki.u-gov.it/confluence/display/SCAIUS/UG3.3%3A+GALILEO100+UserGuide
 
-#SBATCH --time=00:15:00
+#SBATCH --time=00:30:00
 #SBATCH --account=pMI24_MatBa
 #SBATCH --partition=g100_usr_prod
 #SBATCH --job-name=EB_job_pp
@@ -24,5 +24,5 @@
 
 export OMP_NUM_THREADS=1
 
-srun --cpu-bind=cores python3 main_case_eni.py > output.txt 2>&1
+srun --cpu-bind=cores python3 main_mech.py > output.txt 2>&1
 

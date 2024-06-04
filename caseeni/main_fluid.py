@@ -12,7 +12,7 @@ import numpy as np
 https://pytorch.org/get-started/previous-versions/
 """
 
-sys.path.append("../../mypythonmodules") 
+sys.path.append("../../mypythonmodules")
 
 from nnrom.dlromode import offline_ode
 import model_fom_case_eni
@@ -24,14 +24,17 @@ os.system("clear")
 """
 print("\n THIS IS MAIN FLUID \n")
 
+# to try the code:
 data_folder = "./data"
 save_folder = "./results"
 os.system("mkdir -p " + data_folder + "/fluid")
 os.system("mkdir -p " + data_folder + "/mech")
 os.system("mkdir " + save_folder)
-idx_mu = 99999 # "baseline"
+idx_mu = 99999  # "baseline"
 
-offline = model_fom_case_eni.ModelCaseEni(data_folder=data_folder, save_folder=data_folder)
+offline = model_fom_case_eni.ModelCaseEni(
+    data_folder=data_folder, save_folder=data_folder
+)
 mu_param = np.array([np.log(1e1), np.log(1e0), 1, 5.71e10, 1.0, 1.3e6, 703000.0])
 offline.run_one_simulation_no_python(data_folder, data_folder, idx_mu, mu_param)
 
@@ -74,7 +77,9 @@ num_snap_to_generate = test_dataset_id[-1] + 1
 # data generation:
 model_fom = model_fom_case_eni.ModelCaseEni(data_folder)
 
-offline_data_class = offline_ode.OfflineComputationsODE(data_folder=data_folder, save_folder=data_folder)
+offline_data_class = offline_ode.OfflineComputationsODE(
+    data_folder=data_folder, save_folder=data_folder
+)
 offline_data_class.sample_parameters(
     num_snap_to_generate,
     parameters_range,
@@ -109,4 +114,3 @@ ppromode.broomer(
     test_times,
     test_dataset_id,
 )
-
