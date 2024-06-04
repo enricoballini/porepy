@@ -138,7 +138,7 @@ class ModelCaseEni:
         """
 
         # pore compressibility, c_pp
-        E_ave = mu_param[4]  # I dont need an ave since I simulate only the reservoir
+        E_ave = mu_param[3]  # I dont need an ave since I simulate only the reservoir
         with open(data_folder_root + "/fluid/PORO.INC") as f:
             lines = f.read().splitlines()[
                 1:-2
