@@ -65,6 +65,18 @@ if __name__ == "__main__":
             x_ticks = np.array([0, 2, 4, 6, 8, 10])
             x_label = "time"
 
+        if case_type == "slanted_non_conforming_small_k":
+            name_root = "case_" + str(case_id) + "_slanted_non_conforming_small_k"
+            output_file_ppu = (
+                "./case_1/slanted_ppu_small_k/non-conforming/OUTPUT_NEWTON_INFO"
+            )
+            output_file_hu = (
+                "./case_1/slanted_hu_small_k/non-conforming/OUTPUT_NEWTON_INFO"
+            )
+            save_folder = save_folder_root + "/slanted-non-conforming"
+            x_ticks = np.array([0, 2, 4, 6, 8, 10])
+            x_label = "time"
+
     if case_id == 2:
         name_root = "case_" + str(case_id)
         save_folder = "./case_2"

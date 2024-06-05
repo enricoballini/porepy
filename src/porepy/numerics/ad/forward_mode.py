@@ -1,5 +1,6 @@
 """The module contains the data class for forward mode automatic differentiation.
 """
+
 from __future__ import annotations
 
 from typing import Union
@@ -296,7 +297,6 @@ class AdArray:
 
         if isinstance(other, (int, float)):
             # This is a polynomial, use standard rules for differentiation.
-
             new_val = self.val**other
 
             # Left-multiply jac with a diagonal-matrix version of the differentiated

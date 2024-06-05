@@ -1,80 +1,35 @@
+import os
+import sys
 import scipy as sp
 import numpy as np
 from typing import Callable, Optional, Type, Literal, Sequence, Union
-
-import sys
 
 pp_path = "../../../src"
 if pp_path not in sys.path:
     sys.path.append(pp_path)
 import porepy as pp
 
-
-import os
+import copy
 import pdb
-import warnings
 
-import porepy.models.two_phase_hu as two_phase_hu
 import porepy.models.two_phase_ppu as two_phase_ppu
-import case_6_hu
+import porepy.models.two_phase_hu as two_phase_hu
+import case_1_slanted_ppu
+import case_1_slanted_hu
+import case_1_slanted_hu_small_k
 
-"""
 
-"""
-
-
-class InitialContitionCase3PPU(case_6_hu.InitialConditionCase3):
-    def initial_condition(self) -> None:
-        """ """
-        self.initial_condition_common()
-
-        for sd, data in self.mdg.subdomains(return_data=True):
-            pp.initialize_data(
-                sd,
-                data,
-                self.ppu_keyword + "_" + "darcy_flux_phase_0",
-                {
-                    "darcy_flux_phase_0": np.zeros(sd.num_faces),
-                },
-            )
-
-            pp.initialize_data(
-                sd,
-                data,
-                self.ppu_keyword + "_" + "darcy_flux_phase_1",
-                {
-                    "darcy_flux_phase_1": np.zeros(sd.num_faces),
-                },
-            )
-
-        for intf, data in self.mdg.interfaces(return_data=True):
-            pp.initialize_data(
-                intf,
-                data,
-                self.ppu_keyword + "_" + "interface_mortar_flux_phase_0",
-                {
-                    "interface_mortar_flux_phase_0": np.zeros(intf.num_cells),
-                },
-            )
-
-            pp.initialize_data(
-                intf,
-                data,
-                self.ppu_keyword + "_" + "interface_mortar_flux_phase_1",
-                {
-                    "interface_mortar_flux_phase_1": np.zeros(intf.num_cells),
-                },
-            )
+os.system("clear")
 
 
 class PartialFinalModel(
     two_phase_hu.PrimaryVariables,
     two_phase_ppu.EquationsPPU,
-    case_6_hu.ConstitutiveLawCase3,
+    case_1_slanted_hu_small_k.ConstitutiveLawCase1SlantedSmallK,
     two_phase_hu.BoundaryConditionsPressureMass,
-    InitialContitionCase3PPU,
-    two_phase_ppu.SolutionStrategyPressureMassPPU,
-    case_6_hu.GeometryCase3,
+    case_1_slanted_ppu.InitialConditionCase1SlantedPPU,
+    case_1_slanted_ppu.SolutionStrategyCase1SlantedPPU,
+    case_1_slanted_hu.GeometryCase1Slanted,
     pp.DataSavingMixin,
 ):
     """ """
@@ -105,12 +60,13 @@ if __name__ == "__main__":
 
     fluid_constants = pp.FluidConstants({})
 
+    Kn = 0.01
     solid_constants = pp.SolidConstants(
         {
-            "porosity": None,
-            "intrinsic_permeability": None,
-            "normal_permeability": None,
-            "residual_aperture": None,
+            "porosity": 0.25,
+            "intrinsic_permeability": 1.0 / Ka_0,
+            "normal_permeability": Kn / Ka_0,
+            "residual_aperture": 0.01 / L_0,
         }
     )
 
@@ -122,12 +78,14 @@ if __name__ == "__main__":
     mixture = pp.Mixture()
     mixture.add([wetting_phase, non_wetting_phase])
 
-    class FinalModel(PartialFinalModel):
+    class FinalModel(case_1_slanted_ppu.PartialFinalModel):
         def __init__(self, params: Optional[dict] = None):
             super().__init__(params)
 
-            self.mdg = None
+            self.mdg_ref = None  # fine mesh
+            self.mdg = None  # coarse mesh
             self.cell_size = None
+            self.cell_size_ref = None
 
             # scaling values: (not all of them are actually used inside model)
             self.L_0 = L_0
@@ -145,11 +103,30 @@ if __name__ == "__main__":
 
             self.xmin = 0.0 / self.L_0
             self.xmax = 1.0 / self.L_0
-            self.ymin = -1.0 / self.L_0
-            self.ymax = 0.0 / self.L_0
-            self.zmin = 0.0 / self.L_0
-            self.zmax = 2.25 / self.L_0
-            self.z_cut = 0.8
+            self.ymin = 0.0 / self.L_0
+            self.ymax = 1.0 / self.L_0
+
+            self.xmean = (self.xmax - self.xmin) / 2
+            self.ymean = (self.ymax - self.ymin) / 2
+
+            self.tilt_angle = 30 * np.pi / 180
+            self.x_bottom = (
+                self.xmean
+                - (self.ymax - self.ymin)
+                / 2
+                * np.sin(self.tilt_angle)
+                / np.cos(self.tilt_angle)
+                / self.L_0
+            )
+            self.x_top = (
+                self.xmean
+                + (self.ymax - self.ymin)
+                / 2
+                * np.sin(self.tilt_angle)
+                / np.cos(self.tilt_angle)
+                / self.L_0
+            )
+            self.displacement_max = -0.1
 
             self.relative_permeability = (
                 pp.tobedefined.relative_permeability.rel_perm_quadratic
@@ -163,20 +140,26 @@ if __name__ == "__main__":
             self.sign_darcy_phase_0_prev = None
             self.sign_darcy_phase_1_prev = None
 
-            self.root_path = "./case_6/ppu/"
+            # self.root_path = "./case_1/slanted_ppu_Kn" + str(Kn) + "/"
+            self.root_path = "./case_1/slanted_ppu_small_k/non-conforming/"
 
             self.output_file_name = self.root_path + "OUTPUT_NEWTON_INFO"
             self.mass_output_file_name = self.root_path + "MASS_OVER_TIME"
             self.flips_file_name = self.root_path + "FLIPS"
             self.beta_file_name = self.root_path + "BETA"  # not used
 
-    os.system("mkdir -p ./case_6/ppu/")
-    folder_name = "./case_6/ppu/visualization"
+    cell_size = 0.05
+
+    # os.system("mkdir -p ./case_1/slanted_ppu_Kn" + str(Kn))
+    os.system("mkdir -p ./case_1/slanted_ppu_small_k/non-conforming")
+
+    # folder_name = "./case_1/slanted_ppu_Kn" + str(Kn) + "/visualization"
+    folder_name = "./case_1/slanted_ppu_small_k/non-conforming/visualization"
 
     time_manager = two_phase_hu.TimeManagerPP(
-        schedule=np.array([0, 100]) / t_0,
-        dt_init=3e-1 / t_0,
-        dt_min_max=np.array([1e-9, 3e-1]) / t_0,
+        schedule=np.array([0, 10]) / t_0,
+        dt_init=1e-1 / t_0,
+        dt_min_max=np.array([1e-5, 1e-1]) / t_0,
         constant_dt=False,
         recomp_factor=0.5,
         recomp_max=10,
@@ -185,17 +168,18 @@ if __name__ == "__main__":
         folder_name=folder_name,
     )
 
-    meshing_kwargs = {"constraints": np.array([8])}
+    meshing_kwargs = {"constraints": np.array([1, 2])}
     params = {
         "material_constants": material_constants,
         "max_iterations": 15,
-        "nl_convergence_tol": 2e-5,
-        "nl_divergence_tol": 1e5,
+        "nl_convergence_tol": 1e-6,
+        "nl_divergence_tol": 1e0,
         "time_manager": time_manager,
         "folder_name": folder_name,
         "meshing_kwargs": meshing_kwargs,
     }
 
     model = FinalModel(params)
+    model.cell_size = cell_size
 
     pp.run_time_dependent_model(model, params)

@@ -1,7 +1,13 @@
+import sys
 import scipy as sp
 import numpy as np
 from typing import Callable, Optional, Type, Literal, Sequence, Union
+
+pp_path = "../../../src"
+if pp_path not in sys.path:
+    sys.path.append(pp_path)
 import porepy as pp
+
 import pygem
 import os
 import copy
@@ -149,13 +155,13 @@ if __name__ == "__main__":
 
     fluid_constants = pp.FluidConstants({})
 
-    Kn = 0.01
+    Kn = None
     solid_constants = pp.SolidConstants(
         {
-            "porosity": 0.25,
-            "intrinsic_permeability": 1.0 / Ka_0,
-            "normal_permeability": Kn / Ka_0,
-            "residual_aperture": 0.01 / L_0,
+            "porosity": None,
+            "intrinsic_permeability": None,
+            "normal_permeability": None,
+            "residual_aperture": None,
         }
     )
 

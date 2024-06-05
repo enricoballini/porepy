@@ -18,10 +18,13 @@ viz: Visualization; paraview, matplotlib.
 isort:skip_file
 
 """
+
 import os, sys
 from pathlib import Path
 import configparser
 import warnings
+
+sys.path.append("/home/inspiron/Desktop/PhD/mypythonmodules/porepy/src")
 
 __version__ = "1.6.0"
 

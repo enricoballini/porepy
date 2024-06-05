@@ -1,7 +1,13 @@
+import sys
 import scipy as sp
 import numpy as np
 from typing import Callable, Optional, Type, Literal, Sequence, Union
+
+pp_path = "../../../src"
+if pp_path not in sys.path:
+    sys.path.append(pp_path)
 import porepy as pp
+
 import pygem
 import copy
 import os

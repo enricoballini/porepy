@@ -22,6 +22,7 @@ mechanics, but will turn into a standard poro-elasticity equation for non-fractu
 domains).
 
 """
+
 from __future__ import annotations
 
 import logging
@@ -342,6 +343,9 @@ class Biot(pp.Mpsa):
                 for specification.
 
         """
+        print("\nbiot aaaaaaaaaa")
+        time.sleep(1)
+
         parameter_dictionary: dict[str, Any] = sd_data[pp.PARAMETERS][
             self.mechanics_keyword
         ]
@@ -368,6 +372,9 @@ class Biot(pp.Mpsa):
         # else a full new discretization will be computed
         update: bool = parameter_dictionary.get("update_discretization", False)
 
+        print("\nbiot bbbbbbbbb")
+        time.sleep(1)
+
         # The discretization can be limited to a specified set of cells, faces or nodes
         # If none of these are specified, the entire grid will be discretized.
         # NOTE: active_faces are all faces to have their stencils updated, while
@@ -377,15 +384,23 @@ class Biot(pp.Mpsa):
             parameter_dictionary, sd
         )
 
+        print("\nbiot cccccc")
+        time.sleep(1)
+
         # Extract a grid, and get global indices of its active faces and nodes
         active_grid, extracted_faces, extracted_nodes = pp.partition.extract_subgrid(
             sd, active_cells
         )
+
+        print("\nbiot dddddd")
+        time.sleep(1)
         # Constitutive law and boundary condition for the active grid
         active_constit: pp.FourthOrderTensor = self._constit_for_subgrid(
             constit, active_cells
         )
 
+        print("\nbiot eeeeee")
+        time.sleep(1)
         # Extract the relevant part of the boundary condition
         active_bound: pp.BoundaryConditionVectorial = self._bc_for_subgrid(
             bound, active_grid, extracted_faces
@@ -409,10 +424,16 @@ class Biot(pp.Mpsa):
         active_bound_displacement_pressure = sps.csr_matrix((nf * nd, nc))
 
         # Find an estimate of the peak memory need
+        print("\nbiot fffff")
+        time.sleep(1)
+
+        print("\n biot ggggggg")
+        time.sleep(1)
         peak_memory_estimate = self._estimate_peak_memory_mpsa(active_grid)
 
         # Loop over all partition regions, construct local problems, and transfer
         # discretization to the entire active grid
+
         for (
             reg_i,
             (sub_sd, faces_in_subgrid, cells_in_subgrid, l2g_cells, l2g_faces),
@@ -592,25 +613,25 @@ class Biot(pp.Mpsa):
             matrices_f[self.stabilization_matrix_key][update_cell_ind] = stabilization[
                 update_cell_ind
             ]
-            matrices_m[self.bound_displacement_cell_matrix_key][
-                update_face_ind
-            ] = bound_displacement_cell[update_face_ind]
-            matrices_m[self.bound_displacement_face_matrix_key][
-                update_face_ind
-            ] = bound_displacement_face[update_face_ind]
-            matrices_m[self.bound_pressure_matrix_key][
-                update_face_ind
-            ] = bound_displacement_pressure[update_face_ind]
+            matrices_m[self.bound_displacement_cell_matrix_key][update_face_ind] = (
+                bound_displacement_cell[update_face_ind]
+            )
+            matrices_m[self.bound_displacement_face_matrix_key][update_face_ind] = (
+                bound_displacement_face[update_face_ind]
+            )
+            matrices_m[self.bound_pressure_matrix_key][update_face_ind] = (
+                bound_displacement_pressure[update_face_ind]
+            )
         else:
             matrices_m[self.stress_matrix_key] = stress
             matrices_m[self.bound_stress_matrix_key] = bound_stress
             matrices_m[self.grad_p_matrix_key] = grad_p
-            matrices_m[
-                self.bound_displacement_cell_matrix_key
-            ] = bound_displacement_cell
-            matrices_m[
-                self.bound_displacement_face_matrix_key
-            ] = bound_displacement_face
+            matrices_m[self.bound_displacement_cell_matrix_key] = (
+                bound_displacement_cell
+            )
+            matrices_m[self.bound_displacement_face_matrix_key] = (
+                bound_displacement_face
+            )
             matrices_m[self.bound_pressure_matrix_key] = bound_displacement_pressure
 
             matrices_f[self.div_u_matrix_key] = div_u
