@@ -62,6 +62,10 @@ class ModelCaseEni:
             np.arange(0, time_final_training + timestep_nn, timestep_nn),
         )
         np.savetxt(
+            self.data_folder + "/TIMES",
+            np.arange(0, time_final_training + timestep_nn, timestep_nn),
+        ) 
+        np.savetxt(
             self.data_folder + "/TEST_TIMES",
             np.arange(0, time_final_test + timestep_nn, timestep_nn),
         )
@@ -149,7 +153,7 @@ class ModelCaseEni:
         phi_ave = np.max(phi)  # HARDCODED
 
         nu = np.loadtxt(data_folder_root + "/mech/NU")
-        c_pp = (1 + nu) * (1 - 2 * nu) / ((1 - nu) * E_ave * phi_ave)
+        c_pp = (1 + nu) * (1 - 2 * nu) / ((1 - nu) * (E_ave/1e5) * phi_ave) # /1e5: we want echelon in bar
 
         # modify .DATA and prepare running folder
         save_folder = save_folder_root + "/fluid/" + str(idx_mu)

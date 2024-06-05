@@ -35,7 +35,7 @@ idx_mu = 99999  # "baseline"
 offline = model_fom_case_eni.ModelCaseEni(
     data_folder=data_folder, save_folder=data_folder
 )
-mu_param = np.array([np.log(1e1), np.log(1e0), 1, 5.71e10, 1.0, 1.3e6, 703000.0])
+mu_param = np.array([np.log(1e0), np.log(1e0), 1, 5.71e10, 1.0, 1.3e6, 703000.0])
 offline.run_one_simulation_no_python(data_folder, data_folder, idx_mu, mu_param)
 
 print("\n\n\n\n\n Part 1 fluid Done!\n\n\n")
