@@ -107,12 +107,13 @@ class ModelCaseEni:
         # mechanics:
         save_folder = save_folder_root + "/mech/" + str(idx_mu)
 
-        pp_model = sub_model_fom_case_eni.SubModelCaseEni()
-        pp_model.save_folder = save_folder
-        pp_model.exporter_folder = save_folder
-        pp_model.nu = np.loadtxt(data_folder_root + "/mech/NU")
-
+       
         for time in times:
+            pp_model = sub_model_fom_case_eni.SubModelCaseEni()
+            pp_model.save_folder = save_folder
+            pp_model.exporter_folder = save_folder
+            pp_model.nu = np.loadtxt(data_folder_root + "/mech/NU")
+
             pp_model.subscript = "_" + str(time)
             pp_model.mu_param = mu_param
             echelon_pressure = np.load(

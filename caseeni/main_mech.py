@@ -36,7 +36,7 @@ mu_param = np.array([np.log(1e0), np.log(1e0), 1, 5.71e10, 1.0, 1.3e6, 703000.0]
 offline.run_one_simulation(data_folder, save_folder, idx_mu, mu_param)
 
 print("\n\n\n\n\n Part 1 mech Done!\n\n\n")
-stop
+
 
 #####################################################################################################
 
@@ -61,8 +61,18 @@ test_dataset_id = np.loadtxt(data_folder + "/test_dataset_id")
 num_snap_to_generate = test_dataset_id[-1] + 1
 
 # data generation:
-model_fom = model_fom_case_eni.ModelCaseEni(data_folder)
+model_fom = model_fom_case_eni.ModelCaseEni(data_folder, results_folder)
+print("running ref...")
 model_fom.run_ref_mechanics()
+print("done ref")
+
+
+
+stop 
+
+
+
+
 offline_data_class = offline_ode.OfflineComputationsODE(data_folder)
 
 t1 = time.time()

@@ -556,7 +556,7 @@ class GeometryCloseToEni(
 
     def set_geometry(self) -> None:
         """ """
-        cut = True
+        cut = False
 
         self.set_domain()
         eni_grid = self.load_eni_grid(path_to_mat="./data/mrst_grid")
@@ -949,7 +949,8 @@ class SolutionStrategyMomentumBalance(
         self.set_nonlinear_discretizations()
 
         self.save_data_time_step()
-
+    
+        
     def clean_working_directory(self):
         """ """
         os.system("rm *.pvd *.vtu")
@@ -1048,15 +1049,17 @@ class SolutionStrategyMomentumBalance(
         ]  # the fracture is planar, i take the first vecor as ref
 
         # need to save data for computing fault traction as post process
-
-        np.save(self.save_folder + "/displacement", u)
-        np.save(self.save_folder + "/displacement_boundary", u_b_filled)
-        sp.sparse.save_npz(self.save_folder + "/stress_tensor_grad", stress_tensor_grad)
-        sp.sparse.save_npz(self.save_folder + "/bound_stress", bound_stress)
-        np.save(self.save_folder + "/normal", normal)
+        
+        print("self.subscript = ", self.subscript)
+        
+        np.save(self.save_folder + "/displacement" + self.subscript, u)
+        np.save(self.save_folder + "/displacement_boundary"+ self.subscript, u_b_filled)
+        sp.sparse.save_npz(self.save_folder + "/stress_tensor_grad"+ self.subscript, stress_tensor_grad)
+        sp.sparse.save_npz(self.save_folder + "/bound_stress"+ self.subscript, bound_stress)
+        np.save(self.save_folder + "/normal"+ self.subscript, normal)
         np.save(self.save_folder + "/fracture_faces_id", self.fracture_faces_id)
 
-        with open(self.save_folder + "/sd_fract.pkl", "wb") as fle:
+        with open(self.save_folder + "/sd_fract.pkl", "wb") as fle: 
             pickle.dump(self.sd_fract, fle)
 
         # same of np.linalg.solve(self.linear_system[0], self.linear_system[1]) => no reshape problems
@@ -1129,5 +1132,7 @@ if __name__ == "__main__":
     model.nu = 0.25
 
     # pp.run_time_dependent_model(model, {}) # same output of run_stationary....
+    t1 = time.time()
     pp.run_stationary_model(model, {})
+    print("1 RUN TIME = ", time.time()-t1)
     print("\nDone!")
