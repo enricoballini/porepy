@@ -32,16 +32,19 @@ sys.path.append("../porepy/src")
 
 
 class ModelCaseEni:
-    def __init__(self, data_folder, save_folder):
-        """ """
-        self.data_folder = data_folder
-        self.save_folder = save_folder
+    def __init__(self, data_folder_root, save_folder_root):
+        """
+        - data_folder: where data are found, if any
+        - save_folder: where to save offline data. For fluid data_folder=save_folder, for mech data_folder=fluid save folder, save folder=mech save folder
+        """
+        self.data_folder_root = data_folder_root
+        self.save_folder_root = save_folder_root
 
         self.write_common_data()
 
     def write_common_data(self):
         """ """
-        np.savetxt(self.data_folder + "/mech/NU", np.array([0.25]))
+        np.savetxt(self.data_folder_root + "/mech/NU", np.array([0.25]))
 
         t_0 = 1
         time_production = 20 * 365.25 / t_0  # 20 years, leap year included
@@ -53,20 +56,24 @@ class ModelCaseEni:
         timestep_nn = 1 * timestep
         time_final_test = time_final_training
 
-        np.savetxt(self.data_folder + "/TIME_PRODUCTION", np.array([time_production]))
-        np.savetxt(self.data_folder + "/TIME_INJECTION", np.array([time_injection]))
-        np.savetxt(self.data_folder + "/TIMESTEP", np.array([timestep]))
-        np.savetxt(self.data_folder + "/TIMESTEP_NN", np.array([timestep_nn]))
         np.savetxt(
-            self.data_folder + "/TRAINING_TIMES",
+            self.data_folder_root + "/TIME_PRODUCTION", np.array([time_production])
+        )
+        np.savetxt(
+            self.data_folder_root + "/TIME_INJECTION", np.array([time_injection])
+        )
+        np.savetxt(self.data_folder_root + "/TIMESTEP", np.array([timestep]))
+        np.savetxt(self.data_folder_root + "/TIMESTEP_NN", np.array([timestep_nn]))
+        np.savetxt(
+            self.data_folder_root + "/TRAINING_TIMES",
             np.arange(0, time_final_training + timestep_nn, timestep_nn),
         )
         np.savetxt(
-            self.data_folder + "/TIMES",
+            self.data_folder_root + "/TIMES",
             np.arange(0, time_final_training + timestep_nn, timestep_nn),
-        ) 
+        )
         np.savetxt(
-            self.data_folder + "/TEST_TIMES",
+            self.data_folder_root + "/TEST_TIMES",
             np.arange(0, time_final_test + timestep_nn, timestep_nn),
         )
 
@@ -88,17 +95,18 @@ class ModelCaseEni:
 
     def run_one_simulation(
         self,
-        data_folder_root: str,
-        save_folder_root: str,
+        # data_folder_root: str,
+        # save_folder_root: str,
         idx_mu: int,
         mu_param: np.array,
     ) -> None:
-        """
-        - TODO: data folder and save folder are concept not totally clear, improve
-        """
+        """ """
 
         import porepy as pp
         import sub_model_fom_case_eni
+
+        data_folder_root = self.data_folder_root
+        save_folder_root = self.save_folder_root
 
         times = np.loadtxt(
             data_folder_root + "/TIMES"
@@ -107,7 +115,6 @@ class ModelCaseEni:
         # mechanics:
         save_folder = save_folder_root + "/mech/" + str(idx_mu)
 
-       
         for time in times:
             pp_model = sub_model_fom_case_eni.SubModelCaseEni()
             pp_model.save_folder = save_folder
@@ -132,15 +139,15 @@ class ModelCaseEni:
 
     def run_one_simulation_no_python(
         self,
-        data_folder_root: str,
-        save_folder_root: str,
+        # data_folder_root: str,
+        # save_folder_root: str,
         idx_mu,
         mu_param: np.array,
     ) -> None:
         """
-        - TODO: data folder and save folder are concept not totally clear, improve
         - TODO: find a better way to write mu_param in the input file
         """
+        data_folder_root = self.data_folder_root
 
         # pore compressibility, c_pp
         E_ave = mu_param[3]  # I dont need an ave since I simulate only the reservoir
@@ -154,12 +161,15 @@ class ModelCaseEni:
         phi_ave = np.max(phi)  # HARDCODED
 
         nu = np.loadtxt(data_folder_root + "/mech/NU")
-        c_pp = (1 + nu) * (1 - 2 * nu) / ((1 - nu) * (E_ave/1e5) * phi_ave) # /1e5: we want echelon in bar
+        c_pp = (
+            (1 + nu) * (1 - 2 * nu) / ((1 - nu) * (E_ave / 1e5) * phi_ave)
+        )  # /1e5: we want echelon in bar
 
         # modify .DATA and prepare running folder
-        save_folder = save_folder_root + "/fluid/" + str(idx_mu)
+        # save_folder = save_folder_root + "/fluid/" + str(idx_mu)
+        data_folder = data_folder_root + "/fluid/" + str(idx_mu)
         try:
-            os.mkdir(save_folder)
+            os.mkdir(data_folder)
         except:
             pass
 
@@ -180,11 +190,13 @@ class ModelCaseEni:
         )
 
         search_pattern = "__TIME_PRODUCTION__"
-        replacement_pattern = str(np.loadtxt(data_folder_root + "/TIME_PRODUCTION"))
+        tot_time = np.loadtxt(data_folder_root + "/TIME_PRODUCTION")
+        replacement_pattern = str("1*" + str(tot_time / 365.25))
         replace_pattern(file_name, search_pattern, replacement_pattern)
 
         search_pattern = "__TIME_INJECTION__"
-        replacement_pattern = str(np.loadtxt(data_folder_root + "/TIME_INJECTION"))
+        tot_time = np.loadtxt(data_folder_root + "/TIME_INJECTION")
+        replacement_pattern = str("1*" + str(tot_time / 365.25))
         replace_pattern(file_name, search_pattern, replacement_pattern)
 
         search_pattern = "__PRODUCTION_RATE__"
@@ -213,87 +225,87 @@ class ModelCaseEni:
 
         # prepare run working folder
         shutil.copy(
-            save_folder_root + "/fluid/" + "FAULTS.INC",
-            save_folder_root + "/fluid/" + str(idx_mu) + "/" + "FAULTS"
+            data_folder_root + "/fluid/" + "FAULTS.INC",
+            data_folder_root + "/fluid/" + str(idx_mu) + "/" + "FAULTS"
             # + str(idx_mu)
             + ".INC",
         )
 
         shutil.copy(
-            save_folder_root + "/fluid/" + "FIPNUM.INC",
-            save_folder_root + "/fluid/" + str(idx_mu) + "/" + "FIPNUM"
+            data_folder_root + "/fluid/" + "FIPNUM.INC",
+            data_folder_root + "/fluid/" + str(idx_mu) + "/" + "FIPNUM"
             # + str(idx_mu)
             + ".INC",
         )
         shutil.copy(
-            save_folder_root + "/fluid/" + "FLUXNUM.INC",
-            save_folder_root + "/fluid/" + str(idx_mu) + "/" + "FLUXNUM"
+            data_folder_root + "/fluid/" + "FLUXNUM.INC",
+            data_folder_root + "/fluid/" + str(idx_mu) + "/" + "FLUXNUM"
             # + str(idx_mu)
             + ".INC",
         )
         shutil.copy(
-            save_folder_root + "/fluid/" + "PERMX.INC",
-            save_folder_root + "/fluid/" + str(idx_mu) + "/" + "PERMX"
+            data_folder_root + "/fluid/" + "PERMX.INC",
+            data_folder_root + "/fluid/" + str(idx_mu) + "/" + "PERMX"
             # + str(idx_mu)
             + ".INC",
         )
         shutil.copy(
-            save_folder_root + "/fluid/" + "PERMY.INC",
-            save_folder_root + "/fluid/" + str(idx_mu) + "/" + "PERMY"
+            data_folder_root + "/fluid/" + "PERMY.INC",
+            data_folder_root + "/fluid/" + str(idx_mu) + "/" + "PERMY"
             # + str(idx_mu)
             + ".INC",
         )
         shutil.copy(
-            save_folder_root + "/fluid/" + "PERMZ.INC",
-            save_folder_root + "/fluid/" + str(idx_mu) + "/" + "PERMZ"
+            data_folder_root + "/fluid/" + "PERMZ.INC",
+            data_folder_root + "/fluid/" + str(idx_mu) + "/" + "PERMZ"
             # + str(idx_mu)
             + ".INC",
         )
         shutil.copy(
-            save_folder_root + "/fluid/" + "PORO.INC",
-            save_folder_root + "/fluid/" + str(idx_mu) + "/" + "PORO"
-            # + str(idx_mu)
-            + ".INC",
-        )
-
-        shutil.copy(
-            save_folder_root + "/fluid/" + "PUNQS3_EOS_COMPS.INC",
-            save_folder_root + "/fluid/" + str(idx_mu) + "/" + "PUNQS3_EOS_COMPS"
+            data_folder_root + "/fluid/" + "PORO.INC",
+            data_folder_root + "/fluid/" + str(idx_mu) + "/" + "PORO"
             # + str(idx_mu)
             + ".INC",
         )
 
         shutil.copy(
-            save_folder_root + "/fluid/" + "ROCK.INC",
-            save_folder_root + "/fluid/" + str(idx_mu) + "/" + "ROCK"
+            data_folder_root + "/fluid/" + "PUNQS3_EOS_COMPS.INC",
+            data_folder_root + "/fluid/" + str(idx_mu) + "/" + "PUNQS3_EOS_COMPS"
             # + str(idx_mu)
             + ".INC",
         )
 
         shutil.copy(
-            save_folder_root + "/fluid/" + "ROCKNUM.INC",
-            save_folder_root + "/fluid/" + str(idx_mu) + "/" + "ROCKNUM"
+            data_folder_root + "/fluid/" + "ROCK.INC",
+            data_folder_root + "/fluid/" + str(idx_mu) + "/" + "ROCK"
             # + str(idx_mu)
             + ".INC",
         )
 
         shutil.copy(
-            save_folder_root + "/fluid/" + "SCAL.INC",
-            save_folder_root + "/fluid/" + str(idx_mu) + "/" + "SCAL"
+            data_folder_root + "/fluid/" + "ROCKNUM.INC",
+            data_folder_root + "/fluid/" + str(idx_mu) + "/" + "ROCKNUM"
             # + str(idx_mu)
             + ".INC",
         )
 
         shutil.copy(
-            save_folder_root + "/fluid/" + "case2skew.EGRID",
-            save_folder_root + "/fluid/" + str(idx_mu) + "/" + "case2skew"
+            data_folder_root + "/fluid/" + "SCAL.INC",
+            data_folder_root + "/fluid/" + str(idx_mu) + "/" + "SCAL"
+            # + str(idx_mu)
+            + ".INC",
+        )
+
+        shutil.copy(
+            data_folder_root + "/fluid/" + "case2skew.EGRID",
+            data_folder_root + "/fluid/" + str(idx_mu) + "/" + "case2skew"
             # + str(idx_mu)
             + ".EGRID",
         )
 
         shutil.copy(
-            save_folder_root + "/fluid/" + "GRID3D.GRDECL",
-            save_folder_root + "/fluid/" + str(idx_mu) + "/" + "GRID3D"
+            data_folder_root + "/fluid/" + "GRID3D.GRDECL",
+            data_folder_root + "/fluid/" + str(idx_mu) + "/" + "GRID3D"
             # + str(idx_mu)
             + ".GRDECL",
         )  # no idea, echelon looks for it

@@ -25,18 +25,17 @@ os.system("clear")
 print("\n THIS IS MAIN FLUID \n")
 
 # to try the code:
-data_folder = "./data"
-save_folder = "./results"
-os.system("mkdir -p " + data_folder + "/fluid")
-os.system("mkdir -p " + data_folder + "/mech")
-os.system("mkdir " + save_folder)
+data_folder_root = "./data"
+save_folder_root = "./results"
+os.system("mkdir -p " + data_folder_root + "/fluid")
+os.system("mkdir " + save_folder_root)
 idx_mu = 99999  # "baseline"
 
 offline = model_fom_case_eni.ModelCaseEni(
-    data_folder=data_folder, save_folder=data_folder
+    data_folder=data_folder_root, save_folder=data_folder_root
 )
 mu_param = np.array([np.log(1e0), np.log(1e0), 1, 5.71e10, 1.0, 1.3e6, 703000.0])
-offline.run_one_simulation_no_python(data_folder, data_folder, idx_mu, mu_param)
+offline.run_one_simulation_no_python(idx_mu, mu_param)
 
 print("\n\n\n\n\n Part 1 fluid Done!\n\n\n")
 stop
@@ -45,13 +44,12 @@ stop
 
 
 # folder preparation:
-data_folder = "./data"
-results_folder = "./results"
+data_folder_root = "./data"
+results_folder_root = "./results"
 
-os.system("mkdir -p " + data_folder + "/fluid")
-os.system("mkdir -p " + data_folder + "/mech")
-os.system("rm -r " + results_folder)
-os.system("mkdir -p " + results_folder)
+os.system("mkdir -p " + data_folder_root + "/fluid")
+os.system("rm -r " + results_folder_root)
+os.system("mkdir -p " + results_folder_root)
 
 
 # settings:
@@ -70,15 +68,15 @@ training_dataset_id = np.arange(0, 1)
 validation_dataset_id = np.arange(1, 2)
 test_dataset_id = np.arange(2, 10)
 
-np.savetxt(data_folder + "/test_dataset_id", test_dataset_id)
-np.savetxt(results_folder + "/test_dataset_id", test_dataset_id)
+np.savetxt(data_folder_root + "/test_dataset_id", test_dataset_id)
+np.savetxt(results_folder_root + "/test_dataset_id", test_dataset_id)
 num_snap_to_generate = test_dataset_id[-1] + 1
 
 # data generation:
-model_fom = model_fom_case_eni.ModelCaseEni(data_folder)
+model_fom = model_fom_case_eni.ModelCaseEni(data_folder_root, data_folder_root)
 
 offline_data_class = offline_ode.OfflineComputationsODE(
-    data_folder=data_folder, save_folder=data_folder
+    data_folder=data_folder_root, save_folder=data_folder_root
 )
 offline_data_class.sample_parameters(
     num_snap_to_generate,

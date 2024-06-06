@@ -358,9 +358,17 @@ class MomentumBalanceEquations(
             )
             pressure_vals = fake_vals
 
-        if isinstance(pressure_vals, str):  # reference solution
+        elif isinstance(pressure_vals, str):  # reference solution
             if pressure_vals == "gravity_only":
                 pressure_vals = np.zeros(sd.num_cells)
+
+        # elif isinstance(pressure_vals, np.ndarray):
+        #     print("\ngonna use fake fluid pressure values anyway")
+        #     fake_vals = np.zeros(sd.num_cells)
+        #     fake_vals[self.reservoir_cell_ids] = (
+        #         sd.cell_centers[0, self.reservoir_cell_ids] ** 2 * 2
+        #     )
+        #     pressure_vals = fake_vals
 
         discr = pp.Biot()
         data = {
@@ -949,8 +957,7 @@ class SolutionStrategyMomentumBalance(
         self.set_nonlinear_discretizations()
 
         self.save_data_time_step()
-    
-        
+
     def clean_working_directory(self):
         """ """
         os.system("rm *.pvd *.vtu")
@@ -1049,17 +1056,21 @@ class SolutionStrategyMomentumBalance(
         ]  # the fracture is planar, i take the first vecor as ref
 
         # need to save data for computing fault traction as post process
-        
-        print("self.subscript = ", self.subscript)
-        
         np.save(self.save_folder + "/displacement" + self.subscript, u)
-        np.save(self.save_folder + "/displacement_boundary"+ self.subscript, u_b_filled)
-        sp.sparse.save_npz(self.save_folder + "/stress_tensor_grad"+ self.subscript, stress_tensor_grad)
-        sp.sparse.save_npz(self.save_folder + "/bound_stress"+ self.subscript, bound_stress)
-        np.save(self.save_folder + "/normal"+ self.subscript, normal)
+        np.save(
+            self.save_folder + "/displacement_boundary" + self.subscript, u_b_filled
+        )
+        sp.sparse.save_npz(
+            self.save_folder + "/stress_tensor_grad" + self.subscript,
+            stress_tensor_grad,
+        )
+        sp.sparse.save_npz(
+            self.save_folder + "/bound_stress" + self.subscript, bound_stress
+        )
+        np.save(self.save_folder + "/normal" + self.subscript, normal)
         np.save(self.save_folder + "/fracture_faces_id", self.fracture_faces_id)
 
-        with open(self.save_folder + "/sd_fract.pkl", "wb") as fle: 
+        with open(self.save_folder + "/sd_fract.pkl", "wb") as fle:
             pickle.dump(self.sd_fract, fle)
 
         # same of np.linalg.solve(self.linear_system[0], self.linear_system[1]) => no reshape problems
@@ -1134,5 +1145,5 @@ if __name__ == "__main__":
     # pp.run_time_dependent_model(model, {}) # same output of run_stationary....
     t1 = time.time()
     pp.run_stationary_model(model, {})
-    print("1 RUN TIME = ", time.time()-t1)
+    print("1 RUN TIME = ", time.time() - t1)
     print("\nDone!")

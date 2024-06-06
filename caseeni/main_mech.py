@@ -27,13 +27,14 @@ print("\n THIS IS MAIN MECH, to be run after main_fluid.py \n")
 # to try the code:
 data_folder = "./data"
 save_folder = "./results"
+os.system("mkdir -p " + data_folder + "/mech")
 idx_mu = 99999  # "baseline"
 
 offline = model_fom_case_eni.ModelCaseEni(
-    data_folder=data_folder, save_folder=data_folder
+    data_folder_root=data_folder, save_folder_root=data_folder
 )
 mu_param = np.array([np.log(1e0), np.log(1e0), 1, 5.71e10, 1.0, 1.3e6, 703000.0])
-offline.run_one_simulation(data_folder, save_folder, idx_mu, mu_param)
+offline.run_one_simulation(idx_mu, mu_param)
 
 print("\n\n\n\n\n Part 1 mech Done!\n\n\n")
 
@@ -48,29 +49,25 @@ alpha_5 = 1
 
 
 # folder preparation:
-data_folder = "./data"
-results_folder = "./results"
+data_folder_root = "./data"
+results_folder_root = "./results"
 
-os.system("mkdir -p " + data_folder + "/fluid")
-os.system("mkdir -p " + data_folder + "/mech")
-os.system("rm -r " + results_folder)
-os.system("mkdir -p " + results_folder)
+os.system("mkdir -p " + data_folder_root + "/mech")
+os.system("rm -r " + results_folder_root)
+os.system("mkdir -p " + results_folder_root)
 
 
-test_dataset_id = np.loadtxt(data_folder + "/test_dataset_id")
+test_dataset_id = np.loadtxt(data_folder_root + "/test_dataset_id")
 num_snap_to_generate = test_dataset_id[-1] + 1
 
 # data generation:
-model_fom = model_fom_case_eni.ModelCaseEni(data_folder, results_folder)
+model_fom = model_fom_case_eni.ModelCaseEni(data_folder_root, data_folder_root)
 print("running ref...")
 model_fom.run_ref_mechanics()
 print("done ref")
 
 
-
-stop 
-
-
+stop
 
 
 offline_data_class = offline_ode.OfflineComputationsODE(data_folder)
