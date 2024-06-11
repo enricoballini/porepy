@@ -22,13 +22,25 @@ import case_1_slanted_hu_small_k
 os.system("clear")
 
 
+class SolutionStrategyCase1SlantedSmallK(
+    case_1_slanted_ppu.SolutionStrategyCase1SlantedPPU
+):
+    """ """
+
+    def flip_flop(self, dim_to_check):
+        """ """
+        return two_phase_ppu.SolutionStrategyPressureMassPPU.flip_flop(
+            self, dim_to_check
+        )
+
+
 class PartialFinalModel(
     two_phase_hu.PrimaryVariables,
     two_phase_ppu.EquationsPPU,
     case_1_slanted_hu_small_k.ConstitutiveLawCase1SlantedSmallK,
     two_phase_hu.BoundaryConditionsPressureMass,
     case_1_slanted_ppu.InitialConditionCase1SlantedPPU,
-    case_1_slanted_ppu.SolutionStrategyCase1SlantedPPU,
+    SolutionStrategyCase1SlantedSmallK,
     case_1_slanted_hu.GeometryCase1Slanted,
     pp.DataSavingMixin,
 ):
@@ -60,13 +72,13 @@ if __name__ == "__main__":
 
     fluid_constants = pp.FluidConstants({})
 
-    Kn = 0.01
+    Kn = None
     solid_constants = pp.SolidConstants(
         {
-            "porosity": 0.25,
-            "intrinsic_permeability": 1.0 / Ka_0,
-            "normal_permeability": Kn / Ka_0,
-            "residual_aperture": 0.01 / L_0,
+            "porosity": None,
+            "intrinsic_permeability": None,
+            "normal_permeability": None,
+            "residual_aperture": None,
         }
     )
 
@@ -78,7 +90,7 @@ if __name__ == "__main__":
     mixture = pp.Mixture()
     mixture.add([wetting_phase, non_wetting_phase])
 
-    class FinalModel(case_1_slanted_ppu.PartialFinalModel):
+    class FinalModel(PartialFinalModel):
         def __init__(self, params: Optional[dict] = None):
             super().__init__(params)
 

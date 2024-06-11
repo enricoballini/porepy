@@ -150,7 +150,7 @@ if __name__ == "__main__":
     for label in ax_1.get_xticklabels() + ax_1.get_yticklabels():
         label.set_fontsize(fontsize)
 
-    if cumulative_flips_hu.shape == 4:
+    if cumulative_flips_hu.shape[0] == 3:
         ax_1.plot(
             time_ppu,
             global_cumulative_flips_ppu[0],
@@ -308,7 +308,7 @@ if __name__ == "__main__":
         )
     ]
 
-    if cumulative_flips_hu.shape == 4:
+    if cumulative_flips_hu.shape[0] == 3:
         handles = np.ravel(np.reshape(handles_all[:4], (1, 4)), order="F")
         labels = np.ravel(np.reshape(labels_all[:4], (1, 4)), order="F")
         ncol = 2

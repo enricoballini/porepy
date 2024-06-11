@@ -35,7 +35,7 @@ class ConstitutiveLawCase1SlantedSmallK(case_1_slanted_hu.ConstitutiveLawCase1Sl
         elif sd.dim == 2:
             permeability = pp.ad.DenseArray(1 * np.ones(sd.num_cells))
         elif sd.dim == 1:
-            permeability = pp.ad.DenseArray(1e-4 * np.ones(sd.num_cells))
+            permeability = pp.ad.DenseArray(1e-6 * np.ones(sd.num_cells))
         else:  # 0D
             permeability = pp.ad.DenseArray(1 * np.ones(sd.num_cells))
 
@@ -50,12 +50,22 @@ class ConstitutiveLawCase1SlantedSmallK(case_1_slanted_hu.ConstitutiveLawCase1Sl
             if intf.dim == 2:
                 perm[id_intf] = 0.1 * np.ones([intf.num_cells])
             elif intf.dim == 1:
-                perm[id_intf] = 1e-6 * np.ones([intf.num_cells])
+                perm[id_intf] = 1e-8 * np.ones([intf.num_cells])
             else:  # 0D
                 perm[id_intf] = 0.1 * np.ones([intf.num_cells])
 
         norm_perm = pp.ad.DenseArray(np.concatenate(perm))
         return norm_perm
+
+
+class SolutionStrategyCase1SlantetSmallK(
+    case_1_slanted_hu.SolutionStrategyCase1Slanted
+):
+    """ """
+
+    def flip_flop(self, dim_to_check):
+        """ """
+        return two_phase_hu.SolutionStrategyPressureMass.flip_flop(self, dim_to_check)
 
 
 class PartialFinalModel(
@@ -64,7 +74,7 @@ class PartialFinalModel(
     ConstitutiveLawCase1SlantedSmallK,
     two_phase_hu.BoundaryConditionsPressureMass,
     case_1_slanted_hu.InitialConditionCase1Slanted,
-    case_1_slanted_hu.SolutionStrategyCase1Slanted,
+    SolutionStrategyCase1SlantetSmallK,
     case_1_slanted_hu.GeometryCase1Slanted,
     pp.DataSavingMixin,
 ):
@@ -114,7 +124,7 @@ if __name__ == "__main__":
     mixture = pp.Mixture()
     mixture.add([wetting_phase, non_wetting_phase])
 
-    class FinalModel(case_1_slanted_hu.PartialFinalModel):
+    class FinalModel(PartialFinalModel):
         def __init__(self, params: Optional[dict] = None):
             super().__init__(params)
 
