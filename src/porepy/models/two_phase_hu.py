@@ -1450,13 +1450,13 @@ class SolutionStrategyPressureMass(pp.SolutionStrategy):
 
     def clean_working_directory(self) -> None:
         """ """
-        # os.system("rm " + self.output_file_name)
-        # os.system("rm " + self.mass_output_file_name)
-        # os.system("rm " + self.flips_file_name)
-        # os.system("rm -r " + self.beta_file_name + "/*")
-        print(
-            "\n\n\nworking directory not cleaned --------------------------------------------\n\n\n"
-        )
+        os.system("rm " + self.output_file_name)
+        os.system("rm " + self.mass_output_file_name)
+        os.system("rm " + self.flips_file_name)
+        os.system("rm -r " + self.beta_file_name + "/*")
+        # print(
+        #     "\n\n\nworking directory not cleaned --------------------------------------------\n\n\n"
+        # )
 
     def set_equation_system_manager(self) -> None:
         """ """
@@ -2030,6 +2030,8 @@ class SolutionStrategyPressureMass(pp.SolutionStrategy):
                 * (left_restriction @ z - right_restriction @ z)
             )
             return g_ref
+
+        self.mixture.mixture_for_subdomain(sd)
 
         pressure = self.pressure([sd]).evaluate(self.equation_system)
         saturation = (

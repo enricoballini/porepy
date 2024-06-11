@@ -13,21 +13,35 @@ os.system("clear")
 def load_output_flip_flop_ppu(filename):
     """ """
     data = np.loadtxt(filename, delimiter=",")
-    return (
-        data[:, 0],
-        data[:, [1, 2]].T,
-        data[:, [3, 4]].T,
-    )
+    if data.shape[1] == 5:
+        return (
+            data[:, 0],
+            data[:, [1, 2]].T,
+            data[:, [3, 4]].T,
+        )
+    else:
+        return (
+            data[:, 0],
+            data[:, [1, 2, 3, 4, 5, 6]].T,
+            data[:, [7, 8, 9, 10, 11, 12]].T,
+        )
 
 
 def load_output_flip_flop_hu(filename):
     """ """
     data = np.loadtxt(filename, delimiter=",")
-    return (
-        data[:, 0],
-        data[:, [1, 2, 3]].T,
-        data[:, [4, 5, 6]].T,
-    )
+    if data.shape[1] == 7:
+        return (
+            data[:, 0],
+            data[:, [1, 2, 3]].T,
+            data[:, [4, 5, 6]].T,
+        )
+    else:
+        return (
+            data[:, 0],
+            data[:, [1, 2, 3, 4, 5, 6, 7, 8]].T,
+            data[:, [9, 10, 11, 12, 13, 14, 15, 16]].T,
+        )
 
 
 if __name__ == "__main__":
@@ -136,46 +150,142 @@ if __name__ == "__main__":
     for label in ax_1.get_xticklabels() + ax_1.get_yticklabels():
         label.set_fontsize(fontsize)
 
-    ax_1.plot(
-        time_ppu,
-        global_cumulative_flips_ppu[0],
-        label="$PPU - q_0$",
-        linestyle="-",
-        color=my_orange,
-        marker="",
-    )
-    ax_1.plot(
-        time_ppu,
-        global_cumulative_flips_ppu[1],
-        label="$PPU - q_1$",
-        linestyle="--",
-        color=my_orange,
-        marker="",
-    )
-    ax_1.plot(
-        time_hu,
-        global_cumulative_flips_hu[0],
-        label="$HU - q_T$",
-        linestyle="-",
-        color=my_blu,
-        marker="",
-    )
-    ax_1.plot(
-        time_hu,
-        global_cumulative_flips_hu[1],
-        label="$HU - \omega_0$",
-        linestyle="--",
-        color=my_blu,
-        marker="",
-    )
-    # ax_1.plot(
-    #     time_hu,
-    #     global_cumulative_flips_hu[2],
-    #     label="$omega_1$",
-    #     linestyle="-.",
-    #     color=my_blu,
-    #     marker="",
-    # )
+    if cumulative_flips_hu.shape == 4:
+        ax_1.plot(
+            time_ppu,
+            global_cumulative_flips_ppu[0],
+            label="$PPU - q_0$",
+            linestyle="-",
+            color=my_orange,
+            marker="",
+        )
+        ax_1.plot(
+            time_ppu,
+            global_cumulative_flips_ppu[1],
+            label="$PPU - q_1$",
+            linestyle="--",
+            color=my_orange,
+            marker="",
+        )
+        ax_1.plot(
+            time_hu,
+            global_cumulative_flips_hu[0],
+            label="$HU - q_T$",
+            linestyle="-",
+            color=my_blu,
+            marker="",
+        )
+        ax_1.plot(
+            time_hu,
+            global_cumulative_flips_hu[1],
+            label="$HU - \omega_0$",
+            linestyle="--",
+            color=my_blu,
+            marker="",
+        )
+
+    else:
+        # ppu:
+        ax_1.plot(
+            time_ppu,
+            global_cumulative_flips_ppu[0],
+            label="$PPU - q_0 \ 2D$",
+            linestyle="-",
+            color=my_orange,
+            marker="",
+        )
+        ax_1.plot(
+            time_ppu,
+            global_cumulative_flips_ppu[1],
+            label="$PPU - q_1 \ 2D$",
+            linestyle="--",
+            color=my_orange,
+            marker="",
+        )
+        ax_1.plot(
+            time_ppu,
+            global_cumulative_flips_ppu[2],
+            label="$PPU - q_0 \ 1D$",
+            linestyle="-",
+            color="gold",
+            marker="",
+        )
+        ax_1.plot(
+            time_ppu,
+            global_cumulative_flips_ppu[3],
+            label="$PPU - q_1 \ 1D$",
+            linestyle="--",
+            color="gold",
+            marker="",
+        )
+        ax_1.plot(
+            time_ppu,
+            global_cumulative_flips_ppu[4],
+            label="$PPU - \zeta_0$",
+            linestyle="-",
+            color="firebrick",
+            marker="",
+        )
+        ax_1.plot(
+            time_ppu,
+            global_cumulative_flips_ppu[5],
+            label="$PPU - \zeta_1$",
+            linestyle="--",
+            color="firebrick",
+            marker="",
+        )
+
+        # hu:
+        ax_1.plot(
+            time_hu,
+            global_cumulative_flips_hu[0],
+            label="$HU - q_T \ 2D$",
+            linestyle="-",
+            color=my_blu,
+            marker="",
+        )
+        ax_1.plot(
+            time_hu,
+            global_cumulative_flips_hu[1],
+            label="$HU - \omega_0 \ 2D$",
+            linestyle="--",
+            color=my_blu,
+            marker="",
+        )
+        ax_1.plot(
+            time_hu,
+            global_cumulative_flips_hu[3],
+            label="$HU - q_T \ 1D$",
+            linestyle="-",
+            color="lightblue",
+            marker="",
+        )
+        ax_1.plot(
+            time_hu,
+            global_cumulative_flips_hu[4],
+            label="$HU - \omega_0 \ 1D$",
+            linestyle="--",
+            color="lightblue",
+            marker="",
+        )
+        ax_1.plot(
+            time_hu,
+            global_cumulative_flips_hu[6],
+            label="$HU - \zeta_0$",
+            linestyle="--",
+            color="navy",
+            marker="",
+        )
+        ax_1.plot(
+            time_hu,
+            global_cumulative_flips_hu[7],
+            label="$HU - \zeta_1$",
+            linestyle="",
+            color="navy",
+            marker="o",
+            markersize=0.9,
+        )
+
     ax_1.set_xlabel(x_label, fontsize=fontsize)
     ax_1.set_xticks(x_ticks)
 
@@ -198,8 +308,16 @@ if __name__ == "__main__":
         )
     ]
 
-    handles = np.ravel(np.reshape(handles_all[:4], (1, 4)), order="F")
-    labels = np.ravel(np.reshape(labels_all[:4], (1, 4)), order="F")
+    if cumulative_flips_hu.shape == 4:
+        handles = np.ravel(np.reshape(handles_all[:4], (1, 4)), order="F")
+        labels = np.ravel(np.reshape(labels_all[:4], (1, 4)), order="F")
+        ncol = 2
+        bbox_to_anchor = (-0.1, -0.65)
+    else:
+        handles = np.ravel(np.reshape(handles_all[:12], (1, 12)), order="F")
+        labels = np.ravel(np.reshape(labels_all[:12], (1, 12)), order="F")
+        ncol = 2
+        bbox_to_anchor = (-1, -1)
 
     fig, ax = plt.subplots(figsize=(25, 10))
     for h, l in zip(handles, labels):
@@ -210,8 +328,8 @@ if __name__ == "__main__":
         labels,
         fontsize=fontsize,
         loc="lower center",
-        ncol=2,
-        bbox_to_anchor=(-0.1, -0.65),
+        ncol=ncol,
+        bbox_to_anchor=bbox_to_anchor,
     )
 
     filename = save_folder + "/" + name_root + "_flip_flop" + "_legend.pdf"

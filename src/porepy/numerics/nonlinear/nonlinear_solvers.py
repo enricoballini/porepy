@@ -3,6 +3,7 @@ Nonlinear solvers to be used with model classes.
 Implemented classes
     NewtonSolver
 """
+
 import logging
 
 import numpy as np
@@ -112,7 +113,13 @@ class NewtonSolver:
         ):  # so maximum number of iterations reached # "and not is_diverged" added otherwise it calls after_nonlinear_failure twice
             model.after_nonlinear_failure(sol, errors, iteration_counter)
 
-        cumulative_flips -= np.sum(np.not_equal(initial_dirs, dirs), axis=1)
+        cumulative_flips -= np.array(
+            [
+                np.sum(np.not_equal(initial_dirs[i], dirs[i]))
+                for i in np.arange(model.number_upwind_dirs)
+            ]
+        )
+        # cumulative_flips -= np.sum(np.not_equal(initial_dirs, dirs), axis=1)
 
         return error_norm, is_converged, iteration_counter, cumulative_flips
 

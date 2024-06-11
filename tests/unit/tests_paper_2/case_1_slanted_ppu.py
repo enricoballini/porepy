@@ -116,6 +116,116 @@ class SolutionStrategyCase1SlantedPPU(two_phase_ppu.SolutionStrategyPressureMass
 
         # pp.plot_grid(self.mdg, alpha=0)
 
+    def flip_flop(self, dim_to_check):
+        """ """
+        for sd in self.mdg.subdomains():
+            if sd.dim == 2:  # sorry...
+                darcy_phase_0 = (
+                    self.darcy_flux_phase_0([sd], self.mixture.get_phase(0))
+                    .evaluate(self.equation_system)
+                    .val
+                )
+                darcy_phase_1 = (
+                    self.darcy_flux_phase_1([sd], self.mixture.get_phase(1))
+                    .evaluate(self.equation_system)
+                    .val
+                )
+
+                sign_darcy_phase_0_2d = np.sign(darcy_phase_0)
+                sign_darcy_phase_1_2d = np.sign(darcy_phase_1)
+
+                if self.sign_darcy_phase_0_2d_prev is None:
+                    self.sign_darcy_phase_0_2d_prev = sign_darcy_phase_0_2d
+
+                if self.sign_darcy_phase_1_2d_prev is None:
+                    self.sign_darcy_phase_1_2d_prev = sign_darcy_phase_1_2d
+
+                number_flips_darcy_phase_0_2d = np.sum(
+                    np.not_equal(self.sign_darcy_phase_0_2d_prev, sign_darcy_phase_0_2d)
+                )
+
+                number_flips_darcy_phase_1_2d = np.sum(
+                    np.not_equal(self.sign_darcy_phase_1_2d_prev, sign_darcy_phase_1_2d)
+                )
+
+            if sd.dim == 1:  # sorry...
+                darcy_phase_0 = (
+                    self.darcy_flux_phase_0([sd], self.mixture.get_phase(0))
+                    .evaluate(self.equation_system)
+                    .val
+                )
+                darcy_phase_1 = (
+                    self.darcy_flux_phase_1([sd], self.mixture.get_phase(1))
+                    .evaluate(self.equation_system)
+                    .val
+                )
+
+                sign_darcy_phase_0_1d = np.sign(darcy_phase_0)
+                sign_darcy_phase_1_1d = np.sign(darcy_phase_1)
+
+                if self.sign_darcy_phase_0_1d_prev is None:
+                    self.sign_darcy_phase_0_1d_prev = sign_darcy_phase_0_1d
+
+                if self.sign_darcy_phase_1_1d_prev is None:
+                    self.sign_darcy_phase_1_1d_prev = sign_darcy_phase_1_1d
+
+                number_flips_darcy_phase_0_1d = np.sum(
+                    np.not_equal(self.sign_darcy_phase_0_1d_prev, sign_darcy_phase_0_1d)
+                )
+
+                number_flips_darcy_phase_1_1d = np.sum(
+                    np.not_equal(self.sign_darcy_phase_1_1d_prev, sign_darcy_phase_1_1d)
+                )
+
+        for intf, data in self.mdg.interfaces(return_data=True):
+            mortar_0 = self.interface_mortar_flux_phase_0([intf]).evaluate(
+                self.equation_system
+            )
+            sign_mortar_0 = np.sign(mortar_0.val)
+
+            if self.sign_mortar_0_prev is None:
+                self.sign_mortar_0_prev = sign_mortar_0
+
+            number_flips_mortar_0 = np.sum(
+                np.not_equal(self.sign_mortar_0_prev, sign_mortar_0)
+            )
+
+            self.sign_mortar_0_prev = sign_mortar_0
+
+            mortar_1 = self.interface_mortar_flux_phase_1([intf]).evaluate(
+                self.equation_system
+            )
+            sign_mortar_1 = np.sign(mortar_1.val)
+
+            if self.sign_mortar_1_prev is None:
+                self.sign_mortar_1_prev = sign_mortar_1
+
+            number_flips_mortar_1 = np.sum(
+                np.not_equal(self.sign_mortar_1_prev, sign_mortar_1)
+            )
+
+            self.sign_mortar_0_prev = sign_mortar_0
+
+        return np.array(
+            [
+                sign_darcy_phase_0_2d,
+                sign_darcy_phase_1_2d,
+                sign_darcy_phase_0_1d,
+                sign_darcy_phase_1_1d,
+                sign_mortar_0,
+                sign_mortar_1,
+            ]
+        ), np.array(
+            [
+                number_flips_darcy_phase_0_2d,
+                number_flips_darcy_phase_1_2d,
+                number_flips_darcy_phase_0_1d,
+                number_flips_darcy_phase_1_1d,
+                number_flips_mortar_0,
+                number_flips_mortar_1,
+            ]
+        )
+
 
 class PartialFinalModel(
     two_phase_hu.PrimaryVariables,
@@ -231,9 +341,13 @@ if __name__ == "__main__":
                 self.mobility
             )
 
-            self.number_upwind_dirs = 2
-            self.sign_darcy_phase_0_prev = None
-            self.sign_darcy_phase_1_prev = None
+            self.number_upwind_dirs = 6
+            self.sign_darcy_phase_0_2d_prev = None
+            self.sign_darcy_phase_1_2d_prev = None
+            self.sign_darcy_phase_0_1d_prev = None
+            self.sign_darcy_phase_1_1d_prev = None
+            self.sign_mortar_0_prev = None
+            self.sign_mortar_1_prev = None
 
             # self.root_path = "./case_1/slanted_ppu_Kn" + str(Kn) + "/"
             self.root_path = "./case_1/slanted_ppu/non-conforming/"

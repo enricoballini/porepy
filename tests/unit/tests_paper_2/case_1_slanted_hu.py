@@ -436,6 +436,239 @@ class SolutionStrategyCase1Slanted(two_phase_hu.SolutionStrategyPressureMass):
         else:
             self.mdg = gb
 
+    def flip_flop(self, dim_to_check):
+        """very inefficient, i want to make this function as independent as possible"""
+
+        for sd, data in self.mdg.subdomains(return_data=True):
+            if sd.dim == 2:  # sorry...
+                # total flux flips:
+                pressure_adarray = self.pressure([sd]).evaluate(self.equation_system)
+                left_restriction = data["for_hu"]["left_restriction"]
+                right_restriction = data["for_hu"]["right_restriction"]
+                transmissibility_internal_tpfa = data["for_hu"][
+                    "transmissibility_internal_tpfa"
+                ]
+                ad = True
+                dynamic_viscosity = data["for_hu"]["dynamic_viscosity"]
+                dim_max = data["for_hu"]["dim_max"]
+                total_flux_internal = (
+                    pp.numerics.fv.hybrid_weighted_average.total_flux_internal(
+                        sd,
+                        self.mixture.mixture_for_subdomain(sd),
+                        pressure_adarray,
+                        self.gravity_value,
+                        left_restriction,
+                        right_restriction,
+                        transmissibility_internal_tpfa,
+                        ad,
+                        dynamic_viscosity,
+                        dim_max,
+                        self.mobility,
+                        self.relative_permeability,
+                    )
+                )
+                sign_total_flux_internal_2d = np.sign(
+                    total_flux_internal[0].val + total_flux_internal[1].val
+                )
+                if (
+                    self.sign_total_flux_internal_2d_prev is None
+                ):  # first iteration after initial condition
+                    self.sign_total_flux_internal_2d_prev = sign_total_flux_internal_2d
+
+                number_flips_qt_2d = np.sum(
+                    np.not_equal(
+                        self.sign_total_flux_internal_2d_prev,
+                        sign_total_flux_internal_2d,
+                    )
+                )
+
+                self.sign_total_flux_internal_2d_prev = sign_total_flux_internal_2d
+
+                # omega_0 flips:
+                z = -sd.cell_centers[dim_max - 1]
+
+                saturation_list = [None] * self.mixture.num_phases
+                g_list = [None] * self.mixture.num_phases
+                mobility_list = [None] * self.mixture.num_phases
+
+                for phase_id in np.arange(self.mixture.num_phases):
+                    saturation = self.mixture.get_phase(phase_id).saturation
+                    saturation_list[phase_id] = saturation
+                    rho = self.mixture.get_phase(phase_id).mass_density(
+                        self.pressure([sd]).evaluate(self.equation_system).val
+                    )
+                    rho = pp.hu_utils.density_internal_faces(
+                        saturation, rho, left_restriction, right_restriction
+                    )
+                    g_list[phase_id] = pp.hu_utils.g_internal_faces(
+                        z, rho, self.gravity_value, left_restriction, right_restriction
+                    )
+                    mobility_list[phase_id] = self.mobility(
+                        saturation, dynamic_viscosity
+                    )
+
+                omega_0 = pp.omega(
+                    self.mixture.num_phases,
+                    0,
+                    mobility_list,
+                    g_list,
+                    left_restriction,
+                    right_restriction,
+                    ad,
+                )
+
+                sign_omega_0_2d = np.sign(omega_0.val)
+
+                if self.sign_omega_0_2d_prev is None:
+                    self.sign_omega_0_2d_prev = sign_omega_0_2d
+
+                number_flips_omega_0_2d = np.sum(
+                    np.not_equal(self.sign_omega_0_2d_prev, sign_omega_0_2d)
+                )
+
+                self.sign_omega_0_2d_prev = sign_omega_0_2d
+
+            if sd.dim == 1:  # sorry...
+                # total flux flips:
+                pressure_adarray = self.pressure([sd]).evaluate(self.equation_system)
+                left_restriction = data["for_hu"]["left_restriction"]
+                right_restriction = data["for_hu"]["right_restriction"]
+                transmissibility_internal_tpfa = data["for_hu"][
+                    "transmissibility_internal_tpfa"
+                ]
+                ad = True
+                dynamic_viscosity = data["for_hu"]["dynamic_viscosity"]
+                dim_max = data["for_hu"]["dim_max"]
+                total_flux_internal = (
+                    pp.numerics.fv.hybrid_weighted_average.total_flux_internal(
+                        sd,
+                        self.mixture.mixture_for_subdomain(sd),
+                        pressure_adarray,
+                        self.gravity_value,
+                        left_restriction,
+                        right_restriction,
+                        transmissibility_internal_tpfa,
+                        ad,
+                        dynamic_viscosity,
+                        dim_max,
+                        self.mobility,
+                        self.relative_permeability,
+                    )
+                )
+                sign_total_flux_internal_1d = np.sign(
+                    total_flux_internal[0].val + total_flux_internal[1].val
+                )
+                if (
+                    self.sign_total_flux_internal_1d_prev is None
+                ):  # first iteration after initial condition
+                    self.sign_total_flux_internal_1d_prev = sign_total_flux_internal_1d
+
+                number_flips_qt_1d = np.sum(
+                    np.not_equal(
+                        self.sign_total_flux_internal_1d_prev,
+                        sign_total_flux_internal_1d,
+                    )
+                )
+
+                self.sign_total_flux_internal_1d_prev = sign_total_flux_internal_1d
+
+                # omega_0 flips:
+                z = -sd.cell_centers[dim_max - 1]
+
+                saturation_list = [None] * self.mixture.num_phases
+                g_list = [None] * self.mixture.num_phases
+                mobility_list = [None] * self.mixture.num_phases
+
+                for phase_id in np.arange(self.mixture.num_phases):
+                    saturation = self.mixture.get_phase(phase_id).saturation
+                    saturation_list[phase_id] = saturation
+                    rho = self.mixture.get_phase(phase_id).mass_density(
+                        self.pressure([sd]).evaluate(self.equation_system).val
+                    )
+                    rho = pp.hu_utils.density_internal_faces(
+                        saturation, rho, left_restriction, right_restriction
+                    )
+                    g_list[phase_id] = pp.hu_utils.g_internal_faces(
+                        z, rho, self.gravity_value, left_restriction, right_restriction
+                    )
+                    mobility_list[phase_id] = self.mobility(
+                        saturation, dynamic_viscosity
+                    )
+
+                omega_0 = pp.omega(
+                    self.mixture.num_phases,
+                    0,
+                    mobility_list,
+                    g_list,
+                    left_restriction,
+                    right_restriction,
+                    ad,
+                )
+
+                sign_omega_0_1d = np.sign(omega_0.val)
+
+                if self.sign_omega_0_1d_prev is None:
+                    self.sign_omega_0_1d_prev = sign_omega_0_1d
+
+                number_flips_omega_0_1d = np.sum(
+                    np.not_equal(self.sign_omega_0_1d_prev, sign_omega_0_1d)
+                )
+
+                self.sign_omega_0_1d_prev = sign_omega_0_1d
+
+        for intf, data in self.mdg.interfaces(return_data=True):
+            mortar_0 = self.interface_mortar_flux_phase_0([intf]).evaluate(
+                self.equation_system
+            )
+            sign_mortar_0 = np.sign(mortar_0.val)
+
+            if self.sign_mortar_0_prev is None:
+                self.sign_mortar_0_prev = sign_mortar_0
+
+            number_flips_mortar_0 = np.sum(
+                np.not_equal(self.sign_mortar_0_prev, sign_mortar_0)
+            )
+
+            self.sign_mortar_0_1d_prev = sign_mortar_0
+
+            mortar_1 = self.interface_mortar_flux_phase_1([intf]).evaluate(
+                self.equation_system
+            )
+            sign_mortar_1 = np.sign(mortar_1.val)
+
+            if self.sign_mortar_1_prev is None:
+                self.sign_mortar_1_prev = sign_mortar_1
+
+            number_flips_mortar_1 = np.sum(
+                np.not_equal(self.sign_mortar_1_prev, sign_mortar_1)
+            )
+
+            self.sign_mortar_0_1d_prev = sign_mortar_0
+
+        return np.array(
+            [
+                sign_total_flux_internal_2d,
+                sign_omega_0_2d,
+                np.array([0.0]),  # omega_1, but i dont use it
+                sign_total_flux_internal_1d,
+                sign_omega_0_1d,
+                np.array([0.0]),
+                sign_mortar_0,
+                sign_mortar_1,
+            ],
+        ), np.array(
+            [
+                number_flips_qt_2d,
+                number_flips_omega_0_2d,
+                0,
+                number_flips_qt_1d,
+                number_flips_omega_0_1d,
+                0,
+                number_flips_mortar_0,
+                number_flips_mortar_1,
+            ]
+        )
+
 
 class InitialConditionCase1Slanted(
     case_1_horizontal_hu.InitialConditionCase1Horizontal
@@ -686,10 +919,15 @@ if __name__ == "__main__":
                 self.mobility
             )
 
-            self.number_upwind_dirs = 3
-            self.sign_total_flux_internal_prev = None
-            self.sign_omega_0_prev = None
-            self.sign_omega_1_prev = None
+            self.number_upwind_dirs = 8
+            self.sign_total_flux_internal_2d_prev = None
+            self.sign_omega_0_2d_prev = None
+            self.sign_omega_1_2d_prev = None
+            self.sign_total_flux_internal_1d_prev = None
+            self.sign_omega_0_1d_prev = None
+            self.sign_omega_1_1d_prev = None
+            self.sign_mortar_0_prev = None
+            self.sign_mortar_1_prev = None
 
             # self.root_path = "./case_1/slanted_hu_Kn" + str(Kn) + "/"
             self.root_path = "./case_1/slanted_hu/non-conforming/"
