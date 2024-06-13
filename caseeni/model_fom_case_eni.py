@@ -175,7 +175,7 @@ class ModelCaseEni:
 
         # phi_ave = np.sum(phi) / phi.shape[0]  # phi 2 = reservoir = 0.2 #
         phi_ave = np.max(phi)  # HARDCODED
-
+        
         nu = np.loadtxt(data_folder_root + "/mech/NU")
         c_pp = (
             (1 + nu) * (1 - 2 * nu) / ((1 - nu) * (E_ave / 1e5) * phi_ave)

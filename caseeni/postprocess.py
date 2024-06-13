@@ -149,12 +149,23 @@ def compute_fault_traction(idx_mu):
         T_tangential_t = np.linalg.norm(np.array([T_tangential[0],T_tangential[2]]).T, ord=2, axis=1) # the other tangential dir, t, is made of x and z
         T_tangential_norm = np.linalg.norm(T_tangential.T, ord=2, axis=1)
       
+        # exporter.write_vtu(
+        #      [
+        #          (sd_fract, "T_x", T_vect_frac[0]),
+        #          (sd_fract, "T_y", T_vect_frac[1]),
+        #          (sd_fract, "T_z", T_vect_frac[2]),
+        #          (sd_fract, "T_n", T_normal_norm),
+        #          (sd_fract, "T_tangential_y", T_tangential_y),
+        #          (sd_fract, "T_tangential_t", T_tangential_t),
+        #      ],
+        #      time_dependent=True,
+        #      time_step=time,
+        #  )
+        
         exporter.write_vtu(
              [
-                 (sd_fract, "T_x", T_vect_frac[0]),
-                 (sd_fract, "T_y", T_vect_frac[1]),
-                 (sd_fract, "T_z", T_vect_frac[2]),
-                 (sd_fract, "T_n", T_normal_norm),
+                 (sd_fract, "T_xyz", T_vect_frac),
+                 (sd_fract, "T_on_plane", T_normal_norm),
                  (sd_fract, "T_tangential_y", T_tangential_y),
                  (sd_fract, "T_tangential_t", T_tangential_t),
              ],

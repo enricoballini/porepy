@@ -15,6 +15,7 @@ https://pytorch.org/get-started/previous-versions/
 sys.path.append("../../mypythonmodules")
 
 from nnrom.dlromode import offline_ode
+from nnrom.dlrom import offline
 import model_fom_case_eni
 
 
@@ -24,25 +25,25 @@ os.system("clear")
 """
 print("\n THIS IS MAIN FLUID \n")
 
-# to try the code:
-data_folder_root = "./data"
-save_folder_root = "./results"
-os.system("mkdir -p " + data_folder_root + "/fluid")
-os.system("mkdir -p " + data_folder_root + "/mech")
-os.system("mkdir " + save_folder_root)
-idx_mu = 99999  # "baseline"
+# # to try the code:
+# data_folder_root = "./data"
+# save_folder_root = "./results"
+# os.system("mkdir -p " + data_folder_root + "/fluid")
+# os.system("mkdir -p " + data_folder_root + "/mech")
+# os.system("mkdir " + save_folder_root)
+# idx_mu = 99999  # "baseline"
 
-offline = model_fom_case_eni.ModelCaseEni(
-    data_folder_root=data_folder_root, save_folder_root=data_folder_root
-)
-mu_param = np.array([np.log(1e0), np.log(1e0), 1, 5.71e10, 1.0, 1.3e6, 703000.0])
-# mu_param = np.array([np.log(1e0), np.log(1e0), 1, 5.71e10, 1.0, 0.0, 0.0]) 
-offline.run_one_simulation_no_python(idx_mu, mu_param)
+# offline = model_fom_case_eni.ModelCaseEni(
+#     data_folder_root=data_folder_root, save_folder_root=data_folder_root
+# )
+# mu_param = np.array([np.log(1e0), np.log(1e0), 1, 5.71e10, 1.0, 1.3e6, 703000.0])
+# # mu_param = np.array([np.log(1e0), np.log(1e0), 1, 5.71e10, 1.0, 0.0, 0.0]) 
+# offline.run_one_simulation_no_python(idx_mu, mu_param)
 
-# offline.run_ref_fluid(idx_mu, mu_param)
+# # offline.run_ref_fluid(idx_mu, mu_param)
 
-print("\n\n\n\n\n Part 1 fluid Done!\n\n\n")
-stop
+# print("\n\n\n\n\n Part 1 fluid Done!\n\n\n")
+# stop
 
 #####################################################################################################
 
@@ -70,7 +71,7 @@ num_params = parameters_range.shape[1]
 
 training_dataset_id = np.arange(0, 1)
 validation_dataset_id = np.arange(1, 2)
-test_dataset_id = np.arange(2, 10)
+test_dataset_id = np.arange(2, 300)
 
 np.savetxt(data_folder_root + "/test_dataset_id", test_dataset_id)
 np.savetxt(results_folder_root + "/test_dataset_id", test_dataset_id)
@@ -79,7 +80,10 @@ num_snap_to_generate = test_dataset_id[-1] + 1
 # data generation:
 model_fom = model_fom_case_eni.ModelCaseEni(data_folder_root, data_folder_root)
 
-offline_data_class = offline_ode.OfflineComputationsODE(
+# offline_data_class = offline_ode.OfflineComputationsODE(
+#     data_folder=data_folder_root
+# )
+offline_data_class = offline.OfflineComputations(
     data_folder=data_folder_root
 )
 offline_data_class.sample_parameters(
@@ -93,9 +97,6 @@ offline_data_class.sample_parameters(
 
 idx_to_generate = np.arange(0, num_snap_to_generate)
 # idx_to_generate = np.array([0])
-
-
-stop
 
 offline_data_class.generate_snapshots_no_python(model_fom, idx_to_generate)
 
