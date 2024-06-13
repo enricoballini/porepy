@@ -360,7 +360,9 @@ class MomentumBalanceEquations(
 
         elif isinstance(pressure_vals, str):  # reference solution
             if pressure_vals == "gravity_only":
-                pressure_vals = np.zeros(sd.num_cells)
+                raise Error("the reference pressure is the first timestep, so the  taking into account the ref is a postprocess operation")
+                # pressure_vals = np.load("./data/fluid/ref/fluid_pressure_0.0.npy")
+            
 
         # elif isinstance(pressure_vals, np.ndarray):
         #     print("\ngonna use fake fluid pressure values anyway")
@@ -579,8 +581,10 @@ class GeometryCloseToEni(
         self.zmin = 0
         self.zmax = 2500
 
-        self.reservoir_z_left_top = 1450  # from paper
-        self.reservoir_z_left_bottom = 1550
+        correction = 5 # ???
+        
+        self.reservoir_z_left_top = 1450 + correction  # from paper
+        self.reservoir_z_left_bottom = 1550 + correction
         self.reservoir_x_west = 0
         self.reservoir_x_east = 2000
         self.reservoir_y_south = 0
@@ -588,6 +592,7 @@ class GeometryCloseToEni(
 
         self.reservoir_z_right_top = 1450 + 50 * np.sin(80 * np.pi / 180)  # from paper
         self.reservoir_z_right_bottom = 1550 + 50 * np.sin(80 * np.pi / 180)
+        
         if cut:
             ind_cut = (
                 eni_grid.cell_centers[1, :] < self.ymin + width
@@ -606,27 +611,19 @@ class GeometryCloseToEni(
         self.nd: int = self.mdg.dim_max()
 
         pp.set_local_coordinate_projections(self.mdg)
-
-        # self.set_well_network()
-        # if len(self.well_network.wells) > 0:
-        #     # Compute intersections
-        #     assert isinstance(self.fracture_network, FractureNetwork3d)
-        #     pp.compute_well_fracture_intersections(
-        #         self.well_network, self.fracture_network
-        #     )
-        #     self.well_network.mesh(self.mdg)
-
+        
     def set_geometry_part_2(self):
         """ """
         eni_grid = self.eni_grid
-
+        
+        correction = 50 # ???
         polygon_vertices = np.array(
             [
                 [
-                    535.51,
-                    535.51,
-                    976.327,
-                    976.327,
+                    535.51 + correction, # 585
+                    535.51 + correction,
+                    976.327 + correction, # 1026
+                    976.327 + correction,
                 ],  # x
                 [
                     -500,
@@ -648,6 +645,8 @@ class GeometryCloseToEni(
         self.create_frac_sd_for_plot(eni_grid, self.fracture_faces_id)
 
         self.find_reservoir_cells(eni_grid, polygon_vertices)
+   
+
 
     def set_domain(self) -> None:
         """ """
@@ -1051,7 +1050,7 @@ class SolutionStrategyMomentumBalance(
 
         u = self.displacement(subdomains).evaluate(self.equation_system).val
 
-        normal = sd.face_normals[:, self.fracture_faces_id][
+        normal_area = sd.face_normals[:, self.fracture_faces_id][
             :, 0
         ]  # the fracture is planar, i take the first vecor as ref
 
@@ -1067,7 +1066,8 @@ class SolutionStrategyMomentumBalance(
         sp.sparse.save_npz(
             self.save_folder + "/bound_stress" + self.subscript, bound_stress
         )
-        np.save(self.save_folder + "/normal" + self.subscript, normal)
+        np.save(self.save_folder + "/normal_area", normal_area)
+        np.save(self.save_folder + "/face_area", sd.face_areas)
         np.save(self.save_folder + "/fracture_faces_id", self.fracture_faces_id)
 
         with open(self.save_folder + "/sd_fract.pkl", "wb") as fle:
@@ -1134,6 +1134,12 @@ class SubModelCaseEni(
 
 
 if __name__ == "__main__":
+    import tracemalloc
+
+    os.system("clear")
+    tracemalloc.start()
+    
+
     model = SubModelCaseEni()
     model.mu_param = np.array([None, None, 3, 5.71e9])
     model.echelon_pressure = None
@@ -1146,4 +1152,11 @@ if __name__ == "__main__":
     t1 = time.time()
     pp.run_stationary_model(model, {})
     print("1 RUN TIME = ", time.time() - t1)
+    
+    snapshot = tracemalloc.take_snapshot()
+    top_stats = snapshot.statistics('lineno')
+    print("[ Top 10 ]")
+    with open("./memory.txt", "w") as fle:    
+        for stat in top_stats[:10]:
+            print(stat)
     print("\nDone!")

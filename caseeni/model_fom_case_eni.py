@@ -76,7 +76,14 @@ class ModelCaseEni:
             self.data_folder_root + "/TEST_TIMES",
             np.arange(0, time_final_test + timestep_nn, timestep_nn),
         )
-
+        np.savetxt(self.data_folder_root + "/TIMES_MECH", np.array([0, 20*365.25, 40*365.25]))
+        
+    def run_ref_fluid(self):
+        """ """
+        mu_param = np.array([np.log(1e0), np.log(1e0), 1, 5.71e10, 1.0, 0.0, 0.0])
+        self.run_one_simulation_no_python("ref", mu_param)
+        
+        
     def run_ref_mechanics(self):
         """reference solution or initial state"""
         import porepy as pp
@@ -92,6 +99,7 @@ class ModelCaseEni:
         model.nu = 0.25
 
         pp.run_stationary_model(model, {})
+    
 
     def run_one_simulation(
         self,
@@ -108,14 +116,21 @@ class ModelCaseEni:
         data_folder_root = self.data_folder_root
         save_folder_root = self.save_folder_root
 
-        times = np.loadtxt(
-            data_folder_root + "/TIMES"
-        )  # in this case, I dont have timestep chops, so I save only one TIMES file
+        # times = np.loadtxt(
+        #     data_folder_root + "/TIMES"
+        # )  # in this case, I dont have timestep chops, so I save only one TIMES file
+        
+        times_mech = np.loadtxt(
+            data_folder_root + "/TIMES_MECH"
+        )  
+
 
         # mechanics:
         save_folder = save_folder_root + "/mech/" + str(idx_mu)
 
-        for time in times:
+        for time in times_mech:
+        # for time in [times[0]]:
+            print("idx_mu = ", idx_mu, ", time = ", time)
             pp_model = sub_model_fom_case_eni.SubModelCaseEni()
             pp_model.save_folder = save_folder
             pp_model.exporter_folder = save_folder
@@ -130,8 +145,9 @@ class ModelCaseEni:
                 + "/fluid_pressure_"
                 + str(time)
                 + ".npy"
-            )
-            pp_model.echelon_pressure = echelon_pressure
+            ) 
+            pp_model.echelon_pressure = 1e5 * echelon_pressure # bar in ech, Pa in pp
+            # pp_model.echelon_pressure = None
             pp_params = {}
             pp.run_stationary_model(pp_model, pp_params)
 
@@ -191,12 +207,12 @@ class ModelCaseEni:
 
         search_pattern = "__TIME_PRODUCTION__"
         tot_time = np.loadtxt(data_folder_root + "/TIME_PRODUCTION")
-        replacement_pattern = str("1*" + str(tot_time / 365.25))
+        replacement_pattern = str(int(tot_time / 365.25)) + "*365.25"
         replace_pattern(file_name, search_pattern, replacement_pattern)
 
         search_pattern = "__TIME_INJECTION__"
         tot_time = np.loadtxt(data_folder_root + "/TIME_INJECTION")
-        replacement_pattern = str("1*" + str(tot_time / 365.25))
+        replacement_pattern = str(int(tot_time / 365.25)) + "*365.25"
         replace_pattern(file_name, search_pattern, replacement_pattern)
 
         search_pattern = "__PRODUCTION_RATE__"

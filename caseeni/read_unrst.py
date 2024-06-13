@@ -20,19 +20,13 @@ def read_and_save_pressures(data_folder, file_name, timestep):
             )
 
 
-data_folder_root = "./data"
-data_folder_fluid = data_folder_root + "/fluid"
-timestep = np.loadtxt(data_folder_root + "/TIMESTEP")
+def pressure_echelon_to_numpy():
+    """ """
+    
+    data_folder_root = "./data"
+    data_folder_fluid = data_folder_root + "/fluid"
+    timestep = np.loadtxt(data_folder_root + "/TIMESTEP")
 
-
-if __name__ == "__main__":
-    # basically for testing...
-    id_mu = 99999
-    data_folder = data_folder_fluid + "/" + str(id_mu)
-    file_name = data_folder + "/case2skew"
-    read_and_save_pressures(data_folder, file_name, timestep)
-
-else:
     training_dataset_id = np.loadtxt(data_folder_root + "/training_dataset_id")
     validation_dataset_id = np.loadtxt(data_folder_root + "/validation_dataset_id")
     test_dataset_id = np.loadtxt(data_folder_root + "/test_dataset_id")
@@ -43,8 +37,24 @@ else:
 
     for id_mu in all_id_mu:
         data_folder = data_folder_fluid + "/" + str(id_mu)
-        file_name = data_folder + "/*."
-        read_and_save_pressures(file_name, timestep)
+        file_name = data_folder + "/case2skew"
+        read_and_save_pressures(data_folder, file_name, timestep)
+        
+    print("pressure converted")
 
 
-print("pressure converted")
+if __name__ == "__main__":
+    # basically for testing...
+    data_folder_root = "./data"
+    data_folder_fluid = data_folder_root + "/fluid"
+    timestep = np.loadtxt(data_folder_root + "/TIMESTEP")
+
+    id_mu = 99999
+    data_folder = data_folder_fluid + "/" + str(id_mu)
+    file_name = data_folder + "/case2skew"
+    read_and_save_pressures(data_folder, file_name, timestep)
+
+    print("pressure converted")
+    
+    
+    

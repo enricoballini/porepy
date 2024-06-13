@@ -28,14 +28,18 @@ print("\n THIS IS MAIN FLUID \n")
 data_folder_root = "./data"
 save_folder_root = "./results"
 os.system("mkdir -p " + data_folder_root + "/fluid")
+os.system("mkdir -p " + data_folder_root + "/mech")
 os.system("mkdir " + save_folder_root)
 idx_mu = 99999  # "baseline"
 
 offline = model_fom_case_eni.ModelCaseEni(
-    data_folder=data_folder_root, save_folder=data_folder_root
+    data_folder_root=data_folder_root, save_folder_root=data_folder_root
 )
 mu_param = np.array([np.log(1e0), np.log(1e0), 1, 5.71e10, 1.0, 1.3e6, 703000.0])
+# mu_param = np.array([np.log(1e0), np.log(1e0), 1, 5.71e10, 1.0, 0.0, 0.0]) 
 offline.run_one_simulation_no_python(idx_mu, mu_param)
+
+# offline.run_ref_fluid(idx_mu, mu_param)
 
 print("\n\n\n\n\n Part 1 fluid Done!\n\n\n")
 stop
@@ -76,7 +80,7 @@ num_snap_to_generate = test_dataset_id[-1] + 1
 model_fom = model_fom_case_eni.ModelCaseEni(data_folder_root, data_folder_root)
 
 offline_data_class = offline_ode.OfflineComputationsODE(
-    data_folder=data_folder_root, save_folder=data_folder_root
+    data_folder=data_folder_root
 )
 offline_data_class.sample_parameters(
     num_snap_to_generate,
@@ -90,7 +94,9 @@ offline_data_class.sample_parameters(
 idx_to_generate = np.arange(0, num_snap_to_generate)
 # idx_to_generate = np.array([0])
 
-# offline_data_class.generate_snapshots(model_fom, idx_to_generate, n_proc=6)
+
+stop
+
 offline_data_class.generate_snapshots_no_python(model_fom, idx_to_generate)
 
 print("\n\n\n\n\n Done!\n\n\n")

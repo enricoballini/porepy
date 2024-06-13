@@ -298,7 +298,7 @@ WINJGAS
 -- dz(2 layer) = 20m
 -- volume flux = 0.01/1.8436 * 20 * 86400 = 9.373e3 sm3/day
 --WCONINJE
--- W1 GAS OPEN RATE 9.373e4 1*180 /
+-- W1 GAS OPEN RATE 9.373e4 1* 180 /
 --/
 
 --- 
