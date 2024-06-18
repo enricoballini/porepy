@@ -15,6 +15,7 @@ import numpy as np
 sys.path.append("../../mypythonmodules")
 
 from nnrom.dlromode import offline_ode
+from nnrom.dlrom import offline
 import model_fom_case_eni
 import read_unrst
 
@@ -27,36 +28,30 @@ print("\n THIS IS MAIN MECH, to be run after main_fluid.py \n")
 
 # tracemalloc.start()
 
-# to try the code:
-data_folder = "./data"
-save_folder = "./results"
-os.system("mkdir -p " + data_folder + "/mech")
-idx_mu = 99999  # "baseline"
+# # to try the code:
+# data_folder = "./data"
+# save_folder = "./results"
+# os.system("mkdir -p " + data_folder + "/mech")
+# idx_mu = 99999  # "baseline"
 
-offline = model_fom_case_eni.ModelCaseEni(
-    data_folder_root=data_folder, save_folder_root=data_folder
-)
-mu_param = np.array([np.log(1e0), np.log(1e0), 1, 5.71e10, 1.0, 1.3e6, 703000.0])
-offline.run_one_simulation(idx_mu, mu_param)
+# offline = model_fom_case_eni.ModelCaseEni(
+#     data_folder_root=data_folder, save_folder_root=data_folder
+# )
+# mu_param = np.array([np.log(1e0), np.log(1e0), 1, 5.71e10, 1.0, 1.3e6, 703000.0])
+# offline.run_one_simulation(idx_mu, mu_param)
 
-# snapshot = tracemalloc.take_snapshot()
-# top_stats = snapshot.statistics('lineno')
-# print("[ Top 10 ]")
-# with open("./memory.txt", "w") as fle:    
-#     for stat in top_stats[:10]:
-#          print(stat)
+# # snapshot = tracemalloc.take_snapshot()
+# # top_stats = snapshot.statistics('lineno')
+# # print("[ Top 10 ]")
+# # with open("./memory.txt", "w") as fle:    
+# #     for stat in top_stats[:10]:
+# #          print(stat)
     
-print("\n\n\n\n\n Part 1 mech Done!\n\n\n")
+# print("\n\n\n\n\n Part 1 mech Done!\n\n\n")
 
-stop
+# stop
 
 # #####################################################################################################
-
-# alpha_1 = 1
-# alpha_2 = 1
-# alpha_3 = 1
-# alpha_4 = 1
-# alpha_5 = 1
 
 
 # folder preparation:
@@ -69,22 +64,19 @@ os.system("mkdir -p " + results_folder_root)
 
 read_unrst.pressure_echelon_to_numpy()
 
+
 test_dataset_id = np.loadtxt(data_folder_root + "/test_dataset_id")
 num_snap_to_generate = test_dataset_id[-1] + 1
 
 # data generation:
 model_fom = model_fom_case_eni.ModelCaseEni(data_folder_root, data_folder_root)
-# print("running ref...") # NO, we changed the logic. We use the first timestep as ref
-# model_fom.run_ref_mechanics()
-# print("done ref")
 
-
-offline_data_class = offline_ode.OfflineComputationsODE(data_folder_root)
+offline_data_class = offline.OfflineComputations(data_folder_root)
 
 t1 = time.time()
-idx_to_generate = np.arange(0, num_snap_to_generate)
+idx_to_generate = np.arange(0, num_snap_to_generate, dtype=np.int32)
 # idx_to_generate = np.arange(0, 10)
-offline_data_class.generate_snapshots(model_fom, idx_to_generate, n_proc=10)
+offline_data_class.generate_snapshots(model_fom, idx_to_generate, n_proc=23)
 print("\nTOTAL TIME = ", time.time() - t1)
 
 

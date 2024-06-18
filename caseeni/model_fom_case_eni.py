@@ -5,6 +5,7 @@ import warnings
 import inspect
 import copy
 import shutil
+import time as moduletime
 
 
 from functools import partial
@@ -127,7 +128,11 @@ class ModelCaseEni:
 
         # mechanics:
         save_folder = save_folder_root + "/mech/" + str(idx_mu)
-
+        # try:
+        #     os.mkdir(data_folder)
+        # except:
+        #     pass
+        
         for time in times_mech:
         # for time in [times[0]]:
             print("idx_mu = ", idx_mu, ", time = ", time)
@@ -149,7 +154,9 @@ class ModelCaseEni:
             pp_model.echelon_pressure = 1e5 * echelon_pressure # bar in ech, Pa in pp
             # pp_model.echelon_pressure = None
             pp_params = {}
+            t_1 = moduletime.time()
             pp.run_stationary_model(pp_model, pp_params)
+            print("one timestep of idx_mu = ", idx_mu, " took ", moduletime.time()-t_1 )
 
         del pp_model, pp_params
 

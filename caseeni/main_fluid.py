@@ -69,10 +69,13 @@ parameters_range = np.array(
 )
 num_params = parameters_range.shape[1]
 
-training_dataset_id = np.arange(0, 1)
-validation_dataset_id = np.arange(1, 2)
-test_dataset_id = np.arange(2, 300)
+training_dataset_id = np.arange(0, 3, dtype=np.int32)
+validation_dataset_id = np.arange(3, 5, dtype=np.int32)
+test_dataset_id = np.arange(5, 300, dtype=np.int32)
 
+
+np.savetxt(data_folder_root + "/training_dataset_id", training_dataset_id)
+np.savetxt(data_folder_root + "/validation_dataset_id", validation_dataset_id)
 np.savetxt(data_folder_root + "/test_dataset_id", test_dataset_id)
 np.savetxt(results_folder_root + "/test_dataset_id", test_dataset_id)
 num_snap_to_generate = test_dataset_id[-1] + 1

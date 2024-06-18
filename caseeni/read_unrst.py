@@ -31,12 +31,14 @@ def pressure_echelon_to_numpy():
     validation_dataset_id = np.loadtxt(data_folder_root + "/validation_dataset_id")
     test_dataset_id = np.loadtxt(data_folder_root + "/test_dataset_id")
 
-    all_id_mu = np.concatenate(
+    all_idx_mu = np.concatenate(
         (training_dataset_id, validation_dataset_id, test_dataset_id)
-    )
+    ).astype(np.int32)
+    
 
-    for id_mu in all_id_mu:
-        data_folder = data_folder_fluid + "/" + str(id_mu)
+    for idx_mu in all_idx_mu:
+        print("reading UNRST of idx_mu = ", idx_mu)
+        data_folder = data_folder_fluid + "/" + str(int(idx_mu))
         file_name = data_folder + "/case2skew"
         read_and_save_pressures(data_folder, file_name, timestep)
         
@@ -49,8 +51,8 @@ if __name__ == "__main__":
     data_folder_fluid = data_folder_root + "/fluid"
     timestep = np.loadtxt(data_folder_root + "/TIMESTEP")
 
-    id_mu = 99999
-    data_folder = data_folder_fluid + "/" + str(id_mu)
+    idx_mu = 99999
+    data_folder = data_folder_fluid + "/" + str(idx_mu)
     file_name = data_folder + "/case2skew"
     read_and_save_pressures(data_folder, file_name, timestep)
 

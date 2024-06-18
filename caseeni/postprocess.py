@@ -45,7 +45,9 @@ def compute_and_plot_delta_displacement(idx_mu):
         p = np.load(
             "./data/fluid/" + str(idx_mu) + "/fluid_pressure_" + str(time) + ".npy"
         )
-
+        
+        pdb.set_trace()
+        
         exporter.write_vtu(
             [(sd, "delta_displacement", delta_u),
              (sd, "fluid_pressure", p)], 
@@ -180,16 +182,17 @@ def compute_fault_traction(idx_mu):
 
 def run_all_postprocess():
     """ """
-    # data_folder_root = "./data"
+    data_folder_root = "./data"
     # save_folder_root = "./data"
     # model_fom = model_fom_case_eni.ModelCaseEni(data_folder_root, save_folder_root)
     training_dataset_id = np.loadtxt(data_folder_root + "/training_dataset_id")
     validation_dataset_id = np.loadtxt(data_folder_root + "/validation_dataset_id")
     test_dataset_id = np.loadtxt(data_folder_root + "/test_dataset_id")
     
-    all_id_mu = np.concatenate(
+    
+    idx_mu_list = np.concatenate(
         (training_dataset_id, validation_dataset_id, test_dataset_id)
-    )
+    ).astype(np.int32)
      
     for idx_mu in idx_mu_list:
          compute_and_plot_delta_displacement(idx_mu)
