@@ -13,6 +13,7 @@ https://pytorch.org/get-started/previous-versions/
 """
 
 sys.path.append("../../mypythonmodules")
+sys.path.append("../../../mypythonmodules")
 
 from nnrom.dlromode import offline_ode
 from nnrom.dlrom import offline
@@ -37,7 +38,7 @@ print("\n THIS IS MAIN FLUID \n")
 #     data_folder_root=data_folder_root, save_folder_root=data_folder_root
 # )
 # mu_param = np.array([np.log(1e0), np.log(1e0), 1, 5.71e10, 1.0, 1.3e6, 703000.0])
-# # mu_param = np.array([np.log(1e0), np.log(1e0), 1, 5.71e10, 1.0, 0.0, 0.0]) 
+# # mu_param = np.array([np.log(1e0), np.log(1e0), 1, 5.71e10, 1.0, 0.0, 0.0])
 # offline.run_one_simulation_no_python(idx_mu, mu_param)
 
 # # offline.run_ref_fluid(idx_mu, mu_param)
@@ -86,13 +87,11 @@ model_fom = model_fom_case_eni.ModelCaseEni(data_folder_root, data_folder_root)
 # offline_data_class = offline_ode.OfflineComputationsODE(
 #     data_folder=data_folder_root
 # )
-offline_data_class = offline.OfflineComputations(
-    data_folder=data_folder_root
-)
+offline_data_class = offline.OfflineComputations(data_folder=data_folder_root)
 offline_data_class.sample_parameters(
     num_snap_to_generate,
     parameters_range,
-    distribution="uniform",
+    distribution="latin",
     seed=42,
     rtol=1e-10,
     atol=1e-5,
@@ -103,22 +102,4 @@ idx_to_generate = np.arange(0, num_snap_to_generate)
 
 offline_data_class.generate_snapshots_no_python(model_fom, idx_to_generate)
 
-print("\n\n\n\n\n Done!\n\n\n")
-stop
-
-
-# remove extra timesteps:
-training_times = np.loadtxt(data_folder + "/TRAINING_TIMES")
-ppromode.broomer(
-    data_folder,
-    training_times,
-    np.concatenate((training_dataset_id, validation_dataset_id)),
-)
-
-# not sure to what extent I need the foloowing since I interpolate the times when I compute the errors
-test_times = np.loadtxt(data_folder + "/TEST_TIMES")
-ppromode.broomer(
-    data_folder,
-    test_times,
-    test_dataset_id,
-)
+print("\n\n\n\n\n Fluid done!\n\n\n")
