@@ -66,6 +66,7 @@ class NewtonSolver:
                 Number of iterations used.
 
         """
+        print("\n\n\nNEWTON SOLVER \n\n")
         model.before_nonlinear_loop()
 
         iteration_counter = 0
@@ -174,6 +175,15 @@ class NewtonSolver:
         function to prepare for possible future introduction of more advanced schemes.
 
         """
+        try:
+            sub = str(model.subscript)
+        except:
+            sub = ""
+            
+        print("going to assemble linear system " + sub)
         model.assemble_linear_system()
+        print("finished to assemble linear system " + sub)
+        print("going to solve linear system " + sub)
         sol = model.solve_linear_system()
+        print("finished to solve linear system " + sub)
         return sol

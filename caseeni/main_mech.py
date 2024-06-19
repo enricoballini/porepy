@@ -62,7 +62,7 @@ os.system("mkdir -p " + data_folder_root + "/mech")
 os.system("rm -r " + results_folder_root)
 os.system("mkdir -p " + results_folder_root)
 
-read_unrst.pressure_echelon_to_numpy()
+# read_unrst.pressure_echelon_to_numpy()
 
 
 test_dataset_id = np.loadtxt(data_folder_root + "/test_dataset_id")
@@ -76,7 +76,8 @@ offline_data_class = offline.OfflineComputations(data_folder_root)
 t1 = time.time()
 idx_to_generate = np.arange(0, num_snap_to_generate, dtype=np.int32)
 # idx_to_generate = np.arange(0, 10)
-offline_data_class.generate_snapshots(model_fom, idx_to_generate, n_proc=23)
+print("going to generate snapshots")
+offline_data_class.generate_snapshots(model_fom, idx_to_generate, n_proc=9)
 print("\nTOTAL TIME = ", time.time() - t1)
 
 

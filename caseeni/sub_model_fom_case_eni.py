@@ -935,6 +935,7 @@ class SolutionStrategyMomentumBalance(
 
     def prepare_simulation(self) -> None:
         """ """
+        print("beginning prepare_simulation " + str(self.subscript))
         self.clean_working_directory()
 
         self.set_materials()
@@ -956,6 +957,7 @@ class SolutionStrategyMomentumBalance(
         self.set_nonlinear_discretizations()
 
         self.save_data_time_step()
+        print("end prepare_simulation " + str(self.subscript) )
 
     def clean_working_directory(self):
         """ """
