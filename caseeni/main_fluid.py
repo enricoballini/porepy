@@ -70,7 +70,7 @@ parameters_range = np.array(
 )
 np.savetxt(data_folder_root + "/parameters_range", parameters_range)
 num_params = parameters_range.shape[1]
-np.savetxt(data_folder_root + "/num_params", np.array([num_params]))
+np.savetxt(data_folder_root + "/num_params", np.array([num_params]), fmt="%d")
 
 
 training_dataset_id = np.arange(0, 3, dtype=np.int32)

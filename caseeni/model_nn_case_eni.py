@@ -19,10 +19,14 @@ def count_trainable_params(nn_list: list[nn.Module], save_folder: str) -> None:
         trainable_params_count[i] = sum(
             p.numel() for p in nn.parameters() if p.requires_grad
         )
+
         np.savetxt(
-            save_folder + "/trainable_weights_nn_" + str(i), trainable_params_count[i]
+            save_folder + "/trainable_weights_nn_" + str(i),
+            np.array([trainable_params_count[i]]),
         )
-    np.savetxt(save_folder + "/trainable_weights_tot", sum(trainable_params_count))
+    np.savetxt(
+        save_folder + "/trainable_weights_tot", np.array([sum(trainable_params_count)])
+    )
 
 
 def encoder_decoder_blu(data_folder, num_params):

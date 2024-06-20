@@ -73,7 +73,7 @@ fake_displacement = 0.777 * np.ones(sd.num_cells)
 for idx in all_dataset_id:
     for time in times_mech:
         np.save(
-            data_folder_mech + "/" + str(idx) + "/displacement_" + str(time),
+            data_folder_mech + "/" + str(idx) + "/displacement_" + "%.10f" % time,
             fake_displacement,
         )
 

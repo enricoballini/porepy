@@ -1056,7 +1056,7 @@ class SolutionStrategyMomentumBalance(
         ]  # the fracture is planar, i take the first vecor as ref
 
         # need to save data for computing fault traction as post process
-        np.save(self.save_folder + "/displacement" + self.subscript, u)
+        np.save(self.save_folder + "/displacement" + "_%.10f" % self.subscript[1:], u)
         np.save(
             self.save_folder + "/displacement_boundary" + self.subscript, u_b_filled
         )
