@@ -1,4 +1,0 @@
-FAULTS
-DIRECT 19 19 5 24 1 35 X /
-/
-

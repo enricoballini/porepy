@@ -68,25 +68,26 @@ parameters_range = np.array(
         [np.log(1e2), np.log(1e1), 25, 5.71e11, 1.0, 1.5e6, 703000.0],
     ]
 )
+np.savetxt(data_folder_root + "/parameters_range", parameters_range)
 num_params = parameters_range.shape[1]
+np.savetxt(data_folder_root + "/num_params", np.array([num_params]))
+
 
 training_dataset_id = np.arange(0, 3, dtype=np.int32)
 validation_dataset_id = np.arange(3, 5, dtype=np.int32)
 test_dataset_id = np.arange(5, 300, dtype=np.int32)
 
 
-np.savetxt(data_folder_root + "/training_dataset_id", training_dataset_id)
-np.savetxt(data_folder_root + "/validation_dataset_id", validation_dataset_id)
-np.savetxt(data_folder_root + "/test_dataset_id", test_dataset_id)
-np.savetxt(results_folder_root + "/test_dataset_id", test_dataset_id)
+np.savetxt(data_folder_root + "/training_dataset_id", training_dataset_id, fmt="%d")
+np.savetxt(data_folder_root + "/validation_dataset_id", validation_dataset_id, fmt="%d")
+np.savetxt(data_folder_root + "/test_dataset_id", test_dataset_id, fmt="%d")
+np.savetxt(results_folder_root + "/test_dataset_id", test_dataset_id, fmt="%d")
 num_snap_to_generate = test_dataset_id[-1] + 1
+
 
 # data generation:
 model_fom = model_fom_case_eni.ModelCaseEni(data_folder_root, data_folder_root)
 
-# offline_data_class = offline_ode.OfflineComputationsODE(
-#     data_folder=data_folder_root
-# )
 offline_data_class = offline.OfflineComputations(data_folder=data_folder_root)
 offline_data_class.sample_parameters(
     num_snap_to_generate,
@@ -96,6 +97,9 @@ offline_data_class.sample_parameters(
     rtol=1e-10,
     atol=1e-5,
 )
+
+stop
+
 
 idx_to_generate = np.arange(0, num_snap_to_generate)
 # idx_to_generate = np.array([0])

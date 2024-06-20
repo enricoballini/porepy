@@ -360,9 +360,10 @@ class MomentumBalanceEquations(
 
         elif isinstance(pressure_vals, str):  # reference solution
             if pressure_vals == "gravity_only":
-                raise Error("the reference pressure is the first timestep, so the  taking into account the ref is a postprocess operation")
+                raise Error(
+                    "the reference pressure is the first timestep, so the  taking into account the ref is a postprocess operation"
+                )
                 # pressure_vals = np.load("./data/fluid/ref/fluid_pressure_0.0.npy")
-            
 
         # elif isinstance(pressure_vals, np.ndarray):
         #     print("\ngonna use fake fluid pressure values anyway")
@@ -581,8 +582,8 @@ class GeometryCloseToEni(
         self.zmin = 0
         self.zmax = 2500
 
-        correction = 5 # ???
-        
+        correction = 5  # ???
+
         self.reservoir_z_left_top = 1450 + correction  # from paper
         self.reservoir_z_left_bottom = 1550 + correction
         self.reservoir_x_west = 0
@@ -592,7 +593,7 @@ class GeometryCloseToEni(
 
         self.reservoir_z_right_top = 1450 + 50 * np.sin(80 * np.pi / 180)  # from paper
         self.reservoir_z_right_bottom = 1550 + 50 * np.sin(80 * np.pi / 180)
-        
+
         if cut:
             ind_cut = (
                 eni_grid.cell_centers[1, :] < self.ymin + width
@@ -611,18 +612,18 @@ class GeometryCloseToEni(
         self.nd: int = self.mdg.dim_max()
 
         pp.set_local_coordinate_projections(self.mdg)
-        
+
     def set_geometry_part_2(self):
         """ """
         eni_grid = self.eni_grid
-        
-        correction = 50 # ???
+
+        correction = 50  # ???
         polygon_vertices = np.array(
             [
                 [
-                    535.51 + correction, # 585
+                    535.51 + correction,  # 585
                     535.51 + correction,
-                    976.327 + correction, # 1026
+                    976.327 + correction,  # 1026
                     976.327 + correction,
                 ],  # x
                 [
@@ -645,8 +646,6 @@ class GeometryCloseToEni(
         self.create_frac_sd_for_plot(eni_grid, self.fracture_faces_id)
 
         self.find_reservoir_cells(eni_grid, polygon_vertices)
-   
-
 
     def set_domain(self) -> None:
         """ """
@@ -957,7 +956,7 @@ class SolutionStrategyMomentumBalance(
         self.set_nonlinear_discretizations()
 
         self.save_data_time_step()
-        print("end prepare_simulation " + str(self.subscript) )
+        print("end prepare_simulation " + str(self.subscript))
 
     def clean_working_directory(self):
         """ """
@@ -1118,9 +1117,34 @@ class SolutionStrategyMomentumBalance(
             ]
         )
 
-    # def prepare_model_for_postprocess(self):
-    #     """ """
-    #     self.prepare_simulation()
+        # data for L2 error
+        volumes_subdomains = sd.cell_volumes
+        volumes_interfaces = np.array([])
+        vars_domain = np.array([0])
+        dofs_primary_vars = np.arange((0, sd.num_cells))
+        n_dofs_tot = np.array([sd.num_cells], dtype=np.int32)
+
+        np.save(self.save_folder, volumes_subdomains)
+        np.save(self.save_folder, volumes_interfaces)
+        np.save(self.save_folder, vars_domain)
+        np.save(self.save_folder, dofs_primary_vars)
+        np.save(self.save_folder, n_dofs_tot)
+
+    def prepare_model_for_postprocess(self):
+        """ """
+        self.clean_working_directory()
+        self.set_materials()
+        self.set_geometry()
+        self.set_geometry_part_2()
+        self.initialize_data_saving(
+            exporter_folder=self.exporter_folder, subscript=self.subscript
+        )
+        self.set_equation_system_manager()
+        self.create_variables()
+        self.initial_condition()
+        self.reset_state_from_file()
+
+        self.set_equations()
 
 
 class SubModelCaseEni(
@@ -1140,7 +1164,6 @@ if __name__ == "__main__":
 
     os.system("clear")
     tracemalloc.start()
-    
 
     model = SubModelCaseEni()
     model.mu_param = np.array([None, None, 3, 5.71e9])
@@ -1154,11 +1177,11 @@ if __name__ == "__main__":
     t1 = time.time()
     pp.run_stationary_model(model, {})
     print("1 RUN TIME = ", time.time() - t1)
-    
+
     snapshot = tracemalloc.take_snapshot()
-    top_stats = snapshot.statistics('lineno')
+    top_stats = snapshot.statistics("lineno")
     print("[ Top 10 ]")
-    with open("./memory.txt", "w") as fle:    
+    with open("./memory.txt", "w") as fle:
         for stat in top_stats[:10]:
             print(stat)
     print("\nDone!")
