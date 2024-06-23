@@ -1121,7 +1121,7 @@ class SolutionStrategyMomentumBalance(
         volumes_subdomains = sd.cell_volumes
         volumes_interfaces = np.array([])
         vars_domain = np.array([0])
-        dofs_primary_vars = np.arange((0, sd.num_cells))
+        dofs_primary_vars = np.array([np.arange((0, sd.num_cells))])
         n_dofs_tot = np.array([sd.num_cells], dtype=np.int32)
 
         np.save(self.save_folder, volumes_subdomains)
@@ -1130,7 +1130,7 @@ class SolutionStrategyMomentumBalance(
         np.save(self.save_folder, dofs_primary_vars)
         np.save(self.save_folder, n_dofs_tot)
 
-    def prepare_model_for_postprocess(self):
+    def prepare_model_for_visualization(self):
         """ """
         self.clean_working_directory()
         self.set_materials()

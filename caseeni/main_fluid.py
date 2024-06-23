@@ -54,6 +54,7 @@ data_folder_root = "./data"
 results_folder_root = "./results"
 
 os.system("mkdir -p " + data_folder_root + "/fluid")
+os.system("mkdir -p " + data_folder_root + "/mech")
 os.system("rm -r " + results_folder_root)
 os.system("mkdir -p " + results_folder_root)
 
@@ -69,7 +70,7 @@ parameters_range = np.array(
     ]
 )
 np.savetxt(data_folder_root + "/parameters_range", parameters_range)
-num_params = parameters_range.shape[1]
+num_params = parameters_range.shape[1] - 2  # Cm and production rate aren't
 np.savetxt(data_folder_root + "/num_params", np.array([num_params]), fmt="%d")
 
 

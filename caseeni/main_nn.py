@@ -30,8 +30,13 @@ validation_dataset_id = np.loadtxt(
 )
 test_dataset_id = np.loadtxt(data_folder_root + "/test_dataset_id", dtype=np.int32)
 
-num_params = np.loadtxt(data_folder_root + "/num_params", dtype=np.int32)
-parameters_range = np.loadtxt(data_folder_root + "/parameters_range")
+num_params = (
+    np.loadtxt(data_folder_root + "/num_params", dtype=np.int32) + 1
+)  # + 1 bcs of time
+parameters_range = np.loadtxt(data_folder_root + "/parameters_range")[
+    :, [0, 1, 2, 3, 5]
+]  # TODO improve it
+
 
 for idx_mu in np.concatenate(
     (training_dataset_id, validation_dataset_id, test_dataset_id)
@@ -66,8 +71,8 @@ scal_matrices = offline_nn.compute_scaling_matrices(
 nn = offline_nn.Dlrom(encoder, decoder, blu, scal_matrices, scaling_mu_range="01")
 nn.set_forward_mode("offline")
 
-num_epochs = 1
-training_batch_size = 1
+num_epochs = 21
+training_batch_size = 3
 alpha_1 = 1
 alpha_2 = 1
 alpha_3 = 1
@@ -94,14 +99,19 @@ offline_nn.train_neural_network(
 
 
 print("\n\n\n before test_trained_neural_network -------------")
+np.savetxt("./data/TEST_TIMES", np.loadtxt("./data/TIMES_MECH"))
 offline_nn.test_trained_neural_network(
-    data_folder_mech, results_folder_nn, test_dataset, n_eval_pts=100
+    data_folder_root, data_folder_mech, results_folder_nn, test_dataset, n_eval_pts=4
 )
 
 
 print("\n\n\n before create_vtu_for_figure_nn --------------")
-nnrom.viz.create_vtu_for_figure_nn_simply(
-    model_fom_case_eni,
+# WHY DONT I SEE nnrom.utils.viz ??
+from nnrom.utils import viz
+import sub_model_fom_case_eni
+
+viz.create_vtu_for_figure_nn_simply(
+    sub_model_fom_case_eni.SubModelCaseEni(),
     data_folder_root,
     results_folder_nn,
     idx_mu_to_plot=test_dataset_id,

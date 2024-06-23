@@ -74,17 +74,19 @@ class ModelCaseEni:
             np.arange(0, time_final_training + timestep_nn, timestep_nn),
         )
         np.savetxt(
-            self.data_folder_root + "/TEST_TIMES",
-            np.arange(0, time_final_test + timestep_nn, timestep_nn),
+            self.data_folder_root + "/TIMES_MECH",
+            np.array([0, 20 * 365.25, 40 * 365.25]),
         )
-        np.savetxt(self.data_folder_root + "/TIMES_MECH", np.array([0, 20*365.25, 40*365.25]))
-        
+        # np.savetxt(
+        #     self.data_folder_root + "/TEST_TIMES",
+        #     np.array([0, 20 * 365.25, 40 * 365.25]),
+        # ) # this is not related to fom model
+
     def run_ref_fluid(self):
         """ """
         mu_param = np.array([np.log(1e0), np.log(1e0), 1, 5.71e10, 1.0, 0.0, 0.0])
         self.run_one_simulation_no_python("ref", mu_param)
-        
-        
+
     def run_ref_mechanics(self):
         """reference solution or initial state"""
         import porepy as pp
@@ -100,7 +102,6 @@ class ModelCaseEni:
         model.nu = 0.25
 
         pp.run_stationary_model(model, {})
-    
 
     def run_one_simulation(
         self,
@@ -120,11 +121,8 @@ class ModelCaseEni:
         # times = np.loadtxt(
         #     data_folder_root + "/TIMES"
         # )  # in this case, I dont have timestep chops, so I save only one TIMES file
-        
-        times_mech = np.loadtxt(
-            data_folder_root + "/TIMES_MECH"
-        )  
 
+        times_mech = np.loadtxt(data_folder_root + "/TIMES_MECH")
 
         # mechanics:
         save_folder = save_folder_root + "/mech/" + str(idx_mu)
@@ -132,9 +130,9 @@ class ModelCaseEni:
         #     os.mkdir(data_folder)
         # except:
         #     pass
-        
+
         for time in times_mech:
-        # for time in [times[0]]:
+            # for time in [times[0]]:
             print("idx_mu = ", idx_mu, ", time = ", time)
             pp_model = sub_model_fom_case_eni.SubModelCaseEni()
             pp_model.save_folder = save_folder
@@ -150,13 +148,15 @@ class ModelCaseEni:
                 + "/fluid_pressure_"
                 + str(time)
                 + ".npy"
-            ) 
-            pp_model.echelon_pressure = 1e5 * echelon_pressure # bar in ech, Pa in pp
+            )
+            pp_model.echelon_pressure = 1e5 * echelon_pressure  # bar in ech, Pa in pp
             # pp_model.echelon_pressure = None
             pp_params = {}
             t_1 = moduletime.time()
             pp.run_stationary_model(pp_model, pp_params)
-            print("one timestep of idx_mu = ", idx_mu, " took ", moduletime.time()-t_1 )
+            print(
+                "one timestep of idx_mu = ", idx_mu, " took ", moduletime.time() - t_1
+            )
 
         del pp_model, pp_params
 
@@ -182,7 +182,7 @@ class ModelCaseEni:
 
         # phi_ave = np.sum(phi) / phi.shape[0]  # phi 2 = reservoir = 0.2 #
         phi_ave = np.max(phi)  # HARDCODED
-        
+
         nu = np.loadtxt(data_folder_root + "/mech/NU")
         c_pp = (
             (1 + nu) * (1 - 2 * nu) / ((1 - nu) * (E_ave / 1e5) * phi_ave)

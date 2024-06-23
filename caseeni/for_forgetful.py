@@ -51,7 +51,7 @@ for idx in all_dataset_id:
 volumes_subdomains = sd.cell_volumes
 volumes_interfaces = np.array([])
 vars_domain = np.array([0])
-dofs_primary_vars = np.arange(0, sd.num_cells)
+dofs_primary_vars = np.array([np.arange(0, sd.num_cells)])
 n_dofs_tot = np.array([sd.num_cells])
 
 
@@ -69,9 +69,11 @@ for idx in all_dataset_id:
 
 # generate fake displacement:
 pdb.set_trace()
-fake_displacement = 0.777 * np.ones(sd.num_cells)
 for idx in all_dataset_id:
     for time in times_mech:
+        fake_displacement = 0.777 * np.ones(sd.num_cells) + 0.1 * np.sin(
+            time
+        ) * np.random.rand(sd.num_cells)
         np.save(
             data_folder_mech + "/" + str(idx) + "/displacement_" + "%.10f" % time,
             fake_displacement,
