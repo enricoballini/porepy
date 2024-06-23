@@ -1118,11 +1118,11 @@ class SolutionStrategyMomentumBalance(
         )
 
         # data for L2 error
-        volumes_subdomains = sd.cell_volumes
+        volumes_subdomains = np.concatenate(3*[sd.cell_volumes])
         volumes_interfaces = np.array([])
         vars_domain = np.array([0])
-        dofs_primary_vars = np.array([np.arange((0, sd.num_cells))])
-        n_dofs_tot = np.array([sd.num_cells], dtype=np.int32)
+        dofs_primary_vars = np.array([np.arange((0, 3*sd.num_cells))])
+        n_dofs_tot = np.array([3*sd.num_cells], dtype=np.int32)
 
         np.save(self.save_folder, volumes_subdomains)
         np.save(self.save_folder, volumes_interfaces)
@@ -1132,7 +1132,7 @@ class SolutionStrategyMomentumBalance(
 
     def prepare_model_for_visualization(self):
         """ """
-        self.clean_working_directory()
+        #self.clean_working_directory()
         self.set_materials()
         self.set_geometry()
         self.set_geometry_part_2()

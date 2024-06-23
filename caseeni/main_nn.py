@@ -12,6 +12,7 @@ from nnrom.dlrom import offline_nn
 from nnrom.dlromode import offline_nn_ode
 import model_nn_case_eni
 import model_fom_case_eni
+import sub_model_fom_case_eni ###
 
 
 os.system("clear")
@@ -38,6 +39,22 @@ parameters_range = np.loadtxt(data_folder_root + "/parameters_range")[
 ]  # TODO improve it
 
 
+
+model = sub_model_fom_case_eni.SubModelCaseEni()### forgot to add some output in the model
+model.subscript = ""###
+model.save_folder = "./CANCELLARE"###
+model.set_geometry()###
+model.set_geometry_part_2()###
+model.set_equation_system_manager()###
+model.create_variables()###
+sd = model.mdg.subdomains(dim=3)[0]###
+
+volumes_subdomains = np.concatenate(3*[sd.cell_volumes])###
+volumes_interfaces = np.array([])###
+vars_domain = np.array([0])###
+dofs_primary_vars = np.array([np.arange(0, 3*sd.num_cells)])###
+n_dofs_tot = np.array([3*sd.num_cells])###
+
 for idx_mu in np.concatenate(
     (training_dataset_id, validation_dataset_id, test_dataset_id)
 ):
@@ -50,6 +67,28 @@ for idx_mu in np.concatenate(
         + ".npy"
     )  # sorry, __getitem__ search for data in only one folder... TODO: decide how to fix this
 
+    os.system(
+        "cp ./data/TIMES_MECH "
+        + data_folder_mech
+        + "/"
+        + str(idx_mu)
+        + "/PRUNED_TRAINING_TIMES"
+    )
+
+    os.system(
+        "cp ./data/TIMES_MECH " + data_folder_mech + "/" + str(idx_mu) + "/TIMES_MECH"
+    )
+    np.save(
+        data_folder_mech + "/" + str(idx_mu) + "/volumes_subdomains", volumes_subdomains
+    )
+    np.save(
+        data_folder_mech + "/" + str(idx_mu) + "/volumes_interfaces", volumes_interfaces
+    )
+    np.save(data_folder_mech + "/" + str(idx_mu) + "/vars_domain", vars_domain)
+    np.save(data_folder_mech + "/" + str(idx_mu) + "/dofs_primary_vars", dofs_primary_vars)
+    np.save(data_folder_mech + "/" + str(idx_mu) + "/n_dofs_tot", n_dofs_tot)
+
+
 training_dataset, validation_dataset, test_dataset = offline_nn.create_pytorch_datasets(
     data_folder_mech,
     training_dataset_id,
@@ -57,6 +96,8 @@ training_dataset, validation_dataset, test_dataset = offline_nn.create_pytorch_d
     test_dataset_id,
     var_name="displacement",
 )
+
+
 
 snap_range, time_range = nnrom.utils.misc.get_min_max(
     data_folder_mech, "displacement", time_file="TIMES_MECH"
@@ -71,10 +112,10 @@ scal_matrices = offline_nn.compute_scaling_matrices(
 nn = offline_nn.Dlrom(encoder, decoder, blu, scal_matrices, scaling_mu_range="01")
 nn.set_forward_mode("offline")
 
-num_epochs = 21
-training_batch_size = 3
+num_epochs = 501
+training_batch_size = 4
 alpha_1 = 1
-alpha_2 = 1
+alpha_2 = 0.01
 alpha_3 = 1
 alpha_4 = 1
 
@@ -110,8 +151,13 @@ print("\n\n\n before create_vtu_for_figure_nn --------------")
 from nnrom.utils import viz
 import sub_model_fom_case_eni
 
+model = sub_model_fom_case_eni.SubModelCaseEni()### forgot to add some output in the model
+model.subscript = ""###
+model.save_folder = "./CANCELLARE"###
+model.echelon_presure = "gravity_only"
+
 viz.create_vtu_for_figure_nn_simply(
-    sub_model_fom_case_eni.SubModelCaseEni(),
+    model,
     data_folder_root,
     results_folder_nn,
     idx_mu_to_plot=test_dataset_id,

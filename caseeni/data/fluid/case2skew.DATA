@@ -1,0 +1,322 @@
+--------------------------------------------------------
+RUNSPEC
+---------------------------------------------------------
+
+
+
+--GASWAT
+NOMIX
+
+SATOPTS                                -- Generated : Petrel
+  HYSTER /
+
+ENDSCALE
+ /
+
+COMPS                                  -- Generated : Petrel
+  2 /
+
+TITLE                                  -- Generated : Petrel
+ 'SIMPLE FAULT' 
+
+START                                  -- Generated : Petrel
+  1 JAN 2024 /
+
+WATER       
+REGDIMS
+ 3* 3 /
+METRIC                                 -- Generated : Petrel
+
+DIMENS                                 -- Generated : Petrel
+  48 28 35 /
+EQLDIMS
+ 3 /
+TABDIMS                                -- Generated : Petrel
+  2 1 10* 2 /
+
+
+UNIFIN
+UNIFOUT
+
+---------------------------------------------------------
+GRID
+---------------------------------------------------------
+ 
+INCLUDE
+ GRID3D.GRDECL /
+EQUALS
+ ACTNUM 1 /
+/
+
+INCLUDE
+ PERMX.INC /
+ --- 
+ MULTIPLY
+  PERMX __PERMEABILITY_X_MULTIPLIER__ /
+  /
+ 
+INCLUDE
+ PERMY.INC /
+
+INCLUDE
+ PERMZ.INC /
+
+ MULTIPLY
+  PERMX 10 /
+  /
+ 
+ COPY
+   PERMX PERMZ /
+   PERMX PERMY /
+   /
+   MULTIPLY
+    PERMZ 0.2 /
+    /
+
+
+INCLUDE
+ PORO.INC /
+
+-- EQUALS
+--  PORO 0.25 /
+-- /
+
+INCLUDE
+ FAULTS.INC  /
+
+INCLUDE 
+ FLUXNUM.INC /
+MULTFLT
+--        fault multiplier 
+ DIRECT   __TRANSMISS_PERP__  /
+/
+
+GRIDFILE
+ 0 1  /
+
+INIT
+---------------------------------------------------------
+MULTREGT
+  2 1  0.0  2* F /
+  2 3   0.0 2* F /
+/
+EDIT
+---------------------------------------------------------
+
+---------------------------------------------------------
+PROPS
+---------------------------------------------------------
+
+-- Hysteresis for gas only
+EHYSTR
+ 1* 2  /
+INCLUDE
+ PUNQS3_EOS_COMPS.INC  /
+INCLUDE
+ SCAL.INC /
+--- second error for e300
+TEMPVD
+ 1   15
+4000 135 /
+    /
+    /
+-- PUNQS3_SWOF_SGOF.INC /
+---------------------------------------------------------
+PVTW
+1.0   1.0042   5.43E-05   0.5   1.11E-04   /
+
+-- Eaq = 5.71e+05 bar
+-- Cmaq = 1.46e-06 1/bar
+-- nuaq = 2.50e-01
+-- poroaq = 2.00e-01
+-- Cpaq = 7.30e-06 bar
+
+-- Ecap = 5.71e+05 bar
+-- Cmcap = 1.46e-06 1/bar
+-- nuca = 2.50e-01
+-- porocap = 1.00e-01
+-- Cpcap = 1.46e-05 bar
+
+--rocknum=1 -> caprock+outside
+--rocknum=2 -> reservoir
+
+-- ROCK (p. 458) 
+-- REF_PRESS (reference pressure) ROCK_COMP (rock_compressibility)
+ROCK
+150.0  __ROCK_COMPRESSIBILITY_1__ /
+150.0  __ROCK_COMPRESSIBILITY_2__ /
+-- compressibility was: 1.46e-5
+-- and 7.30e-6
+
+--GROCK
+--0.0  3.807e+05  0.200000 /
+--0.0  3.807e+05  0.200000 /
+
+DENSITY
+ 1* 1000 1* /
+ZMFVD
+ 0  1 0
+5000 1 0 /
+ 0  1 0
+5000 1 0 /
+ 0  1 0
+5000 1 0 /
+REGIONS
+---------------------------------------------------------
+-- Zones
+-- 1 -> inactive
+-- 2 -> reservoir
+-- 3 -> caprock
+INCLUDE
+ FIPNUM.INC /
+
+COPY
+ FIPNUM EQLNUM /
+/
+EQUALS
+ SATNUM 1 /
+ PVTNUM 1 /
+ IMBNUM 2 /
+/
+
+INCLUDE
+ ROCKNUM.INC /
+
+---------------------------------------------------------
+SOLUTION
+---------------------------------------------------------
+
+EQUIL                                  -- Generated : Petrel
+-- datum pdatum owc pcowc goc pcgoc
+    1690 169     0 .0      0  0  /
+    1690 169  1690 .0  1690  0/
+ 1690 169  0 .0 0  /
+
+
+RPTRST
+ BASIC=2   /
+
+---------------------------------------------------------
+SUMMARY
+---------------------------------------------------------
+RRPV
+ /
+--ALL
+RWIP
+/
+RGIP
+/
+RPR
+/
+RWFT
+ 1 2 /
+ 1 3 /
+ 2 3 /
+/
+FPR
+FPRP
+
+RPR
+/
+RPRP
+/
+RPPV
+/
+BPR
+7  14 18 /
+13 14 18 /
+19 14 12 /
+19 14 18 /
+19 14 24 /
+20 14 14 /
+20 14 20 /
+20 14 26 /
+28 14 20 /
+36 14 20 /
+/
+
+FGIP
+FOIP
+FWIP
+FGIPL
+FGIPG
+FGIPR
+FOIPL
+FOIPG
+FOIPR
+FAGIP
+
+FGIT
+FGIR
+FVIR
+FVIT
+
+FWGR
+
+WBHP
+/
+
+WMCTL
+/
+
+WGIR
+/
+WVIR
+/
+WWGR
+/
+FGPR
+
+PERFORMA
+
+---------------------------------------------------------
+SCHEDULE
+---------------------------------------------------------
+
+RPTRST
+ BASIC=2  /
+-- BASIC=2 SGAS SWAT XMF YMF AMF PRESSURE BGAS BOIL BWAT DENG DENO DENW BG BW PORV_MOD /
+
+WELSPECS
+ W1 PLATA 7 14 1* GAS /
+/
+
+COMPDAT
+ W1 7 14 17 20 OPEN 2* 0.3048 /
+/
+
+WELLSTRE
+ CO2 0.0 1.0 /
+/
+
+WINJGAS
+ W1 STREAM CO2 /
+/
+
+-- rhoco2_std = 1.8436 kg/sm3
+-- mass flux = 0.01 kg/s/m
+-- dz(2 layer) = 20m
+-- volume flux = 0.01/1.8436 * 20 * 86400 = 9.373e3 sm3/day
+--WCONINJE
+-- W1 GAS OPEN RATE 9.373e4 1* 180 /
+--/
+
+--- 
+WCONPROD
+ W1 OPEN GRAT 2* __PRODUCTION_RATE__ 2* 10 /
+/ 
+
+--- 
+TSTEP
+ __TIME_PRODUCTION__/ 
+--- 1.8436 kg/sm3 *1.e6 sm3 = 1863.6 tonn/day
+--target 0.7 *(1.3)  mtpa 
+
+--- 
+WCONINJE
+ W1 GAS OPEN RATE __INJECTION_RATE__ 1* 190 /
+/
+
+--- 
+TSTEP
+ __TIME_INJECTION__/ 

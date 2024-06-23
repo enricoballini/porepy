@@ -74,16 +74,16 @@ num_params = parameters_range.shape[1] - 2  # Cm and production rate aren't
 np.savetxt(data_folder_root + "/num_params", np.array([num_params]), fmt="%d")
 
 
-training_dataset_id = np.arange(0, 3, dtype=np.int32)
-validation_dataset_id = np.arange(3, 5, dtype=np.int32)
-test_dataset_id = np.arange(5, 300, dtype=np.int32)
+training_dataset_id = np.arange(0, 100, dtype=np.int32)
+validation_dataset_id = np.arange(100, 120, dtype=np.int32)
+test_dataset_id = np.arange(120, 140, dtype=np.int32)
 
 
 np.savetxt(data_folder_root + "/training_dataset_id", training_dataset_id, fmt="%d")
 np.savetxt(data_folder_root + "/validation_dataset_id", validation_dataset_id, fmt="%d")
 np.savetxt(data_folder_root + "/test_dataset_id", test_dataset_id, fmt="%d")
 np.savetxt(results_folder_root + "/test_dataset_id", test_dataset_id, fmt="%d")
-num_snap_to_generate = test_dataset_id[-1] + 1
+num_snap_to_generate = 300 # test_dataset_id[-1] + 1
 
 
 # data generation:
@@ -98,8 +98,6 @@ offline_data_class.sample_parameters(
     rtol=1e-10,
     atol=1e-5,
 )
-
-stop
 
 
 idx_to_generate = np.arange(0, num_snap_to_generate)
