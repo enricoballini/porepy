@@ -112,7 +112,7 @@ scal_matrices = offline_nn.compute_scaling_matrices(
 nn = offline_nn.Dlrom(encoder, decoder, blu, scal_matrices, scaling_mu_range="01")
 nn.set_forward_mode("offline")
 
-num_epochs = 501
+num_epochs = 31
 training_batch_size = 4
 alpha_1 = 1
 alpha_2 = 0.01
@@ -151,13 +151,10 @@ print("\n\n\n before create_vtu_for_figure_nn --------------")
 from nnrom.utils import viz
 import sub_model_fom_case_eni
 
-model = sub_model_fom_case_eni.SubModelCaseEni()### forgot to add some output in the model
-model.subscript = ""###
-model.save_folder = "./CANCELLARE"###
-model.echelon_presure = "gravity_only"
+model_class = sub_model_fom_case_eni.SubModelCaseEni ### forgot to add some output in the model # no...
 
 viz.create_vtu_for_figure_nn_simply(
-    model,
+    model_class,
     data_folder_root,
     results_folder_nn,
     idx_mu_to_plot=test_dataset_id,

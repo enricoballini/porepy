@@ -364,6 +364,12 @@ class MomentumBalanceEquations(
                     "the reference pressure is the first timestep, so the  taking into account the ref is a postprocess operation"
                 )
                 # pressure_vals = np.load("./data/fluid/ref/fluid_pressure_0.0.npy")
+            if pressure_vals == "force_fake":
+                fake_vals = np.zeros(sd.num_cells)
+                fake_vals[self.reservoir_cell_ids] = (
+                    sd.cell_centers[0, self.reservoir_cell_ids] ** 2 * 2
+                )
+                pressure_vals = fake_vals
 
         # elif isinstance(pressure_vals, np.ndarray):
         #     print("\ngonna use fake fluid pressure values anyway")
