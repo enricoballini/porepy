@@ -33,7 +33,7 @@ def encoder_decoder_blu(data_folder, num_params):
     """ """
     n_dofs_tot = np.load(data_folder + "/n_dofs_tot.npy")[0]
     size_hidden = 20
-    latent_size = 3
+    latent_size = 5+1
     mu_param_size = num_params  # time included
 
     encoder = nn.Sequential(
@@ -46,6 +46,8 @@ def encoder_decoder_blu(data_folder, num_params):
 
     decoder = nn.Sequential(
         nn.Linear(latent_size, size_hidden),
+        nn.PReLU(),
+        nn.Linear(size_hidden, size_hidden),
         nn.PReLU(),
         nn.Linear(size_hidden, size_hidden),
         nn.PReLU(),

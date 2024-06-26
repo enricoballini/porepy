@@ -2,11 +2,11 @@ import os
 import sys
 
 import pdb
-import postprocess
+import postprocess_utils
 
 os.system("clear")
 
 
-postprocess.run_all_postprocess()
+postprocess_utils.run_all_postprocess()
 
 print("\nDone!")

@@ -78,7 +78,7 @@ idx_to_generate = np.arange(0, num_snap_to_generate, dtype=np.int32)
 
 
 print("going to generate snapshots")
-offline_data_class.generate_snapshots(model_fom, idx_to_generate, n_proc=6) ###
+offline_data_class.generate_snapshots(model_fom, idx_to_generate, n_proc=np.floor(48*4/4 -1)) 
 print("\nTOTAL TIME = ", time.time() - t1)
 
 

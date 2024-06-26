@@ -1,17 +1,15 @@
-#!/usr/bin/bash
-rm -r pp.sh.* 
-rm -r launch_mech.sh.*
+#!/bin/bash
 
-# #!/bin/bash
+# rm -r pp.sh.* 
+# rm -r launch_mech.sh.*
 
-#PBS -l nodes=1:ncores=48 # ppn=10
-#   #PBS -l mem=60gb
-#PBS -l walltime=24:00:00
-#PBS -N EB_job_pp
+#PBS -l select=8:ncpus=48:mem=180GB
+#PBS -l walltime=00:20:00
+#PBS -N EB_job
 #PBS -j oe
-#PBS -o job_out_eb.out
-# #PBS -q echelon_low
-#PBS -q echelon
+#PBS -o eb_job.out
+#PBS -q echelon_low
+# #PBS -q echelon
 
 export OMP_NUM_THREADS=5
 
