@@ -34,9 +34,7 @@ if __name__ == "__main__":
 
     times = np.loadtxt(time_file)
     
-    from nnrom.utils import viz # ?
-
-    pdb.set_trace()
+    from nnrom.utils import viz ### usual not understood error
 
     viz.plot_err_in_time_relative_and_absolute(
         errs_rel_mu_ave,

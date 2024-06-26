@@ -1136,8 +1136,10 @@ class SolutionStrategyMomentumBalance(
         np.save(self.save_folder, dofs_primary_vars)
         np.save(self.save_folder, n_dofs_tot)
 
-    def prepare_model_for_visualization(self):
-        """ """
+    def prepare_model_for_visualization_old(self):
+        """ 
+        i dont need it for a single domain model right?
+        """
         #self.clean_working_directory()
         self.set_materials()
         self.set_geometry()
@@ -1151,6 +1153,13 @@ class SolutionStrategyMomentumBalance(
         self.reset_state_from_file()
 
         self.set_equations()
+    
+    def prepare_model_for_visualization(self):
+        """ 
+        """
+        self.set_geometry()
+        self.set_geometry_part_2()
+
 
 
 class SubModelCaseEni(

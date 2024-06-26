@@ -78,8 +78,9 @@ idx_to_generate = np.arange(0, num_snap_to_generate, dtype=np.int32)
 
 
 print("going to generate snapshots")
-offline_data_class.generate_snapshots(model_fom, idx_to_generate, n_proc=9)
+offline_data_class.generate_snapshots(model_fom, idx_to_generate, n_proc=6) ###
 print("\nTOTAL TIME = ", time.time() - t1)
 
 
+np.savetxt("./data/mech/end_file", np.array([]))
 print("\n\n\n\n\n Done!\n\n\n")
