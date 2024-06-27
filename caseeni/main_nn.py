@@ -165,5 +165,5 @@ viz.create_vtu_for_figure_nn_simply(
 )
 
 
-np.savetxt("./data/mech/end_file", np.array([]))
+np.savetxt("./results/nn/end_file", np.array([]))
 print("\n\n\n\n\nDone!\n\n\n\n")

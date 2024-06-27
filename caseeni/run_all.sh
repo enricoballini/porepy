@@ -27,6 +27,7 @@ echo "Fluid finished!"
 
 
 # run mechanics: -----------------------------------------------------------------
+rm -r "./data/mech/end_file"
 qsub run_mech.sh
 
 # wait for mechanics to finish: -------------------------------------------------------
@@ -48,6 +49,7 @@ echo "Mechanics finished!"
 
 
 # create reduced model: ---------------------------------------------------------------
+rm -r "./results/nn/end_file"
 qsub run_nn.sh
 
 # wait for ROM to finish: ----------------------------------------------------

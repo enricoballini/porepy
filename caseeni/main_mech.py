@@ -62,7 +62,7 @@ results_folder_root = "./results"
 os.system("rm -r " + results_folder_root)
 os.system("mkdir -p " + results_folder_root)
 
-# read_unrst.pressure_echelon_to_numpy()
+read_unrst.pressure_echelon_to_numpy()
 
 test_dataset_id = np.loadtxt(data_folder_root + "/test_dataset_id")
 num_snap_to_generate = test_dataset_id[-1] + 1
@@ -78,7 +78,7 @@ idx_to_generate = np.arange(0, num_snap_to_generate, dtype=np.int32)
 
 
 print("going to generate snapshots")
-offline_data_class.generate_snapshots(model_fom, idx_to_generate, n_proc=np.floor(48*4/4 -1)) 
+offline_data_class.generate_snapshots(model_fom, idx_to_generate, n_proc=int(np.floor(48*4/4 -1))) 
 print("\nTOTAL TIME = ", time.time() - t1)
 
 
