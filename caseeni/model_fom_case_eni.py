@@ -131,34 +131,38 @@ class ModelCaseEni:
         # except:
         #     pass
 
-        for time in times_mech:
-            # for time in [times[0]]:
-            print("idx_mu = ", idx_mu, ", time = ", time)
-            pp_model = sub_model_fom_case_eni.SubModelCaseEni()
-            pp_model.save_folder = save_folder
-            pp_model.exporter_folder = save_folder
-            pp_model.nu = np.loadtxt(data_folder_root + "/mech/NU")
+        if os.path.isfile(save_folder + "/end_file"):
+            print("mech idx_mu " + str(idx_mu) + " already done")
+        else:
+            for time in times_mech:
+                # for time in [times[0]]:
+                print("idx_mu = ", idx_mu, ", time = ", time)
+                pp_model = sub_model_fom_case_eni.SubModelCaseEni()
+                pp_model.save_folder = save_folder
+                pp_model.exporter_folder = save_folder
+                pp_model.nu = np.loadtxt(data_folder_root + "/mech/NU")
 
-            pp_model.subscript = "_" + str(time)
-            pp_model.mu_param = mu_param
-            echelon_pressure = np.load(
-                data_folder_root
-                + "/fluid/"
-                + str(idx_mu)
-                + "/fluid_pressure_"
-                + str(time)
-                + ".npy"
-            )
-            pp_model.echelon_pressure = 1e5 * echelon_pressure  # bar in ech, Pa in pp
-            # pp_model.echelon_pressure = None
-            pp_params = {}
-            t_1 = moduletime.time()
-            pp.run_stationary_model(pp_model, pp_params)
-            print(
-                "one timestep of idx_mu = ", idx_mu, " took ", moduletime.time() - t_1
-            )
+                pp_model.subscript = "_" + str(time)
+                pp_model.mu_param = mu_param
+                echelon_pressure = np.load(
+                    data_folder_root
+                    + "/fluid/"
+                    + str(idx_mu)
+                    + "/fluid_pressure_"
+                    + str(time)
+                    + ".npy"
+                )
+                pp_model.echelon_pressure = 1e5 * echelon_pressure  # bar in ech, Pa in pp
+                # pp_model.echelon_pressure = None
+                pp_params = {}
+                t_1 = moduletime.time()
+                pp.run_stationary_model(pp_model, pp_params)
+                print(
+                    "one timestep of idx_mu = ", idx_mu, " took ", moduletime.time() - t_1
+                )
 
-        del pp_model, pp_params
+            del pp_model, pp_params
+            np.savetxt(save_folder + "/end_file")
 
     def run_one_simulation_no_python(
         self,

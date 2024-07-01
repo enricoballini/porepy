@@ -4,25 +4,26 @@ clear
 rm -r run_all.sh.*
 
 
-# run fluid: --------------------------------------------------------------------
-qsub run_fluid.sh
+# # run fluid: --------------------------------------------------------------------
+# qsub run_fluid.sh
 
-# wait for fluid to finish: ----------------------------------------------------
-LAST_IDX_MU=$(head -n 1 "./data/last_idx_mu")
-FILE_PATH="./data/fluid/$LAST_IDX_MU/case2skew.ECLEND"
-WAIT_TIME=10 
+# # wait for fluid to finish: ----------------------------------------------------
+# LAST_IDX_MU=$(head -n 1 "./data/last_idx_mu")
+# FILE_PATH="./data/fluid/$LAST_IDX_MU/case2skew.ECLEND"
+# WAIT_TIME=10 
 
-SENTINEL=1
-while [ $SENTINEL -eq 1 ]; do
-  if [ -f "$FILE_PATH" ]; then
-    echo "File $FILE_PATH has been generated."
-    SENTINEL=0
-  else
-    echo "Fluid simulation not finished since file $FILE_PATH has not been found. Checking again in $WAIT_TIME seconds."
-  fi
-  sleep $WAIT_TIME
-done
-echo "Fluid finished!"
+# SENTINEL=1
+# while [ $SENTINEL -eq 1 ]; do
+#   if [ -f "$FILE_PATH" ]; then
+#     echo "File $FILE_PATH has been generated."
+#     SENTINEL=0
+#   else
+#     echo "Fluid simulation not finished since file $FILE_PATH has not been found. Checking again in $WAIT_TIME seconds."
+#   fi
+#   sleep $WAIT_TIME
+# done
+# sleep 600 # to be sure that ALL simulations have finished # TODO: check each folder, not only the last one
+# echo "Fluid finished!"
 
 
 
@@ -77,8 +78,3 @@ python3 post_process.py
 
 
 echo "\n\n\n\nDone!"
-
-
-
-
-

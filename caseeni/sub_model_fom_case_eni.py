@@ -966,8 +966,9 @@ class SolutionStrategyMomentumBalance(
 
     def clean_working_directory(self):
         """ """
-        os.system("rm *.pvd *.vtu")
-        os.system("rm -r visualization")
+        # os.system("rm *.pvd *.vtu")
+        # os.system("rm -r visualization")
+        print("not cleaning")
 
     def initial_condition(self) -> None:
         """ """
@@ -1062,10 +1063,6 @@ class SolutionStrategyMomentumBalance(
         ]  # the fracture is planar, i take the first vecor as ref
 
         # need to save data for computing fault traction as post process
-        print("self.subscript = ",  self.subscript)
-        print("type(u) = ", type(u))
-        print("u.shape = ", u.shape)
-
         np.save(self.save_folder + "/displacement" + self.subscript, u)
         np.save(
             self.save_folder + "/displacement_boundary" + self.subscript, u_b_filled
@@ -1131,20 +1128,19 @@ class SolutionStrategyMomentumBalance(
         volumes_subdomains = np.concatenate(3*[sd.cell_volumes])
         volumes_interfaces = np.array([])
         vars_domain = np.array([0])
-        dofs_primary_vars = np.array([np.arange((0, 3*sd.num_cells))])
+        dofs_primary_vars = np.array( [np.arange(0, 3*sd.num_cells)] )
         n_dofs_tot = np.array([3*sd.num_cells], dtype=np.int32)
 
-        np.save(self.save_folder, volumes_subdomains)
-        np.save(self.save_folder, volumes_interfaces)
-        np.save(self.save_folder, vars_domain)
-        np.save(self.save_folder, dofs_primary_vars)
-        np.save(self.save_folder, n_dofs_tot)
+        np.save(self.save_folder + "/volumes_subdomains", volumes_subdomains)
+        np.save(self.save_folder + "/volumes_interfaces", volumes_interfaces)
+        np.save(self.save_folder + "/vars_domain", vars_domain)
+        np.save(self.save_folder + "/dofs_primary_vars", dofs_primary_vars)
+        np.save(self.save_folder + "/n_dofs_tot", n_dofs_tot)
 
     def prepare_model_for_visualization_old(self):
         """ 
         i dont need it for a single domain model right?
         """
-        #self.clean_working_directory()
         self.set_materials()
         self.set_geometry()
         self.set_geometry_part_2()

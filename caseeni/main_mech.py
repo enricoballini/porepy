@@ -59,10 +59,9 @@ print("\n THIS IS MAIN MECH, to be run after main_fluid.py \n")
 data_folder_root = "./data"
 results_folder_root = "./results"
 
-os.system("rm -r " + results_folder_root)
 os.system("mkdir -p " + results_folder_root)
 
-read_unrst.pressure_echelon_to_numpy()
+# read_unrst.pressure_echelon_to_numpy()
 
 test_dataset_id = np.loadtxt(data_folder_root + "/test_dataset_id")
 num_snap_to_generate = test_dataset_id[-1] + 1
@@ -74,12 +73,18 @@ offline_data_class = offline.OfflineComputations(data_folder_root)
 
 t1 = time.time()
 idx_to_generate = np.arange(0, num_snap_to_generate, dtype=np.int32)
-# idx_to_generate = np.arange(0, 10)
-
+idx_to_generate = np.concatenate(
+    (np.arange(301,420),
+    np.arange(517,588),
+    np.arange(637,660),
+    np.arange(709,756),
+    np.arange(806,828),
+    np.arange(853,900)), dtype=np.int32
+    ) ##############################################################################################
 
 print("going to generate snapshots")
-offline_data_class.generate_snapshots(model_fom, idx_to_generate, n_proc=int(np.floor(48*4/4 -1))) 
-print("\nTOTAL TIME = ", time.time() - t1)
+offline_data_class.generate_snapshots(model_fom, idx_to_generate, n_proc=int(np.floor(48*40/8 - 1))) 
+print("\nTOTAL TIME = ", time.time() - t1) #, flush=True) to print realtime
 
 
 np.savetxt("./data/mech/end_file", np.array([]))

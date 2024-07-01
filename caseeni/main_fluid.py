@@ -55,7 +55,7 @@ results_folder_root = "./results"
 
 os.system("mkdir -p " + data_folder_root + "/fluid")
 os.system("mkdir -p " + data_folder_root + "/mech")
-os.system("rm -r " + results_folder_root)
+# os.system("rm -r " + results_folder_root)
 os.system("mkdir -p " + results_folder_root)
 
 
