@@ -73,17 +73,20 @@ offline_data_class = offline.OfflineComputations(data_folder_root)
 
 t1 = time.time()
 idx_to_generate = np.arange(0, num_snap_to_generate, dtype=np.int32)
-idx_to_generate = np.concatenate(
-    (np.arange(301,420),
-    np.arange(517,588),
-    np.arange(637,660),
-    np.arange(709,756),
-    np.arange(806,828),
-    np.arange(853,900)), dtype=np.int32
-    ) ##############################################################################################
+# idx_to_generate = np.concatenate(
+#     (np.arange(301,420),
+#     np.arange(517,588),
+#     np.arange(637,660),
+#     np.arange(709,756),
+#     np.arange(806,828),
+#     np.arange(853,900)), dtype=np.int32
+#     ) ##############################################################################################
 
 print("going to generate snapshots")
-offline_data_class.generate_snapshots(model_fom, idx_to_generate, n_proc=int(np.floor(48*40/8 - 1))) 
+n_proc = int(np.floor(48*1/5 - 1))
+print("n_proc = ", n_proc)
+# offline_data_class.generate_snapshots(model_fom, idx_to_generate, n_proc=n_proc) 
+offline_data_class.generate_snapshots_no_python_mech(model_fom, idx_to_generate) 
 print("\nTOTAL TIME = ", time.time() - t1) #, flush=True) to print realtime
 
 

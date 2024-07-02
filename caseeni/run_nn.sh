@@ -8,4 +8,4 @@
 #PBS -q echelon
 
 echo "Running on nodes: $PBS_NODEFILE" > node_info_nn.txt
-python3 main_nn.py > output_nn.txt 2>&1
+python3 -u main_nn.py > output_nn.txt 2>&1

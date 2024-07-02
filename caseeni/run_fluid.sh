@@ -7,4 +7,4 @@
 #PBS -o eb_job_fluid.out
 #PBS -q echelon
 echo "Running on nodes: $PBS_NODEFILE" > node_info_fluid.txt
-python3 main_fluid.py > output_fluid.txt 2>&1
+python3 -u main_fluid.py > output_fluid.txt 2>&1

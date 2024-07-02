@@ -5,7 +5,8 @@ rm -r run_all.sh.*
 
 
 # # run fluid: --------------------------------------------------------------------
-# qsub run_fluid.sh
+# # qsub run_fluid.sh
+# python3 main_fluid.py
 
 # # wait for fluid to finish: ----------------------------------------------------
 # LAST_IDX_MU=$(head -n 1 "./data/last_idx_mu")
@@ -29,10 +30,11 @@ rm -r run_all.sh.*
 
 # run mechanics: -----------------------------------------------------------------
 rm -r "./data/mech/end_file"
-qsub run_mech.sh
+python3 main_mech.py
 
 # wait for mechanics to finish: -------------------------------------------------------
-FILE_PATH="./data/mech/end_file"
+LAST_IDX_MU=$(head -n 1 "./data/last_idx_mu")
+FILE_PATH="./data/mech/$LAST_IDX_MU/end_file" # TODO...
 WAIT_TIME=60 
 
 SENTINEL=1
@@ -45,6 +47,7 @@ while [ $SENTINEL -eq 1 ]; do
   fi
   sleep $WAIT_TIME
 done
+sleep 1200
 echo "Mechanics finished!"
 
 

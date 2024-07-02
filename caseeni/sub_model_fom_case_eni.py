@@ -576,7 +576,7 @@ class GeometryCloseToEni(
         cut = False
 
         self.set_domain()
-        eni_grid = self.load_eni_grid(path_to_mat="./data/mrst_grid")
+        eni_grid = self.load_eni_grid(path_to_mat=self.mrst_folder+"/mrst_grid")
 
         self.xmin = -1000
         self.xmax = 3000
@@ -944,20 +944,29 @@ class SolutionStrategyMomentumBalance(
         self.clean_working_directory()
 
         self.set_materials()
+
+        print(" before set_geometry" + str(self.subscript))
         self.set_geometry()
         self.set_geometry_part_2()
 
         self.initialize_data_saving(
             exporter_folder=self.exporter_folder, subscript=self.subscript
         )
+
+        print(" before manager" + str(self.subscript))
         self.set_equation_system_manager()
+        print(" before create variables" + str(self.subscript))
         self.create_variables()
+        print(" before initial conditions" + str(self.subscript))
         self.initial_condition()
         self.reset_state_from_file()
 
+        print(" before set_eqautions" + str(self.subscript))
         self.set_equations()
         self.set_discretization_parameters()
+        print(" before discretize " + str(self.subscript))
         self.discretize()
+        print(" after discretize " + str(self.subscript))
         self._initialize_linear_solver()
         self.set_nonlinear_discretizations()
 
@@ -1031,6 +1040,8 @@ class SolutionStrategyMomentumBalance(
         # _, sss, _ = sp.sparse.linalg.svds(A, k=int(A.shape[0] / 1000))
         # cond = np.linalg.cond(A.todense(), p=2)
         # print("condition number K2 = ", cond)
+        
+        print("inside after_simulation")
 
         subdomains_data = self.mdg.subdomains(return_data=True)
         subdomains = [subdomains_data[0][0]]
@@ -1136,6 +1147,7 @@ class SolutionStrategyMomentumBalance(
         np.save(self.save_folder + "/vars_domain", vars_domain)
         np.save(self.save_folder + "/dofs_primary_vars", dofs_primary_vars)
         np.save(self.save_folder + "/n_dofs_tot", n_dofs_tot)
+        print("end after_simulation")
 
     def prepare_model_for_visualization_old(self):
         """ 
@@ -1187,6 +1199,7 @@ if __name__ == "__main__":
     model.exporter_folder = "./data/mech/99999"
     model.subscript = ""
     model.nu = 0.25
+    model.mrst_folder = "./data"
 
     # pp.run_time_dependent_model(model, {}) # same output of run_stationary....
     t1 = time.time()
