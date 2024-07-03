@@ -32,7 +32,7 @@ def count_trainable_params(nn_list: list[nn.Module], save_folder: str) -> None:
 def encoder_decoder_blu(data_folder, num_params):
     """ """
     n_dofs_tot = np.load(data_folder + "/n_dofs_tot.npy")[0]
-    size_hidden = 20
+    size_hidden = 40
     latent_size = 5+1
     mu_param_size = num_params  # time included
 

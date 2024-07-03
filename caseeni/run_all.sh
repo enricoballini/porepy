@@ -28,27 +28,36 @@ rm -r run_all.sh.*
 
 
 
-# run mechanics: -----------------------------------------------------------------
-rm -r "./data/mech/end_file"
-python3 main_mech.py
+# # run mechanics: -----------------------------------------------------------------
+# rm -r "./data/mech/end_file"
+# python3 main_mech.py
 
-# wait for mechanics to finish: -------------------------------------------------------
-LAST_IDX_MU=$(head -n 1 "./data/last_idx_mu")
-FILE_PATH="./data/mech/$LAST_IDX_MU/end_file" # TODO...
-WAIT_TIME=60 
+# # wait for mechanics to finish: -------------------------------------------------------
+# LAST_IDX_MU=$(head -n 1 "./data/last_idx_mu")
+# WAIT_TIME=60 
 
-SENTINEL=1
-while [ $SENTINEL -eq 1 ]; do
-  if [ -f "$FILE_PATH" ]; then
-    echo "File $FILE_PATH has been generated."
-    SENTINEL=0
-  else
-    echo "Mechanics simulation not finished since file $FILE_PATH has not been found. Checking again in $WAIT_TIME seconds."
-  fi
-  sleep $WAIT_TIME
-done
-sleep 1200
-echo "Mechanics finished!"
+# SENTINEL=1
+# while [ $SENTINEL -eq 1 ]; do
+
+#   ALL_END_FILES=1 # mech has finished only if EACH folder idx_mu has end_file
+#   for i in $(seq 0 $N); do 
+#       if [ ! -f "./data/mech/$i/end_file" ]; then
+#           ALL_END_FILES=0
+#           break
+#       fi
+#   done
+      
+#   if [ $ALL_END_FILES -eq 1 ]; then
+#     echo "File $FILE_PATH has been generated."
+#     SENTINEL=0
+#   else
+#     echo "Mechanics simulation not finished since file $FILE_PATH has not been found. Checking again in $WAIT_TIME seconds."
+#   fi
+#   sleep $WAIT_TIME
+
+# done
+# sleep 1200
+# echo "Mechanics finished!"
 
 
 
@@ -75,9 +84,10 @@ echo "ROM finished!"
 
 
 # figures: ----------------------------------------------------------------------------
+python3 main_nn_part_2.py 
 python3 plot_loss.py
 python3 plot_err_in_time.py
-python3 post_process.py
+python3 postprocess.py
 
 
 echo "\n\n\n\nDone!"

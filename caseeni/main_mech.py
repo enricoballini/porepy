@@ -73,14 +73,6 @@ offline_data_class = offline.OfflineComputations(data_folder_root)
 
 t1 = time.time()
 idx_to_generate = np.arange(0, num_snap_to_generate, dtype=np.int32)
-# idx_to_generate = np.concatenate(
-#     (np.arange(301,420),
-#     np.arange(517,588),
-#     np.arange(637,660),
-#     np.arange(709,756),
-#     np.arange(806,828),
-#     np.arange(853,900)), dtype=np.int32
-#     ) ##############################################################################################
 
 print("going to generate snapshots")
 n_proc = int(np.floor(48*1/5 - 1))

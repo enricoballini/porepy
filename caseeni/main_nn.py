@@ -61,9 +61,11 @@ parameters_range = np.loadtxt(data_folder_root + "/parameters_range")[
 # dofs_primary_vars = np.array([np.arange(0, 3*sd.num_cells)])###
 # n_dofs_tot = np.array([3*sd.num_cells])###
 
+print("going to copy some files...")
 for idx_mu in np.concatenate(
     (training_dataset_id, validation_dataset_id, test_dataset_id)
 ):
+    print(idx_mu)
     os.system(
         "cp ./data/mu_param_"
         + str(idx_mu)
@@ -95,6 +97,7 @@ for idx_mu in np.concatenate(
     # np.save(data_folder_mech + "/" + str(idx_mu) + "/n_dofs_tot", n_dofs_tot)###
 
 
+print("before create datasets")
 training_dataset, validation_dataset, test_dataset = offline_nn.create_pytorch_datasets(
     data_folder_mech,
     training_dataset_id,
@@ -103,12 +106,15 @@ training_dataset, validation_dataset, test_dataset = offline_nn.create_pytorch_d
     var_name="displacement",
 )
 
+print("before get_min_max")
 snap_range, time_range = nnrom.utils.misc.get_min_max(
     data_folder_mech, "displacement", time_file="TIMES_MECH"
 )
+print("before encoder, decoder, blu")
 encoder, decoder, blu = model_nn_case_eni.encoder_decoder_blu(
     data_folder_mech + "/0", num_params
 )
+print("before scaling matrices")
 model_nn_case_eni.count_trainable_params([encoder, decoder, blu], results_folder_nn)
 scal_matrices = offline_nn.compute_scaling_matrices(
     snap_range, parameters_range, time_range, scaling_mu_range="01"
@@ -116,8 +122,8 @@ scal_matrices = offline_nn.compute_scaling_matrices(
 nn = offline_nn.Dlrom(encoder, decoder, blu, scal_matrices, scaling_mu_range="01")
 nn.set_forward_mode("offline")
 
-num_epochs = 501
-training_batch_size = 4
+num_epochs = 10001 #1001
+training_batch_size = 32
 alpha_1 = 1
 alpha_2 = 0.01
 alpha_3 = 1
@@ -142,28 +148,6 @@ offline_nn.train_neural_network(
     alpha_4=alpha_4,
 )
 
-
-print("\n\n\n before test_trained_neural_network -------------")
-np.savetxt("./data/TEST_TIMES", np.loadtxt("./data/TIMES_MECH"))
-offline_nn.test_trained_neural_network(
-    data_folder_root, data_folder_mech, results_folder_nn, test_dataset, n_eval_pts=4
-)
-
-
-print("\n\n\n before create_vtu_for_figure_nn --------------")
-# WHY DONT I SEE nnrom.utils.viz ??
-from nnrom.utils import viz
-import sub_model_fom_case_eni
-
-model_class = sub_model_fom_case_eni.SubModelCaseEni ### forgot to add some output in the model # no...
-
-viz.create_vtu_for_figure_nn_simply(
-    model_class,
-    data_folder_root,
-    results_folder_nn,
-    idx_mu_to_plot=test_dataset_id,
-)
-
-
 np.savetxt("./results/nn/end_file", np.array([]))
+
 print("\n\n\n\n\nDone!\n\n\n\n")
