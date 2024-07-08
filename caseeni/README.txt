@@ -37,8 +37,12 @@ htop show the cumulative over users usage
 
 at the current time, June 2024, the clusters arent really busy, you can easily steal an entire node for an interactive session with, e.g. qsub -I -X -l select=1:ncpus=24:ngpus=4 -q echelon 
 
+qsub -I -X -l select=1:ncpus=24:ngpus=4 -q echelon        
+qsub -I -X -l select=1:ncpus=48:mem=180gb -q echelon_low
+export OMP_NUM_THREADS=4
 
-REMEMBER to make sh executable for qsub chmod +x ....sh
+
+REMEMBER to make sh executable for qsub chmod +x ....sh NO
 
 qselect -u ext2047799 | xargs -r qdel
 
@@ -49,12 +53,17 @@ watch nvidia-smi
 
 UNSOLVED ISSUES: -------------------------------------
 - need to code on cluster, connections slow
-- need to ask cineca to install a recent version of VSCode
+- SOLVED need to ask cineca to install a recent version of VSCode
 - PBS doesn not always retunr errors, you can make some mistake in requireing resources that it automatically fixes them following internal rules
 - unpredicatable RAM usage, with 48/5 simulations per node only few failed bcs of memory run out (most simulaitons reached the end), with 48/16 the same... What is the bottleneck?
+- partially SOLVED, issues with python multiprocess and multi node job, all the processes go to one one 
 - if you ask for too much RAM, PBS put your job in the queue, forever, whitout warnings
 - No clear documentation of PBS, the one provided by cineca is too simplified, the one on the internet is unclear
 - useless laptop, used only to type ssh -X login 
 - laptop keyboard without keys...
 - IMPORTANT: it seems that subporcess module of python does NOT work on more than one nodes
 - i have 300GB of data, how do i manage them? I cant make a safety copy
+- pytorch requires specific backends to work with spase matrices on gpu and cpu
+- pytorch is unhappy with sparse matrices, no easy way to pass from scipy to torch. *** RuntimeError: add(sparse, dense) is not supported. Use add(dense, sparse) instead.
+- Reading/writing from disk (which one?) is terrribly slow, sometimes it takes minutes to just importing the libraries in python!
+

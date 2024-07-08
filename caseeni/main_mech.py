@@ -77,7 +77,6 @@ idx_to_generate = np.arange(0, num_snap_to_generate, dtype=np.int32)
 print("going to generate snapshots")
 n_proc = int(np.floor(48*1/5 - 1))
 print("n_proc = ", n_proc)
-# offline_data_class.generate_snapshots(model_fom, idx_to_generate, n_proc=n_proc) 
 offline_data_class.generate_snapshots_no_python_mech(model_fom, idx_to_generate) 
 print("\nTOTAL TIME = ", time.time() - t1) #, flush=True) to print realtime
 

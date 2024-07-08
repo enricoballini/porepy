@@ -9,10 +9,7 @@ sys.path.append("../../../mypythonmodules")
 
 import nnrom
 from nnrom.dlrom import offline_nn
-from nnrom.dlromode import offline_nn_ode
-import model_nn_case_eni
-import model_fom_case_eni
-import sub_model_fom_case_eni ###
+import sub_model_fom_case_eni 
 
 
 os.system("clear")
@@ -49,7 +46,6 @@ offline_nn.test_trained_neural_network(
 print("before create_vtu_for_figure_nn --------------")
 # WHY DONT I SEE nnrom.utils.viz ??
 from nnrom.utils import viz
-import sub_model_fom_case_eni
 
 model_class = sub_model_fom_case_eni.SubModelCaseEni 
 

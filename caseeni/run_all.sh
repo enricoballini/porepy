@@ -63,6 +63,8 @@ rm -r run_all.sh.*
 
 # create reduced model: ---------------------------------------------------------------
 rm -r "./results/nn/end_file"
+rm -r "./data/mech/snap_range"
+rm -r "./data/mech/time_range"
 qsub run_nn.sh
 
 # wait for ROM to finish: ----------------------------------------------------

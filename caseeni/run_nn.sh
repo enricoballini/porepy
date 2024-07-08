@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 
 #PBS -l select=1:ncpus=12:ngpus=4
-#PBS -l walltime=48:00:00
+#PBS -l walltime=96:00:00
 #PBS -N eb_job_nn
 #PBS -j oe
 #PBS -o eb_job_nn.out

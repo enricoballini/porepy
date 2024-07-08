@@ -33,7 +33,7 @@ def compute_and_plot_delta_displacement(idx_mu):
     for time in times_mech:
         print("time = ", time)
         # u_ref = np.load("./data/mech/ref/displacement.npy")
-        u_ref =  u = np.load(
+        u_ref = np.load(
             "./data/mech/" + str(idx_mu) + "/displacement_" + str(0.0) + ".npy"
         )
         u = np.load(
@@ -70,7 +70,7 @@ def compute_fault_traction(idx_mu):
         folder_name=save_folder,
     )
 
-    u_ref =  u = np.load(
+    u_ref = np.load(
         "./data/mech/" + str(idx_mu) + "/displacement_" + str(0.0) + ".npy"
     )
     u_b_filled_ref = np.load(

@@ -9,13 +9,12 @@ sys.path.append("../../../mypythonmodules")
 
 import nnrom
 from nnrom.dlrom import offline_nn
-from nnrom.dlromode import offline_nn_ode
 import model_nn_case_eni
-import model_fom_case_eni
-import sub_model_fom_case_eni ###
 
 
 os.system("clear")
+
+print("right after clear")
 
 data_folder_root = "./data"
 data_folder_mech = "./data/mech"
@@ -35,7 +34,7 @@ test_dataset_id = np.loadtxt(data_folder_root + "/test_dataset_id", dtype=np.int
 if validation_dataset_id.shape == (): # for debugging
     validation_dataset_id = np.array([validation_dataset_id])
 
-if test_dataset_id.shape == (): # for debugging
+if test_dataset_id.shape == ():
     test_dataset_id = np.array([test_dataset_id])
 
 num_params = (
@@ -45,21 +44,6 @@ parameters_range = np.loadtxt(data_folder_root + "/parameters_range")[
     :, [0, 1, 2, 3, 5]
 ]  # TODO improve it
 
-
-# model = sub_model_fom_case_eni.SubModelCaseEni()### forgot to add some output in the model
-# model.subscript = ""###
-# model.save_folder = "./CANCELLARE"###
-# model.set_geometry()###
-# model.set_geometry_part_2()###
-# model.set_equation_system_manager()###
-# model.create_variables()###
-# sd = model.mdg.subdomains(dim=3)[0]###
-
-# volumes_subdomains = np.concatenate(3*[sd.cell_volumes])###
-# volumes_interfaces = np.array([])###
-# vars_domain = np.array([0])###
-# dofs_primary_vars = np.array([np.arange(0, 3*sd.num_cells)])###
-# n_dofs_tot = np.array([3*sd.num_cells])###
 
 print("going to copy some files...")
 for idx_mu in np.concatenate(
@@ -86,16 +70,7 @@ for idx_mu in np.concatenate(
     os.system(
         "cp ./data/TIMES_MECH " + data_folder_mech + "/" + str(idx_mu) + "/TIMES_MECH"
     )
-    # np.save(
-    #     data_folder_mech + "/" + str(idx_mu) + "/volumes_subdomains", volumes_subdomains
-    # ) ###
-    # np.save(
-    #     data_folder_mech + "/" + str(idx_mu) + "/volumes_interfaces", volumes_interfaces
-    # )###
-    # np.save(data_folder_mech + "/" + str(idx_mu) + "/vars_domain", vars_domain)###
-    # np.save(data_folder_mech + "/" + str(idx_mu) + "/dofs_primary_vars", dofs_primary_vars) ###
-    # np.save(data_folder_mech + "/" + str(idx_mu) + "/n_dofs_tot", n_dofs_tot)###
-
+    
 
 print("before create datasets")
 training_dataset, validation_dataset, test_dataset = offline_nn.create_pytorch_datasets(
@@ -106,10 +81,19 @@ training_dataset, validation_dataset, test_dataset = offline_nn.create_pytorch_d
     var_name="displacement",
 )
 
-print("before get_min_max")
-snap_range, time_range = nnrom.utils.misc.get_min_max(
-    data_folder_mech, "displacement", time_file="TIMES_MECH"
-)
+print("before get min max")
+if not os.path.isfile("./data/mech/snap_range"):
+    snap_range, time_range = nnrom.utils.misc.get_min_max(
+        data_folder_mech, "displacement", time_file="TIMES_MECH"
+    )
+    np.savetxt("./data/mech/snap_range", snap_range)
+    np.savetxt("./data/mech/time_range", time_range)
+else:
+    print("min max already gotten")
+    snap_range = np.loadtxt("./data/mech/snap_range")
+    time_range = np.loadtxt("./data/mech/time_range")
+    
+
 print("before encoder, decoder, blu")
 encoder, decoder, blu = model_nn_case_eni.encoder_decoder_blu(
     data_folder_mech + "/0", num_params
@@ -122,12 +106,13 @@ scal_matrices = offline_nn.compute_scaling_matrices(
 nn = offline_nn.Dlrom(encoder, decoder, blu, scal_matrices, scaling_mu_range="01")
 nn.set_forward_mode("offline")
 
-num_epochs = 10001 #1001
+num_epochs = 501 #2001 #1001 # 10001
 training_batch_size = 32
 alpha_1 = 1
 alpha_2 = 0.01
 alpha_3 = 1
 alpha_4 = 1
+# alpha_traction = None
 
 num_updates = num_epochs * training_dataset_id[-1] / training_batch_size
 print("I'm going to do a number of weights updates = ", num_updates)
