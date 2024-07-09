@@ -71,7 +71,6 @@ for idx_mu in np.concatenate(
         "cp ./data/TIMES_MECH " + data_folder_mech + "/" + str(idx_mu) + "/TIMES_MECH"
     )
     
-
 print("before create datasets")
 training_dataset, validation_dataset, test_dataset = offline_nn.create_pytorch_datasets(
     data_folder_mech,
@@ -111,7 +110,7 @@ training_batch_size = 32
 alpha_1 = 1
 alpha_2 = 0.01
 alpha_3 = 1
-alpha_4 = 1
+alpha_4 = 0.1
 # alpha_traction = None
 
 num_updates = num_epochs * training_dataset_id[-1] / training_batch_size
