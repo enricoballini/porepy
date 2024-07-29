@@ -82,7 +82,6 @@ test_dataset_id = np.arange(800, 900, dtype=np.int32)
 # validation_dataset_id = np.arange(3, 4, dtype=np.int32) ###
 # test_dataset_id = np.arange(4, 6, dtype=np.int32) ###
 
-
 np.savetxt(data_folder_root + "/training_dataset_id", training_dataset_id, fmt="%d")
 np.savetxt(data_folder_root + "/validation_dataset_id", validation_dataset_id, fmt="%d")
 np.savetxt(data_folder_root + "/test_dataset_id", test_dataset_id, fmt="%d")

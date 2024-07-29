@@ -50,6 +50,9 @@ git does not work on nodi di calcolo, they dont have internet. git work only on 
 
 watch nvidia-smi 
 
+find ./ -type f -exec sed -i 's/AAA/BBB/g' {} + ### NOT TRIED
+grep -rl AAA | xargs sed -i  's/AAA/BBB/g'
+
 
 UNSOLVED ISSUES: -------------------------------------
 - need to code on cluster, connections slow

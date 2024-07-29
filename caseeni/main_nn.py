@@ -105,7 +105,7 @@ scal_matrices = offline_nn.compute_scaling_matrices(
 nn = offline_nn.Dlrom(encoder, decoder, blu, scal_matrices, scaling_mu_range="01")
 nn.set_forward_mode("offline")
 
-num_epochs = 501 #2001 #1001 # 10001
+num_epochs = 40001 #2001 #1001 # 10001
 training_batch_size = 32
 alpha_1 = 1
 alpha_2 = 0.01

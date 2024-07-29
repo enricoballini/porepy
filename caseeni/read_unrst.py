@@ -46,17 +46,19 @@ def pressure_echelon_to_numpy():
 
 
 if __name__ == "__main__":
-    # basically for testing...
-    data_folder_root = "./data"
-    data_folder_fluid = data_folder_root + "/fluid"
-    timestep = np.loadtxt(data_folder_root + "/TIMESTEP")
+    # # basically for testing...
+    # data_folder_root = "./data"
+    # data_folder_fluid = data_folder_root + "/fluid"
+    # timestep = np.loadtxt(data_folder_root + "/TIMESTEP")
 
-    idx_mu = 99999
-    data_folder = data_folder_fluid + "/" + str(idx_mu)
-    file_name = data_folder + "/case2skew"
-    read_and_save_pressures(data_folder, file_name, timestep)
+    # idx_mu = 99999
+    # data_folder = data_folder_fluid + "/" + str(idx_mu)
+    # file_name = data_folder + "/case2skew"
+    # read_and_save_pressures(data_folder, file_name, timestep)
 
-    print("pressure converted")
-    
+    # print("pressure converted")
+
+
+    pressure_echelon_to_numpy()
     
     

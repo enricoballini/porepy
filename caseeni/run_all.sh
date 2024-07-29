@@ -24,6 +24,7 @@ rm -r run_all.sh.*
 #   sleep $WAIT_TIME
 # done
 # sleep 600 # to be sure that ALL simulations have finished # TODO: check each folder, not only the last one
+# python3 read_unrst.py
 # echo "Fluid finished!"
 
 
@@ -40,18 +41,19 @@ rm -r run_all.sh.*
 # while [ $SENTINEL -eq 1 ]; do
 
 #   ALL_END_FILES=1 # mech has finished only if EACH folder idx_mu has end_file
-#   for i in $(seq 0 $N); do 
+#   for i in $(seq 0 $LAST_IDX_MU); do 
 #       if [ ! -f "./data/mech/$i/end_file" ]; then
 #           ALL_END_FILES=0
+#           echo $i
 #           break
 #       fi
 #   done
       
 #   if [ $ALL_END_FILES -eq 1 ]; then
-#     echo "File $FILE_PATH has been generated."
+#     echo "File end_file has been generated."
 #     SENTINEL=0
 #   else
-#     echo "Mechanics simulation not finished since file $FILE_PATH has not been found. Checking again in $WAIT_TIME seconds."
+#     echo "Mechanics simulation not finished since file end_file has not been found. Checking again in $WAIT_TIME seconds."
 #   fi
 #   sleep $WAIT_TIME
 

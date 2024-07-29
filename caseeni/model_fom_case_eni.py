@@ -355,9 +355,12 @@ class ModelCaseEni:
         mu_param: np.array,
     ) -> None:
 
+        if os.path.isfile("./data/mech/" + str(idx_mu) + "/end_file"):
+            print(str(idx_mu) + " already done")
+        else:
 
-        # POREPY: ----------------------------------------------
-        content = """import sys
+            # POREPY: ----------------------------------------------
+            content = """import sys
 import os
 sys.path.append("../../../../porepy/src")
 sys.path.append("../../../")
@@ -367,8 +370,8 @@ import time as moduletime
 import porepy as pp
 import sub_model_fom_case_eni
 
-data_folder_root = "../../"
-save_folder_root = "../../"
+data_folder_root = "../.."
+save_folder_root = "../.."
 
 times_mech = np.loadtxt(data_folder_root + "/TIMES_MECH")
 
@@ -412,38 +415,38 @@ else:
 
     del pp_model, pp_params
     np.savetxt(save_folder + "/end_file", np.array([]))
-        """
+            """
 
-        with open("./data/mech/" + str(idx_mu) + "/mech.py", "w") as fle:
-            fle.write(content)
+            with open("./data/mech/" + str(idx_mu) + "/mech.py", "w") as fle:
+                fle.write(content)
 
 
-        # PBS: -----------------------------------------------
-        content = """#!/usr/bin/bash
+            # PBS: -----------------------------------------------
+            content = """#!/usr/bin/bash
 
 #PBS -l select=1:ncpus=5:mem=18GB
 #PBS -l walltime=96:00:00
 #PBS -N eb_job_mech
 #PBS -j oe
 #PBS -o eb_job_mech.out
-#PBS -q echelon
+#PBS -q echelon_low
 
 export OMP_NUM_THREADS=5
 echo "Running on nodes: $PBS_NODEFILE" > node_info_mech.txt
-cd ./data/mech/""" + str(idx_mu) + """
+cd ./caseeni/data/mech/""" + str(idx_mu) + """
 python3 -u mech.py > output_mech.txt 2>&1
-        """
+            """
 
-        with open("./data/mech/" + str(idx_mu) + "/run_mech.sh", "w") as fle:
-            fle.write(content)
+            with open("./data/mech/" + str(idx_mu) + "/run_mech.sh", "w") as fle:
+                fle.write(content)
 
-        os.system("chmod +x ./data/mech/" + str(idx_mu) + "/run_mech.sh")
-        os.system(
-            "cd "
-            + self.data_folder_root
-            + "/mech/"
-            + str(idx_mu)
-            + " && qsub run_mech.sh"
-        )
+            os.system("chmod +x ./data/mech/" + str(idx_mu) + "/run_mech.sh")
+            os.system(
+                "cd "
+                + self.data_folder_root
+                + "/mech/"
+                + str(idx_mu)
+                + " && qsub run_mech.sh"
+            )
 
-        print("mech " + str(idx_mu) + " launced!")
+            print("mech " + str(idx_mu) + " launced!")

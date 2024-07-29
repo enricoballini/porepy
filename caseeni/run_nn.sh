@@ -7,5 +7,6 @@
 #PBS -o eb_job_nn.out
 #PBS -q echelon
 
+cd caseeni
 echo "Running on nodes: $PBS_NODEFILE" > node_info_nn.txt
 python3 -u main_nn.py > output_nn.txt 2>&1

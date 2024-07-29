@@ -61,7 +61,7 @@ results_folder_root = "./results"
 
 os.system("mkdir -p " + results_folder_root)
 
-# read_unrst.pressure_echelon_to_numpy()
+# read_unrst.pressure_echelon_to_numpy() # moved in run_all
 
 test_dataset_id = np.loadtxt(data_folder_root + "/test_dataset_id")
 num_snap_to_generate = test_dataset_id[-1] + 1
@@ -75,11 +75,6 @@ t1 = time.time()
 idx_to_generate = np.arange(0, num_snap_to_generate, dtype=np.int32)
 
 print("going to generate snapshots")
-n_proc = int(np.floor(48*1/5 - 1))
-print("n_proc = ", n_proc)
 offline_data_class.generate_snapshots_no_python_mech(model_fom, idx_to_generate) 
-print("\nTOTAL TIME = ", time.time() - t1) #, flush=True) to print realtime
 
-
-np.savetxt("./data/mech/end_file", np.array([]))
 print("\n\n\n\n\n Done!\n\n\n")
