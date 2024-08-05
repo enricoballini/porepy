@@ -66,6 +66,125 @@ class SolutionStrategyCase1SlantedNonConformingConvergence(
 
         self.computations_for_hu()
 
+    def flip_flop(
+        self, dim_to_check
+    ):  # eh eh here comes the rub with the mixing... you are not taking flip_flop of SolutionStrategyCase1SlantedConvergence
+        """very inefficient, i want to make this function as independent as possible"""
+
+        for sd, data in self.mdg.subdomains(return_data=True):
+            if sd.dim == dim_to_check:  # for simplicity...
+                # total flux flips:
+                pressure_adarray = self.pressure([sd]).evaluate(self.equation_system)
+                left_restriction = data["for_hu"]["left_restriction"]
+                right_restriction = data["for_hu"]["right_restriction"]
+                transmissibility_internal_tpfa = data["for_hu"][
+                    "transmissibility_internal_tpfa"
+                ]
+                ad = True
+                dynamic_viscosity = data["for_hu"]["dynamic_viscosity"]
+                dim_max = data["for_hu"]["dim_max"]
+                total_flux_internal = (
+                    pp.numerics.fv.hybrid_weighted_average.total_flux_internal(
+                        sd,
+                        self.mixture.mixture_for_subdomain(sd),
+                        pressure_adarray,
+                        self.gravity_value,
+                        left_restriction,
+                        right_restriction,
+                        transmissibility_internal_tpfa,
+                        ad,
+                        dynamic_viscosity,
+                        dim_max,
+                        self.mobility,
+                        self.relative_permeability,
+                    )
+                )
+                sign_total_flux_internal = np.sign(
+                    total_flux_internal[0].val + total_flux_internal[1].val
+                )
+                if (
+                    self.sign_total_flux_internal_prev is None
+                ):  # first iteration after initial condition
+                    self.sign_total_flux_internal_prev = sign_total_flux_internal
+
+                number_flips_qt = np.sum(
+                    np.not_equal(
+                        self.sign_total_flux_internal_prev, sign_total_flux_internal
+                    )
+                )
+
+                self.sign_total_flux_internal_prev = sign_total_flux_internal
+
+                # omega_0 flips:
+                z = -sd.cell_centers[dim_max - 1]
+
+                saturation_list = [None] * self.mixture.num_phases
+                g_list = [None] * self.mixture.num_phases
+                mobility_list = [None] * self.mixture.num_phases
+
+                for phase_id in np.arange(self.mixture.num_phases):
+                    saturation = self.mixture.get_phase(phase_id).saturation
+                    saturation_list[phase_id] = saturation
+                    rho = self.mixture.get_phase(phase_id).mass_density(
+                        self.pressure([sd]).evaluate(self.equation_system).val
+                    )
+                    rho = pp.hu_utils.density_internal_faces(
+                        saturation, rho, left_restriction, right_restriction
+                    )
+                    g_list[phase_id] = pp.hu_utils.g_internal_faces(
+                        z, rho, self.gravity_value, left_restriction, right_restriction
+                    )
+                    mobility_list[phase_id] = self.mobility(
+                        saturation, dynamic_viscosity
+                    )
+
+                omega_0 = pp.omega(
+                    self.mixture.num_phases,
+                    0,
+                    mobility_list,
+                    g_list,
+                    left_restriction,
+                    right_restriction,
+                    ad,
+                )
+
+                sign_omega_0 = np.sign(omega_0.val)
+
+                if self.sign_omega_0_prev is None:
+                    self.sign_omega_0_prev = sign_omega_0
+
+                number_flips_omega_0 = np.sum(
+                    np.not_equal(self.sign_omega_0_prev, sign_omega_0)
+                )
+
+                self.sign_omega_0_prev = sign_omega_0
+
+                # omega_1 flips
+                omega_1 = pp.omega(
+                    self.mixture.num_phases,
+                    1,
+                    mobility_list,
+                    g_list,
+                    left_restriction,
+                    right_restriction,
+                    ad,
+                )
+
+                sign_omega_1 = np.sign(omega_1.val)
+
+                if self.sign_omega_1_prev is None:
+                    self.sign_omega_1_prev = sign_omega_1
+
+                number_flips_omega_1 = np.sum(
+                    np.not_equal(self.sign_omega_1_prev, sign_omega_1)
+                )
+
+                self.sign_omega_1_prev = sign_omega_1
+
+        return np.array(
+            [sign_total_flux_internal, sign_omega_0, sign_omega_1]
+        ), np.array([number_flips_qt, number_flips_omega_0, number_flips_omega_1])
+
 
 class PartialFinalModel(
     two_phase_hu.PrimaryVariables,
@@ -198,7 +317,8 @@ if __name__ == "__main__":
             self.flips_file_name = self.root_path + "FLIPS"
             self.beta_file_name = self.root_path + "BETA"
 
-    cell_sizes = np.array([0.2, 0.1, 0.05, 0.025, 0.005])  # last one is the ref value
+    # in the first submission it was: cell_sizes = np.array([0.2, 0.1, 0.05, 0.025, 0.005])  # last one is the ref value
+    cell_sizes = np.array([0.2, 0.1, 0.05, 0.025, 0.0025])
 
     os.system("mkdir -p ./case_1/slanted_hu/non-conforming/convergence_results")
     # os.system(

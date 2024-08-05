@@ -415,7 +415,8 @@ if __name__ == "__main__":
             self.flips_file_name = self.root_path + "FLIPS"
             self.beta_file_name = self.root_path + "BETA"
 
-    cell_sizes = np.array([0.2, 0.1, 0.05, 0.025, 0.005])  # last one is the ref value
+    # in the first submission it was: cell_sizes = np.array([0.2, 0.1, 0.05, 0.025, 0.005])  # last one is the ref value
+    cell_sizes = np.array([0.2, 0.1, 0.05, 0.025, 0.0025])
 
     os.system("mkdir -p ./case_1/slanted_hu/convergence_results")
     # os.system(

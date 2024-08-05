@@ -31,12 +31,14 @@ export OMP_NUM_THREADS=2
 # # python3 plot_beta.py 1 slanted_non_conforming
 # python3 plot_mass.py 1 slanted_non_conforming
 
+python3 plot_flip_flop_multi_dim.py 1 slanted_non_conforming
+
 # Case 1 slanted non conforming small K
 # python3 case_1_slanted_hu_small_k.py
 # python3 case_1_slanted_ppu_small_k.py
-python3 plot_flip_flop.py 1 slanted_non_conforming_small_k
-python3 plot_chops.py 1 slanted_non_conforming_small_k
-python3 plot_newton.py 1 slanted_non_conforming_small_k
+# python3 plot_flip_flop.py 1 slanted_non_conforming_small_k
+# python3 plot_chops.py 1 slanted_non_conforming_small_k
+# python3 plot_newton.py 1 slanted_non_conforming_small_k
 
 
 # # Case 1 slanted convergence
