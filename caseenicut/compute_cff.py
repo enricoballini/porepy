@@ -132,10 +132,10 @@ for i, idx_mu in enumerate(test_dataset_id):
 # np.savetxt(results_folder_nn + "/cff_nn", cff_nn_mu_time)
 np.savetxt(results_folder_mech + "/cff_fom_integrated", cff_fom_integrated)
 
-err_ave_mu = np.sum(err_rel_cff_mu_time, axis=0) / err_rel_cff_mu_time.shape[0]
-err_ave_mu = np.sum(err_abs_cff_mu_time, axis=0) / err_abs_cff_mu_time.shape[0]
-np.savetxt(results_folder_nn + "/err_relative_cff_ave", err_ave_mu)
-np.savetxt(results_folder_nn + "/err_area_cff_ave", err_ave_mu)
+err_ave_mu_rel = np.sum(err_rel_cff_mu_time, axis=0) / err_rel_cff_mu_time.shape[0]
+err_ave_mu_abs = np.sum(err_abs_cff_mu_time, axis=0) / err_abs_cff_mu_time.shape[0]
+np.savetxt(results_folder_nn + "/err_relative_cff_ave", err_ave_mu_rel)
+np.savetxt(results_folder_nn + "/err_area_cff_ave", err_ave_mu_abs)
 
 
 
@@ -144,6 +144,8 @@ np.savetxt(results_folder_nn + "/err_area_cff_ave", err_ave_mu)
 cff_fom_integrated = np.loadtxt(results_folder_mech + "/cff_fom_integrated")
 cff_fom_integrated_max = np.max(cff_fom_integrated, axis=0)
 cff_nn_list = 999999999*np.ones(times_mech.shape[0])
+cff_max_list = 999999999*np.ones((test_dataset_id.shape[0], times_mech.shape[0]))
+
 
 for i, idx_mu in enumerate(test_dataset_id):
     print("computing cff of " + str(idx_mu))
@@ -159,7 +161,10 @@ for i, idx_mu in enumerate(test_dataset_id):
         ref = max(cff_fom_integrated_max[idx_dt], 1e-12) # time 0 is included in this loop...
         diff = cff_fom - cff_nn
         err_rel[idx_dt] = np.sqrt(
-                        np.dot(diff**2, vols) ) / ref # ref is already a sqrt         
+                        np.dot(diff**2, vols) ) / ref # ref is already a sqrt
+        
+        cff_max_list[i, idx_dt] = np.max(cff_fom)
+
 
     np.savetxt(results_folder_nn + "/" + str(idx_mu) + "/err_relative_vs_max_cff", err_rel)
 
@@ -175,5 +180,8 @@ np.savetxt(results_folder_nn + "/idx_mu_max_err_area_cff", idx_mu_max_err_abs)
 idx_mu_max_err_rel_vs_max_cff = np.argmax(err_rel_vs_max_cff_mu_time, axis=0) + test_dataset_id[0]
 np.savetxt(results_folder_nn + "/idx_mu_max_err_rel_vs_max_cff", idx_mu_max_err_rel_vs_max_cff)
 np.savetxt(results_folder_nn + "/err_rel_vs_max_cff_mu_time", err_rel_vs_max_cff_mu_time)
+
+idx_max_cff = np.argmax(cff_max_list, axis=0) + test_dataset_id[0]
+np.savetxt(results_folder_nn + "/idx_max_cff", idx_max_cff)
 
 print("\nDone!")

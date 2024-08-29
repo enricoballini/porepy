@@ -61,7 +61,7 @@ UNSOLVED ISSUES: -------------------------------------
 - unpredicatable RAM usage, with 48/5 simulations per node only few failed bcs of memory run out (most simulaitons reached the end), with 48/16 the same... What is the bottleneck?
 - partially SOLVED, issues with python multiprocess and multi node job, all the processes go to one one 
 - if you ask for too much RAM, PBS put your job in the queue, forever, whitout warnings
-- No clear documentation of PBS, the one provided by cineca is too simplified, the one on the internet is unclear
+- SOLVED No clear documentation of PBS, the one provided by cineca is too simplified, the one on the internet is unclear. Search for altair pbs reference guide version 19.2.1, the one currently installed in summer 2024
 - useless laptop, used only to type ssh -X login 
 - laptop keyboard without keys...
 - IMPORTANT: it seems that subporcess module of python does NOT work on more than one nodes

@@ -31,15 +31,18 @@ def plt_boxplot_dict(dictionary, save_folder, y_lim_1, y_lim_2, file_name, fonts
     for label in ax_1.get_xticklabels() + ax_1.get_yticklabels():
         label.set_fontsize(fontsize)
 
-    ax_1.boxplot(dictionary.values(), whis=(0, 100), showfliers=True)
+    ax_1.boxplot(dictionary.values(), whis=(0, 95), showfliers=True)
     
     ax_1.set_xticklabels(
-        dictionary.keys()
-    )  # I'm  writing the labels twice
-    # plt.yscale("log")
+        [str(int(float(i))) for i in dictionary.keys()] 
+    ) 
 
     ax_1.set_ylim(y_lim_1)
+    plt.xlabel("time $[day]$")
+    plt.ylabel("Traction error $[N]$")
  
+    plt.grid(visible=True, which='major', axis='both', alpha=0.5)
+
     plt.savefig(
         save_folder + "/" + file_name + ".pdf", dpi=150, bbox_inches="tight", pad_inches=0.2
     )
@@ -59,12 +62,12 @@ if __name__ == "__main__":
 
     fontsize = 24
     errs_rel_mu_ave = np.loadtxt(data_folder + "/err_relative_mu_ave")
-    errs_abs_mu_ave = np.loadtxt(data_folder + "/err_area_mu_ave")
+    # errs_abs_mu_ave = np.loadtxt(data_folder + "/err_abs_mu_ave")
     errs_rmse_mu_ave = np.loadtxt(data_folder + "/err_rmse_mu_ave")
     errs_area_mu_ave = np.loadtxt(data_folder + "/err_area_mu_ave")
 
     errs_rel_mu_ave = np.array([[*errs_rel_mu_ave]])  # sorry, I need two dimensions
-    errs_abs_mu_ave = np.array([[*errs_abs_mu_ave]])
+    # errs_abs_mu_ave = np.array([[*errs_abs_mu_ave]])
     errs_rmse_mu_ave = np.array([[*errs_rmse_mu_ave]])
     errs_area_mu_ave = np.array([[*errs_area_mu_ave]])
 
@@ -72,21 +75,19 @@ if __name__ == "__main__":
     
     from nnrom.utils import viz ### usual not understood error
 
-    viz.plot_err_in_time_relative_and_absolute(
-        errs_rel_mu_ave,
-        errs_abs_mu_ave,
-        times,
-        var_names,
-        results_folder_nn,
-        fontsize,
-        y_lim,
-        x_ticks,
-    )
+    # viz.plot_err_in_time_relative_and_absolute(
+    #     errs_rel_mu_ave,
+    #     errs_abs_mu_ave,
+    #     times,
+    #     var_names,
+    #     results_folder_nn,
+    #     fontsize,
+    #     y_lim,
+    #     x_ticks,
+    # )
 
     viz.plot_err_in_time(errs_rmse_mu_ave, times, ["traction_rmse"], results_folder_nn, fontsize)
     viz.plot_err_in_time(errs_area_mu_ave, times, ["traction_area"], results_folder_nn, fontsize)
-
-
 
     err_relative_traction_mu_time = 999999999*np.ones((test_dataset_id.shape[0], times.shape[0]))
     err_area_traction_mu_time = 999999999*np.ones((test_dataset_id.shape[0], times.shape[0]))
@@ -114,7 +115,7 @@ if __name__ == "__main__":
                 str(times[1]): err_area_traction_mu_time[:,1],
                 str(times[2]): err_area_traction_mu_time[:,2],
                 }
-    y_lim_1 = np.array([0, 5e4])
+    y_lim_1 = np.array([0, 4e4])
     y_lim_2 = np.array([0, 0])
     file_name = "boxplot_err_area_traction"
     plt_boxplot_dict(dictionary, results_folder_nn, y_lim_1, y_lim_2, file_name)
