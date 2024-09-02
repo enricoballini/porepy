@@ -18916,7 +18916,7 @@
         <Domain name="bool" id="18858.SelectionVisibility.bool"/>
       </Property>
       <Property name="Visibility" id="18858.Visibility" number_of_elements="1">
-        <Element index="0" value="1"/>
+        <Element index="0" value="0"/>
         <Domain name="bool" id="18858.Visibility.bool"/>
       </Property>
       <Property name="Ambient" id="18858.Ambient" number_of_elements="1">
@@ -20602,7 +20602,7 @@
         <Domain name="bool" id="19308.SelectionVisibility.bool"/>
       </Property>
       <Property name="Visibility" id="19308.Visibility" number_of_elements="1">
-        <Element index="0" value="1"/>
+        <Element index="0" value="0"/>
         <Domain name="bool" id="19308.Visibility.bool"/>
       </Property>
       <Property name="Ambient" id="19308.Ambient" number_of_elements="1">
@@ -21445,7 +21445,7 @@
         <Domain name="bool" id="14564.SelectionVisibility.bool"/>
       </Property>
       <Property name="Visibility" id="14564.Visibility" number_of_elements="1">
-        <Element index="0" value="0"/>
+        <Element index="0" value="1"/>
         <Domain name="bool" id="14564.Visibility.bool"/>
       </Property>
       <Property name="Ambient" id="14564.Ambient" number_of_elements="1">
@@ -23242,7 +23242,7 @@
         <Domain name="bool" id="17440.SelectionVisibility.bool"/>
       </Property>
       <Property name="Visibility" id="17440.Visibility" number_of_elements="1">
-        <Element index="0" value="1"/>
+        <Element index="0" value="0"/>
         <Domain name="bool" id="17440.Visibility.bool"/>
       </Property>
       <Property name="Ambient" id="17440.Ambient" number_of_elements="1">
@@ -24149,7 +24149,7 @@
         <Domain name="bool" id="17700.SelectionVisibility.bool"/>
       </Property>
       <Property name="Visibility" id="17700.Visibility" number_of_elements="1">
-        <Element index="0" value="1"/>
+        <Element index="0" value="0"/>
         <Domain name="bool" id="17700.Visibility.bool"/>
       </Property>
       <Property name="Ambient" id="17700.Ambient" number_of_elements="1">
@@ -25040,7 +25040,7 @@
         <Domain name="bool" id="17958.SelectionVisibility.bool"/>
       </Property>
       <Property name="Visibility" id="17958.Visibility" number_of_elements="1">
-        <Element index="0" value="1"/>
+        <Element index="0" value="0"/>
         <Domain name="bool" id="17958.Visibility.bool"/>
       </Property>
       <Property name="Ambient" id="17958.Ambient" number_of_elements="1">
@@ -25947,7 +25947,7 @@
         <Domain name="bool" id="14758.SelectionVisibility.bool"/>
       </Property>
       <Property name="Visibility" id="14758.Visibility" number_of_elements="1">
-        <Element index="0" value="0"/>
+        <Element index="0" value="1"/>
         <Domain name="bool" id="14758.Visibility.bool"/>
       </Property>
       <Property name="Ambient" id="14758.Ambient" number_of_elements="1">
@@ -26858,7 +26858,7 @@
         <Domain name="bool" id="14984.SelectionVisibility.bool"/>
       </Property>
       <Property name="Visibility" id="14984.Visibility" number_of_elements="1">
-        <Element index="0" value="0"/>
+        <Element index="0" value="1"/>
         <Domain name="bool" id="14984.Visibility.bool"/>
       </Property>
       <Property name="Ambient" id="14984.Ambient" number_of_elements="1">
@@ -34370,7 +34370,7 @@
         <Domain name="bool" id="15614.UseCustomLabels.bool"/>
       </Property>
       <Property name="Visibility" id="15614.Visibility" number_of_elements="1">
-        <Element index="0" value="1"/>
+        <Element index="0" value="0"/>
         <Domain name="bool" id="15614.Visibility.bool"/>
       </Property>
       <Property name="WindowLocation" id="15614.WindowLocation" number_of_elements="1">
@@ -36133,7 +36133,7 @@
         <Element index="2" value="1"/>
       </Property>
       <Property name="OrientationAxesVisibility" id="15191.OrientationAxesVisibility" number_of_elements="1">
-        <Element index="0" value="1"/>
+        <Element index="0" value="0"/>
         <Domain name="bool" id="15191.OrientationAxesVisibility.bool"/>
       </Property>
       <Property name="PPI" id="15191.PPI" number_of_elements="1">
