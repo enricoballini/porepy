@@ -27,7 +27,7 @@ variable_names = ["TIME",
                 "WBHP",
                 ] # well bottom hole pressure 
 
-fontsize = 18
+fontsize = 28
 colors = ["black", "black", "darkorange"]
 linestyles = ["-", "--", "-"]
 
@@ -106,7 +106,7 @@ for idx_mu in test_dataset_id:
 
     handles = np.ravel(np.reshape(handles_all[:len(variable_names)], (1, len(variable_names))), order="F")
     labels = np.ravel(np.reshape(labels_all[:len(variable_names)], (1, len(variable_names))), order="F")
-    fig, ax = plt.subplots(figsize=(25, 10))
+    fig, ax = plt.subplots(figsize=(17, 10))
     for h, l in zip(handles, labels):
         ax.plot(np.zeros(1), label=l)
 

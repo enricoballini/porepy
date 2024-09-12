@@ -96,7 +96,8 @@ dictionary = {
             str(times_mech[1]): err_relative_vs_max_cff_mu_time[:,1],
             str(times_mech[2]): err_relative_vs_max_cff_mu_time[:,2],
             }
-y_lim_1 = np.array([0, 0.1])
+# y_lim_1 = np.array([0, 0.1]) # no shutdown
+y_lim_1 = np.array([0, 0.3]) # with shutdown
 y_lim_2 = np.array([0, 0])
 file_name = "boxplot_err_relative_vs_max_cff"
 plt_boxplot_dict(dictionary, results_folder_nn, y_lim_1, y_lim_2, file_name)

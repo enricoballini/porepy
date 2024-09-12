@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<VTKFile type="Collection" version="0.1" byte_order="LittleEndian" compressor="vtkZLibDataCompressor">
+<Collection>
+	<DataSet group="" part="" file="sd_fract_2_0000.0.vtu"/>
+	<DataSet group="" part="" file="sd_fract_constant_2_7305.0.vtu"/>
+</Collection>
+</VTKFile>
