@@ -54,7 +54,7 @@ find ./ -type f -exec sed -i 's/AAA/BBB/g' {} + ### NOT TRIED
 grep -rl AAA | xargs sed -i  's/AAA/BBB/g'
 
 
-UNSOLVED ISSUES: -------------------------------------
+UNSOLVED/SOLVED ISSUES: -------------------------------------
 - need to code on cluster, connections slow
 - SOLVED need to ask cineca to install a recent version of VSCode
 - PBS doesn not always retunr errors, you can make some mistake in requireing resources that it automatically fixes them following internal rules
