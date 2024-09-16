@@ -64,7 +64,7 @@ for idx_mu in test_dataset_id:
     plt.rcParams.update(params)
     matplotlib.rcParams["axes.linewidth"] = 1.5
 
-    fig, ax_1 = plt.subplots(figsize=(15, 4))
+    fig, ax_1 = plt.subplots(figsize=(12, 4))
 
     for label in ax_1.get_xticklabels() + ax_1.get_yticklabels():
         label.set_fontsize(fontsize)
@@ -106,7 +106,7 @@ for idx_mu in test_dataset_id:
 
     handles = np.ravel(np.reshape(handles_all[:len(variable_names)], (1, len(variable_names))), order="F")
     labels = np.ravel(np.reshape(labels_all[:len(variable_names)], (1, len(variable_names))), order="F")
-    fig, ax = plt.subplots(figsize=(17, 10))
+    fig, ax = plt.subplots(figsize=(25, 10))
     for h, l in zip(handles, labels):
         ax.plot(np.zeros(1), label=l)
 
@@ -115,7 +115,7 @@ for idx_mu in test_dataset_id:
         labels,
         fontsize=fontsize,
         loc="lower center",
-        ncol=5,
+        ncol=len(variable_names),
         bbox_to_anchor=(-0.1, -0.65),
     )
 
