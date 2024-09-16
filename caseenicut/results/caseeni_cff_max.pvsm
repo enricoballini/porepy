@@ -17639,7 +17639,7 @@
         <Element index="1" value=""/>
         <Element index="2" value=""/>
         <Element index="3" value="1"/>
-        <Element index="4" value="cff_nn"/>
+        <Element index="4" value="minus_T_out_of_plane_signed_nn"/>
         <Domain name="array_list" id="15150.ColorArrayName.array_list">
           <String text="T_out_of_plane_nn"/>
           <String text="T_out_of_plane_signed_nn"/>
@@ -17793,7 +17793,7 @@
         <Domain name="range" id="15150.LineWidth.range"/>
       </Property>
       <Property name="LookupTable" id="15150.LookupTable" number_of_elements="1">
-        <Proxy value="15170"/>
+        <Proxy value="15445"/>
         <Domain name="groups" id="15150.LookupTable.groups"/>
       </Property>
       <Property name="Luminosity" id="15150.Luminosity" number_of_elements="1">
@@ -18085,7 +18085,7 @@
         <Domain name="range" id="15150.SamplingDimensions.range"/>
       </Property>
       <Property name="ScalarOpacityFunction" id="15150.ScalarOpacityFunction" number_of_elements="1">
-        <Proxy value="15169"/>
+        <Proxy value="15444"/>
         <Domain name="groups" id="15150.ScalarOpacityFunction.groups"/>
       </Property>
       <Property name="ScalarOpacityUnitDistance" id="15150.ScalarOpacityUnitDistance" number_of_elements="1">
@@ -18565,7 +18565,7 @@
         <Element index="1" value=""/>
         <Element index="2" value=""/>
         <Element index="3" value="1"/>
-        <Element index="4" value="T_tangential_y"/>
+        <Element index="4" value="T_tangential_norm"/>
         <Domain name="array_list" id="15409.ColorArrayName.array_list">
           <String text="T_out_of_plane"/>
           <String text="T_out_of_plane_signed"/>
@@ -18695,7 +18695,7 @@
         <Domain name="range" id="15409.LineWidth.range"/>
       </Property>
       <Property name="LookupTable" id="15409.LookupTable" number_of_elements="1">
-        <Proxy value="15685"/>
+        <Proxy value="15334"/>
         <Domain name="groups" id="15409.LookupTable.groups"/>
       </Property>
       <Property name="Luminosity" id="15409.Luminosity" number_of_elements="1">
@@ -18968,7 +18968,7 @@
         <Domain name="range" id="15409.SamplingDimensions.range"/>
       </Property>
       <Property name="ScalarOpacityFunction" id="15409.ScalarOpacityFunction" number_of_elements="1">
-        <Proxy value="15684"/>
+        <Proxy value="15333"/>
         <Domain name="groups" id="15409.ScalarOpacityFunction.groups"/>
       </Property>
       <Property name="ScalarOpacityUnitDistance" id="15409.ScalarOpacityUnitDistance" number_of_elements="1">
@@ -19798,7 +19798,8 @@
         <Element index="0" value="0"/>
         <Domain name="bool" id="15489.LockPosition.bool"/>
       </Property>
-      <Property name="StickyVisible" id="15489.StickyVisible">
+      <Property name="StickyVisible" id="15489.StickyVisible" number_of_elements="1">
+        <Element index="0" value="1"/>
         <Domain name="bool" id="15489.StickyVisible.bool"/>
       </Property>
       <Property name="UseNonCompositedRenderer" id="15489.UseNonCompositedRenderer" number_of_elements="1">
@@ -20053,7 +20054,7 @@
         <Domain name="bool" id="15497.AutoOrient.bool"/>
       </Property>
       <Property name="AutoOrientInfo" id="15497.AutoOrientInfo" number_of_elements="1">
-        <Element index="0" value="1"/>
+        <Element index="0" value="0"/>
         <Domain name="bool" id="15497.AutoOrientInfo.bool"/>
       </Property>
       <Property name="AutomaticAnnotations" id="15497.AutomaticAnnotations" number_of_elements="1">
@@ -20120,7 +20121,7 @@
         <Domain name="range" id="15497.LabelFontSize.range"/>
       </Property>
       <Property name="LabelFormat" id="15497.LabelFormat" number_of_elements="1">
-        <Element index="0" value="%-#6.1g"/>
+        <Element index="0" value="%-#6.0g"/>
       </Property>
       <Property name="LabelItalic" id="15497.LabelItalic" number_of_elements="1">
         <Element index="0" value="0"/>
@@ -20161,7 +20162,7 @@
         <Element index="1" value="0.3007142857142859"/>
       </Property>
       <Property name="RangeLabelFormat" id="15497.RangeLabelFormat" number_of_elements="1">
-        <Element index="0" value="%-#6.3e"/>
+        <Element index="0" value="%-#6.2e"/>
       </Property>
       <Property name="Repositionable" id="15497.Repositionable" number_of_elements="1">
         <Element index="0" value="1"/>
@@ -20176,7 +20177,7 @@
         <Domain name="bool" id="15497.ReverseLegend.bool"/>
       </Property>
       <Property name="ScalarBarLength" id="15497.ScalarBarLength" number_of_elements="1">
-        <Element index="0" value="0.27716692189892755"/>
+        <Element index="0" value="0.1676722817764159"/>
       </Property>
       <Property name="ScalarBarThickness" id="15497.ScalarBarThickness" number_of_elements="1">
         <Element index="0" value="16"/>
@@ -20291,7 +20292,7 @@
         <Domain name="bool" id="15503.AutoOrient.bool"/>
       </Property>
       <Property name="AutoOrientInfo" id="15503.AutoOrientInfo" number_of_elements="1">
-        <Element index="0" value="1"/>
+        <Element index="0" value="0"/>
         <Domain name="bool" id="15503.AutoOrientInfo.bool"/>
       </Property>
       <Property name="AutomaticAnnotations" id="15503.AutomaticAnnotations" number_of_elements="1">
@@ -20358,7 +20359,7 @@
         <Domain name="range" id="15503.LabelFontSize.range"/>
       </Property>
       <Property name="LabelFormat" id="15503.LabelFormat" number_of_elements="1">
-        <Element index="0" value="%-#6.1g"/>
+        <Element index="0" value="%-#6.0g"/>
       </Property>
       <Property name="LabelItalic" id="15503.LabelItalic" number_of_elements="1">
         <Element index="0" value="0"/>
@@ -20399,7 +20400,7 @@
         <Element index="1" value="0.2642857142857141"/>
       </Property>
       <Property name="RangeLabelFormat" id="15503.RangeLabelFormat" number_of_elements="1">
-        <Element index="0" value="%-#6.1e"/>
+        <Element index="0" value="%-#6.2e"/>
       </Property>
       <Property name="Repositionable" id="15503.Repositionable" number_of_elements="1">
         <Element index="0" value="1"/>
@@ -20414,7 +20415,7 @@
         <Domain name="bool" id="15503.ReverseLegend.bool"/>
       </Property>
       <Property name="ScalarBarLength" id="15503.ScalarBarLength" number_of_elements="1">
-        <Element index="0" value="0.27257274119448704"/>
+        <Element index="0" value="0.15082695252679956"/>
       </Property>
       <Property name="ScalarBarThickness" id="15503.ScalarBarThickness" number_of_elements="1">
         <Element index="0" value="16"/>
@@ -22133,7 +22134,7 @@
         <Domain name="bool" id="15176.UseCustomLabels.bool"/>
       </Property>
       <Property name="Visibility" id="15176.Visibility" number_of_elements="1">
-        <Element index="0" value="1"/>
+        <Element index="0" value="0"/>
         <Domain name="bool" id="15176.Visibility.bool"/>
       </Property>
       <Property name="WindowLocation" id="15176.WindowLocation" number_of_elements="1">
@@ -22628,7 +22629,8 @@
         <Element index="0" value="0"/>
         <Domain name="bool" id="15643.LockPosition.bool"/>
       </Property>
-      <Property name="StickyVisible" id="15643.StickyVisible">
+      <Property name="StickyVisible" id="15643.StickyVisible" number_of_elements="1">
+        <Element index="0" value="1"/>
         <Domain name="bool" id="15643.StickyVisible.bool"/>
       </Property>
       <Property name="UseNonCompositedRenderer" id="15643.UseNonCompositedRenderer" number_of_elements="1">
@@ -23098,7 +23100,8 @@
         <Element index="0" value="0"/>
         <Domain name="bool" id="15691.LockPosition.bool"/>
       </Property>
-      <Property name="StickyVisible" id="15691.StickyVisible">
+      <Property name="StickyVisible" id="15691.StickyVisible" number_of_elements="1">
+        <Element index="0" value="1"/>
         <Domain name="bool" id="15691.StickyVisible.bool"/>
       </Property>
       <Property name="UseNonCompositedRenderer" id="15691.UseNonCompositedRenderer" number_of_elements="1">
@@ -23312,8 +23315,243 @@
         <Domain name="bool" id="15691.Visibility.bool"/>
       </Property>
       <Property name="WindowLocation" id="15691.WindowLocation" number_of_elements="1">
-        <Element index="0" value="2"/>
+        <Element index="0" value="5"/>
         <Domain name="enum" id="15691.WindowLocation.enum">
+          <Entry value="0" text="AnyLocation"/>
+          <Entry value="1" text="LowerLeftCorner"/>
+          <Entry value="2" text="LowerRightCorner"/>
+          <Entry value="3" text="LowerCenter"/>
+          <Entry value="4" text="UpperLeftCorner"/>
+          <Entry value="5" text="UpperRightCorner"/>
+          <Entry value="6" text="UpperCenter"/>
+        </Domain>
+      </Property>
+    </Proxy>
+    <Proxy group="representations" type="ScalarBarWidgetRepresentation" id="15765" servers="21">
+      <Property name="Enabled" id="15765.Enabled" number_of_elements="1">
+        <Element index="0" value="1"/>
+        <Domain name="bool" id="15765.Enabled.bool"/>
+      </Property>
+      <Property name="LockPosition" id="15765.LockPosition" number_of_elements="1">
+        <Element index="0" value="0"/>
+        <Domain name="bool" id="15765.LockPosition.bool"/>
+      </Property>
+      <Property name="StickyVisible" id="15765.StickyVisible">
+        <Domain name="bool" id="15765.StickyVisible.bool"/>
+      </Property>
+      <Property name="UseNonCompositedRenderer" id="15765.UseNonCompositedRenderer" number_of_elements="1">
+        <Element index="0" value="1"/>
+      </Property>
+      <Property name="AddRangeAnnotations" id="15765.AddRangeAnnotations" number_of_elements="1">
+        <Element index="0" value="0"/>
+        <Domain name="bool" id="15765.AddRangeAnnotations.bool"/>
+      </Property>
+      <Property name="AddRangeLabels" id="15765.AddRangeLabels" number_of_elements="1">
+        <Element index="0" value="1"/>
+        <Domain name="bool" id="15765.AddRangeLabels.bool"/>
+      </Property>
+      <Property name="AutoOrient" id="15765.AutoOrient" number_of_elements="1">
+        <Element index="0" value="1"/>
+        <Domain name="bool" id="15765.AutoOrient.bool"/>
+      </Property>
+      <Property name="AutoOrientInfo" id="15765.AutoOrientInfo" number_of_elements="1">
+        <Element index="0" value="1"/>
+        <Domain name="bool" id="15765.AutoOrientInfo.bool"/>
+      </Property>
+      <Property name="AutomaticAnnotations" id="15765.AutomaticAnnotations" number_of_elements="1">
+        <Element index="0" value="0"/>
+        <Domain name="bool" id="15765.AutomaticAnnotations.bool"/>
+      </Property>
+      <Property name="AutomaticLabelFormat" id="15765.AutomaticLabelFormat" number_of_elements="1">
+        <Element index="0" value="1"/>
+        <Domain name="bool" id="15765.AutomaticLabelFormat.bool"/>
+      </Property>
+      <Property name="ComponentTitle" id="15765.ComponentTitle" number_of_elements="1">
+        <Element index="0" value=""/>
+      </Property>
+      <Property name="CustomLabels" id="15765.CustomLabels"/>
+      <Property name="DrawAnnotations" id="15765.DrawAnnotations" number_of_elements="1">
+        <Element index="0" value="1"/>
+        <Domain name="bool" id="15765.DrawAnnotations.bool"/>
+      </Property>
+      <Property name="DrawNanAnnotation" id="15765.DrawNanAnnotation" number_of_elements="1">
+        <Element index="0" value="0"/>
+        <Domain name="bool" id="15765.DrawNanAnnotation.bool"/>
+      </Property>
+      <Property name="DrawTickLabels" id="15765.DrawTickLabels" number_of_elements="1">
+        <Element index="0" value="1"/>
+        <Domain name="bool" id="15765.DrawTickLabels.bool"/>
+      </Property>
+      <Property name="DrawTickMarks" id="15765.DrawTickMarks" number_of_elements="1">
+        <Element index="0" value="1"/>
+        <Domain name="bool" id="15765.DrawTickMarks.bool"/>
+      </Property>
+      <Property name="EstimatedNumberOfAnnotations" id="15765.EstimatedNumberOfAnnotations" number_of_elements="1">
+        <Element index="0" value="0"/>
+      </Property>
+      <Property name="HorizontalTitle" id="15765.HorizontalTitle" number_of_elements="1">
+        <Element index="0" value="0"/>
+        <Domain name="bool" id="15765.HorizontalTitle.bool"/>
+      </Property>
+      <Property name="LabelBold" id="15765.LabelBold" number_of_elements="1">
+        <Element index="0" value="0"/>
+        <Domain name="bool" id="15765.LabelBold.bool"/>
+      </Property>
+      <Property name="LabelColor" id="15765.LabelColor" number_of_elements="3">
+        <Element index="0" value="1"/>
+        <Element index="1" value="1"/>
+        <Element index="2" value="1"/>
+        <Domain name="range" id="15765.LabelColor.range"/>
+      </Property>
+      <Property name="LabelFontFamily" id="15765.LabelFontFamily" number_of_elements="1">
+        <Element index="0" value="0"/>
+        <Domain name="enum" id="15765.LabelFontFamily.enum">
+          <Entry value="0" text="Arial"/>
+          <Entry value="1" text="Courier"/>
+          <Entry value="2" text="Times"/>
+          <Entry value="4" text="File"/>
+        </Domain>
+      </Property>
+      <Property name="LabelFontFile" id="15765.LabelFontFile" number_of_elements="1">
+        <Element index="0" value=""/>
+      </Property>
+      <Property name="LabelFontSize" id="15765.LabelFontSize" number_of_elements="1">
+        <Element index="0" value="16"/>
+        <Domain name="range" id="15765.LabelFontSize.range"/>
+      </Property>
+      <Property name="LabelFormat" id="15765.LabelFormat" number_of_elements="1">
+        <Element index="0" value="%-#6.3g"/>
+      </Property>
+      <Property name="LabelItalic" id="15765.LabelItalic" number_of_elements="1">
+        <Element index="0" value="0"/>
+        <Domain name="bool" id="15765.LabelItalic.bool"/>
+      </Property>
+      <Property name="LabelOpacity" id="15765.LabelOpacity" number_of_elements="1">
+        <Element index="0" value="1"/>
+        <Domain name="range" id="15765.LabelOpacity.range"/>
+      </Property>
+      <Property name="LabelShadow" id="15765.LabelShadow" number_of_elements="1">
+        <Element index="0" value="0"/>
+        <Domain name="bool" id="15765.LabelShadow.bool"/>
+      </Property>
+      <Property name="LookupTable" id="15765.LookupTable" number_of_elements="1">
+        <Proxy value="15549"/>
+        <Domain name="groups" id="15765.LookupTable.groups"/>
+      </Property>
+      <Property name="NanAnnotation" id="15765.NanAnnotation" number_of_elements="1">
+        <Element index="0" value="NaN"/>
+      </Property>
+      <Property name="Orientation" id="15765.Orientation" number_of_elements="1">
+        <Element index="0" value="1"/>
+        <Domain name="enum" id="15765.Orientation.enum">
+          <Entry value="0" text="Horizontal"/>
+          <Entry value="1" text="Vertical"/>
+        </Domain>
+      </Property>
+      <Property name="OrientationInfo" id="15765.OrientationInfo" number_of_elements="1">
+        <Element index="0" value="1"/>
+      </Property>
+      <Property name="Position" id="15765.Position" number_of_elements="2">
+        <Element index="0" value="0.89"/>
+        <Element index="1" value="0.02"/>
+        <Domain name="range" id="15765.Position.range"/>
+      </Property>
+      <Property name="PositionInfo" id="15765.PositionInfo" number_of_elements="2">
+        <Element index="0" value="0.89"/>
+        <Element index="1" value="0.02"/>
+      </Property>
+      <Property name="RangeLabelFormat" id="15765.RangeLabelFormat" number_of_elements="1">
+        <Element index="0" value="%-#6.1e"/>
+      </Property>
+      <Property name="Repositionable" id="15765.Repositionable" number_of_elements="1">
+        <Element index="0" value="1"/>
+        <Domain name="bool" id="15765.Repositionable.bool"/>
+      </Property>
+      <Property name="Resizable" id="15765.Resizable" number_of_elements="1">
+        <Element index="0" value="1"/>
+        <Domain name="bool" id="15765.Resizable.bool"/>
+      </Property>
+      <Property name="ReverseLegend" id="15765.ReverseLegend" number_of_elements="1">
+        <Element index="0" value="0"/>
+        <Domain name="bool" id="15765.ReverseLegend.bool"/>
+      </Property>
+      <Property name="ScalarBarLength" id="15765.ScalarBarLength" number_of_elements="1">
+        <Element index="0" value="0.33"/>
+      </Property>
+      <Property name="ScalarBarThickness" id="15765.ScalarBarThickness" number_of_elements="1">
+        <Element index="0" value="16"/>
+      </Property>
+      <Property name="Selectable" id="15765.Selectable" number_of_elements="1">
+        <Element index="0" value="0"/>
+        <Domain name="bool" id="15765.Selectable.bool"/>
+      </Property>
+      <Property name="TextPosition" id="15765.TextPosition" number_of_elements="1">
+        <Element index="0" value="1"/>
+        <Domain name="enum" id="15765.TextPosition.enum">
+          <Entry value="1" text="Ticks right/top, annotations left/bottom"/>
+          <Entry value="0" text="Ticks left/bottom, annotations right/top"/>
+        </Domain>
+      </Property>
+      <Property name="Title" id="15765.Title" number_of_elements="1">
+        <Element index="0" value="T_tangential_t"/>
+      </Property>
+      <Property name="TitleBold" id="15765.TitleBold" number_of_elements="1">
+        <Element index="0" value="0"/>
+        <Domain name="bool" id="15765.TitleBold.bool"/>
+      </Property>
+      <Property name="TitleColor" id="15765.TitleColor" number_of_elements="3">
+        <Element index="0" value="1"/>
+        <Element index="1" value="1"/>
+        <Element index="2" value="1"/>
+        <Domain name="range" id="15765.TitleColor.range"/>
+      </Property>
+      <Property name="TitleFontFamily" id="15765.TitleFontFamily" number_of_elements="1">
+        <Element index="0" value="0"/>
+        <Domain name="enum" id="15765.TitleFontFamily.enum">
+          <Entry value="0" text="Arial"/>
+          <Entry value="1" text="Courier"/>
+          <Entry value="2" text="Times"/>
+          <Entry value="4" text="File"/>
+        </Domain>
+      </Property>
+      <Property name="TitleFontFile" id="15765.TitleFontFile" number_of_elements="1">
+        <Element index="0" value=""/>
+      </Property>
+      <Property name="TitleFontSize" id="15765.TitleFontSize" number_of_elements="1">
+        <Element index="0" value="16"/>
+        <Domain name="range" id="15765.TitleFontSize.range"/>
+      </Property>
+      <Property name="TitleItalic" id="15765.TitleItalic" number_of_elements="1">
+        <Element index="0" value="0"/>
+        <Domain name="bool" id="15765.TitleItalic.bool"/>
+      </Property>
+      <Property name="TitleJustification" id="15765.TitleJustification" number_of_elements="1">
+        <Element index="0" value="1"/>
+        <Domain name="enum" id="15765.TitleJustification.enum">
+          <Entry value="0" text="Left"/>
+          <Entry value="1" text="Centered"/>
+          <Entry value="2" text="Right"/>
+        </Domain>
+      </Property>
+      <Property name="TitleOpacity" id="15765.TitleOpacity" number_of_elements="1">
+        <Element index="0" value="1"/>
+        <Domain name="range" id="15765.TitleOpacity.range"/>
+      </Property>
+      <Property name="TitleShadow" id="15765.TitleShadow" number_of_elements="1">
+        <Element index="0" value="0"/>
+        <Domain name="bool" id="15765.TitleShadow.bool"/>
+      </Property>
+      <Property name="UseCustomLabels" id="15765.UseCustomLabels" number_of_elements="1">
+        <Element index="0" value="0"/>
+        <Domain name="bool" id="15765.UseCustomLabels.bool"/>
+      </Property>
+      <Property name="Visibility" id="15765.Visibility" number_of_elements="1">
+        <Element index="0" value="0"/>
+        <Domain name="bool" id="15765.Visibility.bool"/>
+      </Property>
+      <Property name="WindowLocation" id="15765.WindowLocation" number_of_elements="1">
+        <Element index="0" value="2"/>
+        <Domain name="enum" id="15765.WindowLocation.enum">
           <Entry value="0" text="AnyLocation"/>
           <Entry value="1" text="LowerLeftCorner"/>
           <Entry value="2" text="LowerRightCorner"/>
@@ -24061,7 +24299,7 @@
         <Domain name="bool" id="15451.AutoOrient.bool"/>
       </Property>
       <Property name="AutoOrientInfo" id="15451.AutoOrientInfo" number_of_elements="1">
-        <Element index="0" value="1"/>
+        <Element index="0" value="0"/>
         <Domain name="bool" id="15451.AutoOrientInfo.bool"/>
       </Property>
       <Property name="AutomaticAnnotations" id="15451.AutomaticAnnotations" number_of_elements="1">
@@ -24075,7 +24313,11 @@
       <Property name="ComponentTitle" id="15451.ComponentTitle" number_of_elements="1">
         <Element index="0" value=""/>
       </Property>
-      <Property name="CustomLabels" id="15451.CustomLabels"/>
+      <Property name="CustomLabels" id="15451.CustomLabels" number_of_elements="3">
+        <Element index="0" value="1000000"/>
+        <Element index="1" value="3000000"/>
+        <Element index="2" value="5000000"/>
+      </Property>
       <Property name="DrawAnnotations" id="15451.DrawAnnotations" number_of_elements="1">
         <Element index="0" value="1"/>
         <Domain name="bool" id="15451.DrawAnnotations.bool"/>
@@ -24122,7 +24364,7 @@
         <Element index="0" value=""/>
       </Property>
       <Property name="LabelFontSize" id="15451.LabelFontSize" number_of_elements="1">
-        <Element index="0" value="16"/>
+        <Element index="0" value="20"/>
         <Domain name="range" id="15451.LabelFontSize.range"/>
       </Property>
       <Property name="LabelFormat" id="15451.LabelFormat" number_of_elements="1">
@@ -24158,13 +24400,13 @@
         <Element index="0" value="0"/>
       </Property>
       <Property name="Position" id="15451.Position" number_of_elements="2">
-        <Element index="0" value="0.6184998014860191"/>
-        <Element index="1" value="0.2442016806722688"/>
+        <Element index="0" value="0.5610725426805061"/>
+        <Element index="1" value="0.17563025210084016"/>
         <Domain name="range" id="15451.Position.range"/>
       </Property>
       <Property name="PositionInfo" id="15451.PositionInfo" number_of_elements="2">
-        <Element index="0" value="0.6184998014860191"/>
-        <Element index="1" value="0.2442016806722688"/>
+        <Element index="0" value="0.5610725426805061"/>
+        <Element index="1" value="0.17563025210084016"/>
       </Property>
       <Property name="RangeLabelFormat" id="15451.RangeLabelFormat" number_of_elements="1">
         <Element index="0" value="%-#6.2e"/>
@@ -24182,7 +24424,7 @@
         <Domain name="bool" id="15451.ReverseLegend.bool"/>
       </Property>
       <Property name="ScalarBarLength" id="15451.ScalarBarLength" number_of_elements="1">
-        <Element index="0" value="0.3299999999999992"/>
+        <Element index="0" value="0.35143950995405737"/>
       </Property>
       <Property name="ScalarBarThickness" id="15451.ScalarBarThickness" number_of_elements="1">
         <Element index="0" value="16"/>
@@ -24224,7 +24466,7 @@
         <Element index="0" value=""/>
       </Property>
       <Property name="TitleFontSize" id="15451.TitleFontSize" number_of_elements="1">
-        <Element index="0" value="16"/>
+        <Element index="0" value="20"/>
         <Domain name="range" id="15451.TitleFontSize.range"/>
       </Property>
       <Property name="TitleItalic" id="15451.TitleItalic" number_of_elements="1">
@@ -24248,11 +24490,11 @@
         <Domain name="bool" id="15451.TitleShadow.bool"/>
       </Property>
       <Property name="UseCustomLabels" id="15451.UseCustomLabels" number_of_elements="1">
-        <Element index="0" value="0"/>
+        <Element index="0" value="1"/>
         <Domain name="bool" id="15451.UseCustomLabels.bool"/>
       </Property>
       <Property name="Visibility" id="15451.Visibility" number_of_elements="1">
-        <Element index="0" value="0"/>
+        <Element index="0" value="1"/>
         <Domain name="bool" id="15451.Visibility.bool"/>
       </Property>
       <Property name="WindowLocation" id="15451.WindowLocation" number_of_elements="1">
@@ -25617,7 +25859,7 @@
         <Element index="0" value="20"/>
         <Domain name="range" id="15546.RemoteRenderThreshold.range"/>
       </Property>
-      <Property name="Representations" id="15546.Representations" number_of_elements="26">
+      <Property name="Representations" id="15546.Representations" number_of_elements="27">
         <Proxy value="15150"/>
         <Proxy value="15168"/>
         <Proxy value="15176"/>
@@ -25644,6 +25886,7 @@
         <Proxy value="15643"/>
         <Proxy value="15667"/>
         <Proxy value="15691"/>
+        <Proxy value="15765"/>
       </Property>
       <Property name="RotationFactor" id="15546.RotationFactor" number_of_elements="1">
         <Element index="0" value="1"/>
@@ -25816,14 +26059,14 @@
         <Element index="0" value="0"/>
       </Property>
       <Property name="CameraFocalPoint" id="15546.CameraFocalPoint" number_of_elements="3">
-        <Element index="0" value="825.263589413053"/>
-        <Element index="1" value="-806.4171391253268"/>
-        <Element index="2" value="1231.7462373474941"/>
+        <Element index="0" value="805.3472849910022"/>
+        <Element index="1" value="-783.6676371894928"/>
+        <Element index="2" value="1117.9898692609463"/>
       </Property>
       <Property name="CameraFocalPointInfo" id="15546.CameraFocalPointInfo" number_of_elements="3">
-        <Element index="0" value="825.263589413053"/>
-        <Element index="1" value="-806.4171391253268"/>
-        <Element index="2" value="1231.7462373474941"/>
+        <Element index="0" value="805.3472849910022"/>
+        <Element index="1" value="-783.6676371894928"/>
+        <Element index="2" value="1117.9898692609463"/>
       </Property>
       <Property name="CameraParallelScale" id="15546.CameraParallelScale" number_of_elements="1">
         <Element index="0" value="1615.8836647954508"/>
@@ -25832,26 +26075,26 @@
         <Element index="0" value="1615.8836647954508"/>
       </Property>
       <Property name="CameraPosition" id="15546.CameraPosition" number_of_elements="3">
-        <Element index="0" value="6977.695187706483"/>
-        <Element index="1" value="-700.557765896512"/>
-        <Element index="2" value="175.7574197380254"/>
+        <Element index="0" value="6957.778883284433"/>
+        <Element index="1" value="-677.808263960678"/>
+        <Element index="2" value="62.001051651477496"/>
       </Property>
       <Property name="CameraPositionInfo" id="15546.CameraPositionInfo" number_of_elements="3">
-        <Element index="0" value="6977.695187706483"/>
-        <Element index="1" value="-700.557765896512"/>
-        <Element index="2" value="175.7574197380254"/>
+        <Element index="0" value="6957.778883284433"/>
+        <Element index="1" value="-677.808263960678"/>
+        <Element index="2" value="62.001051651477496"/>
       </Property>
       <Property name="CameraViewAngle" id="15546.CameraViewAngle" number_of_elements="1">
         <Element index="0" value="30"/>
       </Property>
       <Property name="CameraViewUp" id="15546.CameraViewUp" number_of_elements="3">
-        <Element index="0" value="-0.16911533348737398"/>
-        <Element index="1" value="-0.0028689666726956276"/>
+        <Element index="0" value="-0.16911533348737395"/>
+        <Element index="1" value="-0.002868966672695627"/>
         <Element index="2" value="-0.9855920926071218"/>
       </Property>
       <Property name="CameraViewUpInfo" id="15546.CameraViewUpInfo" number_of_elements="3">
-        <Element index="0" value="-0.16911533348737398"/>
-        <Element index="1" value="-0.0028689666726956276"/>
+        <Element index="0" value="-0.16911533348737395"/>
+        <Element index="1" value="-0.002868966672695627"/>
         <Element index="2" value="-0.9855920926071218"/>
       </Property>
       <Property name="EyeAngle" id="15546.EyeAngle" number_of_elements="1">
@@ -25990,6 +26233,7 @@
       <Item id="15643" name="ScalarBarWidgetRepresentation22"/>
       <Item id="15667" name="ScalarBarWidgetRepresentation23"/>
       <Item id="15691" name="ScalarBarWidgetRepresentation24"/>
+      <Item id="15765" name="ScalarBarWidgetRepresentation25"/>
       <Item id="15427" name="ScalarBarWidgetRepresentation3"/>
       <Item id="15435" name="ScalarBarWidgetRepresentation4"/>
       <Item id="15443" name="ScalarBarWidgetRepresentation5"/>
@@ -26087,6 +26331,8 @@
           <Property source_property="TextAnnotationColor" target_id="15667" target_property="TitleColor" unlink_if_modified="1"/>
           <Property source_property="TextAnnotationColor" target_id="15691" target_property="LabelColor" unlink_if_modified="1"/>
           <Property source_property="TextAnnotationColor" target_id="15691" target_property="TitleColor" unlink_if_modified="1"/>
+          <Property source_property="TextAnnotationColor" target_id="15765" target_property="LabelColor" unlink_if_modified="1"/>
+          <Property source_property="TextAnnotationColor" target_id="15765" target_property="TitleColor" unlink_if_modified="1"/>
         </Links>
       </SettingsProxy>
       <SettingsProxy group="settings" type="GeneralSettings">
