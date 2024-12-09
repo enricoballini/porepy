@@ -578,7 +578,7 @@ class GeometryCloseToEni(
         cut = False
 
         self.set_domain()
-        eni_grid = self.load_eni_grid(path_to_mat=self.mrst_folder+"/mrst_grid")
+        eni_grid = self.load_eni_grid(path_to_mat=self.mrst_folder + "/mrst_grid")
 
         self.xmin = -1000
         self.xmax = 3000
@@ -587,7 +587,7 @@ class GeometryCloseToEni(
         width = 550  # step 125
         if cut:
             self.ymax = self.ymin + width
-            self.ymin = self.ymin + width - 376 ### extra cut, 3 slices is the minimum
+            self.ymin = self.ymin + width - 376  ### extra cut, 3 slices is the minimum
         self.zmin = 0
         self.zmax = 2500
 
@@ -604,15 +604,16 @@ class GeometryCloseToEni(
         self.reservoir_z_right_bottom = 1550 + 50 * np.sin(80 * np.pi / 180)
 
         if cut:
-            ind_cut = (
-                np.logical_and(eni_grid.cell_centers[1, :] > self.ymin, eni_grid.cell_centers[1, :] < self.ymax)
+            ind_cut = np.logical_and(
+                eni_grid.cell_centers[1, :] > self.ymin,
+                eni_grid.cell_centers[1, :] < self.ymax,
             )  # old_grid: + 2000 => 24000 cell, more or less the limit for my computer
             [_, eni_grid], _, _ = pp.partition.partition_grid(eni_grid, ind_cut)
 
         if cut:
             self.ind_cut = ind_cut
         else:
-            self.ind_cut = [True]*eni_grid.num_cells
+            self.ind_cut = [True] * eni_grid.num_cells
 
         self.eni_grid = eni_grid
         # exporter = pp.Exporter(eni_grid, folder_name="./", file_name="ENIGRID")
@@ -626,7 +627,6 @@ class GeometryCloseToEni(
         self.nd: int = self.mdg.dim_max()
 
         pp.set_local_coordinate_projections(self.mdg)
-
 
     def set_geometry_part_2(self):
         """ """
@@ -1049,7 +1049,7 @@ class SolutionStrategyMomentumBalance(
         # _, sss, _ = sp.sparse.linalg.svds(A, k=int(A.shape[0] / 1000))
         # cond = np.linalg.cond(A.todense(), p=2)
         # print("condition number K2 = ", cond)
-        
+
         print("inside after_simulation")
 
         subdomains_data = self.mdg.subdomains(return_data=True)
@@ -1152,11 +1152,13 @@ class SolutionStrategyMomentumBalance(
         # n_dofs_tot = np.array([3*sd.num_cells], dtype=np.int32)
 
         # focus on the traction!
-        volumes_subdomains = np.repeat(self.sd_fract.cell_volumes, 3) # [vol cell1, vol cell1, vol cell1, vol cell2, vol cell2, ...]
+        volumes_subdomains = np.repeat(
+            self.sd_fract.cell_volumes, 3
+        )  # [vol cell1, vol cell1, vol cell1, vol cell2, vol cell2, ...]
         volumes_interfaces = np.array([])
         vars_domain = np.array([0])
-        dofs_primary_vars = np.array( [np.arange(0, 3*self.sd_fract.num_cells)] )
-        n_dofs_tot = np.array([3*self.sd_fract.num_cells], dtype=np.int32)
+        dofs_primary_vars = np.array([np.arange(0, 3 * self.sd_fract.num_cells)])
+        n_dofs_tot = np.array([3 * self.sd_fract.num_cells], dtype=np.int32)
 
         # n_dofs_traction = np.array([3*self.fracture_faces_id.shape[0]], dtype=np.int32)
 
@@ -1169,7 +1171,7 @@ class SolutionStrategyMomentumBalance(
         print("end after_simulation")
 
     def prepare_model_for_visualization_old(self):
-        """ 
+        """
         i dont need it for a single domain model right?
         """
         self.set_materials()
@@ -1184,13 +1186,11 @@ class SolutionStrategyMomentumBalance(
         self.reset_state_from_file()
 
         self.set_equations()
-    
+
     def prepare_model_for_visualization(self):
-        """ 
-        """
+        """ """
         self.set_geometry()
         self.set_geometry_part_2()
-
 
 
 class SubModelCaseEni(

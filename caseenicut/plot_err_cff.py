@@ -12,15 +12,15 @@ data_folder_root = "./data"
 results_folder_mech = "./results/mech"
 results_folder_nn = "./results/nn"
 
-training_dataset_id = np.loadtxt(data_folder_root + "/training_dataset_id", dtype=np.int32)
-validation_dataset_id = np.loadtxt(data_folder_root + "/validation_dataset_id", dtype=np.int32)
+# training_dataset_id = np.loadtxt(data_folder_root + "/training_dataset_id", dtype=np.int32)
+# validation_dataset_id = np.loadtxt(data_folder_root + "/validation_dataset_id", dtype=np.int32)
 test_dataset_id = np.loadtxt(data_folder_root + "/test_dataset_id", dtype=np.int32)
 
 times_mech = np.loadtxt("./data/TIMES_MECH")
 
 
 
-def plt_boxplot_dict(dictionary, save_folder, y_lim_1, y_lim_2, file_name, fontsize=16):
+def plt_boxplot_dict(dictionary, save_folder, y_lim_1, y_lim_2, file_name, fontsize=20):
     """ 
     copied from viz
     """
@@ -46,7 +46,7 @@ def plt_boxplot_dict(dictionary, save_folder, y_lim_1, y_lim_2, file_name, fonts
   
     ax_1.set_ylim(y_lim_1)
     plt.xlabel("time $[day]$")
-    plt.ylabel("$CFF$ realtive error")
+    plt.ylabel(r"$\Delta\text{CFF}$ realtive error")
 
     plt.grid(visible=True, which='major', axis='both', alpha=0.5)
 
@@ -97,7 +97,7 @@ dictionary = {
             str(times_mech[2]): err_relative_vs_max_cff_mu_time[:,2],
             }
 # y_lim_1 = np.array([0, 0.1]) # no shutdown
-y_lim_1 = np.array([0, 0.3]) # with shutdown
+y_lim_1 = np.array([0, 0.1]) # with shutdown
 y_lim_2 = np.array([0, 0])
 file_name = "boxplot_err_relative_vs_max_cff"
 plt_boxplot_dict(dictionary, results_folder_nn, y_lim_1, y_lim_2, file_name)

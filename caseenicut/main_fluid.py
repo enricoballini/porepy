@@ -98,6 +98,7 @@ np.savetxt(data_folder_root + "/test_dataset_id", test_dataset_id, fmt="%d")
 np.savetxt(results_folder_root + "/test_dataset_id", test_dataset_id, fmt="%d")
 num_snap_to_generate = test_dataset_id[-1] + 1
 
+
 with open("./data/last_idx_mu", "+w") as fle:
     fle.write(str(num_snap_to_generate-1))
 # np.savetxt("./data/last_idx_mu", np.array([num_snap_to_generate], dtype=np.int32)) # read by run_all.sh

@@ -35,13 +35,15 @@ linestyles = ["-", "--", "-"]
 # dates, prop, kw_upper, wg_upper = read_unrst.read_simulated_summary( varsource, filename, init_date)
 
 
-for idx_mu in test_dataset_id:
-    print("writing well properties of " + str(idx_mu))
 
-    for var in variable_names:
-        os.system("rm -r " + save_folder + "/" + var + "*")
+# # UNCOMMENT IF YOU NEED TO RE-READ THE DATA ON HPC5
+# print("check ead_unrst.read_and_save_variables, are you working on hpc5 ore elsewhere?")
+# for idx_mu in test_dataset_id:
+#     print("writing well properties of " + str(idx_mu))
 
-    read_unrst.read_and_save_variables(data_folder, save_folder, unrst_file_name, idx_mu, variable_names)
+#     for var in variable_names:
+#         os.system("rm -r " + save_folder + "/" + var + "*")
+#         read_unrst.read_and_save_variables(data_folder, save_folder, unrst_file_name, idx_mu, variable_names)
 
 
 variable_names = variable_names[1:] # remove TIME
@@ -75,14 +77,14 @@ for idx_mu in test_dataset_id:
             ax_2 = ax_1.twinx()
             ax_2.plot(
                     times,
-                    variables[i] *1e5, # form bar to Pa ### TODO: improve
+                    variables[i], # *1e5, # form bar to Pa ### TODO: improve
                     label=var_name,
                     linestyle=linestyles[i],
                     color=colors[i],
                     marker="",
                 )
-            ax_2.set_ylim(np.array([0, 210e5])) ### upper bound is 1.9 bar, see .DATA TODO: improve 
-            ax_2.set_ylabel("$[Pa]$", fontsize=fontsize)
+            ax_2.set_ylim(np.array([0, 210])) ### upper bound is 1.9 bar, see .DATA TODO: improve 
+            ax_2.set_ylabel("[bar]", fontsize=fontsize)
         else:
             ax_1.plot(
                     times,
@@ -92,7 +94,7 @@ for idx_mu in test_dataset_id:
                     color=colors[i],
                     marker="",
                 )
-            ax_1.set_ylabel(r"$[m^3 / \text{day}]$", fontsize=fontsize)
+            ax_1.set_ylabel(r"$[\text{sm}^3 / \text{day}]$", fontsize=fontsize)
 
     plt.savefig(
         save_folder + "/" + str(idx_mu) + "/well_props.pdf",

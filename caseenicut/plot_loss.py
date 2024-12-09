@@ -15,15 +15,18 @@ os.system("clear")
 if __name__ == "__main__":
     # case_id = int(sys.argv[1])  # 1, 2, 3, ...
 
-    nn_folder = "./results/nn" 
+    nn_folder = "./results/nn"
 
     loss_training_list = np.loadtxt(nn_folder + "/loss_ave_list")
     loss_validation_list = np.loadtxt(nn_folder + "/loss_ave_validation_list")
 
     loss_components_training_list = np.loadtxt(nn_folder + "/loss_components_ave_list")
-    loss_components_validation_list = np.loadtxt(nn_folder + "/loss_components_ave_validation_list")
+    loss_components_validation_list = np.loadtxt(
+        nn_folder + "/loss_components_ave_validation_list"
+    )
 
     from nnrom.utils import viz
+
     viz.plot_loss(
         loss_training_list,
         loss_validation_list,
@@ -35,7 +38,13 @@ if __name__ == "__main__":
     viz.plot_loss_components(
         loss_components_training_list,
         loss_components_validation_list,
-        loss_names = ["$\mathscr{L}_1$", "$\mathscr{L}_2$", "$\mathscr{L}_3$", "$\mathscr{L}_4$", "$\mathscr{R}$"],
+        loss_names=[
+            "$\mathscr{L}^1$",
+            "$\mathscr{L}^2$",
+            "$\mathscr{L}^3$",
+            "$\mathscr{L}^4$",
+            "$\mathscr{L}^{reg}$",
+        ],
         # loss_names = ["$\mathscr{L}_1$", "$\mathscr{L}_2$", "$\mathscr{L}_3$", "$\mathscr{L}_4$", "$\mathscr{L}_5$", "$\mathscr{R}$"],
         save_folder=nn_folder,
         validate_every_n_iter=10,
