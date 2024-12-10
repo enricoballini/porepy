@@ -16,16 +16,21 @@ save_folder = "./results/fluid"
 os.system("mkdir -p " + save_folder)
 timestep = np.loadtxt("./data/TIMESTEP")
 
-training_dataset_id = np.loadtxt(data_folder_root + "/training_dataset_id", dtype=np.int32)
-validation_dataset_id = np.loadtxt(data_folder_root + "/validation_dataset_id", dtype=np.int32)
+training_dataset_id = np.loadtxt(
+    data_folder_root + "/training_dataset_id", dtype=np.int32
+)
+validation_dataset_id = np.loadtxt(
+    data_folder_root + "/validation_dataset_id", dtype=np.int32
+)
 test_dataset_id = np.loadtxt(data_folder_root + "/test_dataset_id", dtype=np.int32)
 
 unrst_file_name = "case2skew"
-variable_names = ["TIME",
-                "FGPR", # Field gas production rate
-                "FGIR", # field gas injeciton rate
-                "WBHP",
-                ] # well bottom hole pressure 
+variable_names = [
+    "TIME",
+    "FGPR",  # Field gas production rate
+    "FGIR",  # field gas injeciton rate
+    "WBHP",
+]  # well bottom hole pressure
 
 fontsize = 28
 colors = ["black", "black", "darkorange"]
@@ -33,7 +38,6 @@ linestyles = ["-", "--", "-"]
 
 
 # dates, prop, kw_upper, wg_upper = read_unrst.read_simulated_summary( varsource, filename, init_date)
-
 
 
 # # UNCOMMENT IF YOU NEED TO RE-READ THE DATA ON HPC5
@@ -46,23 +50,27 @@ linestyles = ["-", "--", "-"]
 #         read_unrst.read_and_save_variables(data_folder, save_folder, unrst_file_name, idx_mu, variable_names)
 
 
-variable_names = variable_names[1:] # remove TIME
+variable_names = variable_names[1:]  # remove TIME
 for idx_mu in test_dataset_id:
     print("plotting well properties of " + str(idx_mu))
     variables = []
 
     for var_name in variable_names:
-        variables.append(np.load(save_folder + "/" + str(idx_mu) +  "/" + var_name + ".npy"))
+        variables.append(
+            np.load(save_folder + "/" + str(idx_mu) + "/" + var_name + ".npy")
+        )
 
     # time_final = np.loadtxt("./data/TIMES")[-1]
     # times = np.linspace(0, time_final, variables[0].shape[0])
-    times = np.load(save_folder + "/" + str(idx_mu) +  "/TIME.npy" )
+    times = np.load(save_folder + "/" + str(idx_mu) + "/TIME.npy")
 
     plt.rc("text", usetex=True)
     plt.rc("font", family="serif")
     plt.rc("font", size=fontsize)
 
-    params = {"text.latex.preamble": r"\usepackage{bm}\usepackage{amsmath}\usepackage{mathrsfs}"}
+    params = {
+        "text.latex.preamble": r"\usepackage{bm}\usepackage{amsmath}\usepackage{mathrsfs}"
+    }
     plt.rcParams.update(params)
     matplotlib.rcParams["axes.linewidth"] = 1.5
 
@@ -72,29 +80,31 @@ for idx_mu in test_dataset_id:
         label.set_fontsize(fontsize)
 
     for i, var_name in enumerate(variable_names):
-        
-        if var_name == "WBHP": ### TODO: improve...
+
+        if var_name == "WBHP":  ### TODO: improve...
             ax_2 = ax_1.twinx()
             ax_2.plot(
-                    times,
-                    variables[i], # *1e5, # form bar to Pa ### TODO: improve
-                    label=var_name,
-                    linestyle=linestyles[i],
-                    color=colors[i],
-                    marker="",
-                )
-            ax_2.set_ylim(np.array([0, 210])) ### upper bound is 1.9 bar, see .DATA TODO: improve 
-            ax_2.set_ylabel("[bar]", fontsize=fontsize)
+                times,
+                variables[i],  # *1e5, # form bar to Pa ### TODO: improve
+                label=var_name,
+                linestyle=linestyles[i],
+                color=colors[i],
+                marker="",
+            )
+            ax_2.set_ylim(
+                np.array([0, 210])
+            )  ### upper bound is 1.9 bar, see .DATA TODO: improve
+            ax_2.set_ylabel("pressure [bar]", fontsize=fontsize)
         else:
             ax_1.plot(
-                    times,
-                    variables[i],
-                    label=var_name,
-                    linestyle=linestyles[i],
-                    color=colors[i],
-                    marker="",
-                )
-            ax_1.set_ylabel(r"$[\text{sm}^3 / \text{day}]$", fontsize=fontsize)
+                times,
+                variables[i],
+                label=var_name,
+                linestyle=linestyles[i],
+                color=colors[i],
+                marker="",
+            )
+            ax_1.set_ylabel(r"rate $[\text{sm}^3 / \text{day}]$", fontsize=fontsize)
 
     plt.savefig(
         save_folder + "/" + str(idx_mu) + "/well_props.pdf",
@@ -104,10 +114,21 @@ for idx_mu in test_dataset_id:
     )
 
     # legend:
-    handles_all, labels_all = [ (a + b) for a, b in zip( ax_1.get_legend_handles_labels(), ax_2.get_legend_handles_labels() ) ]
+    handles_all, labels_all = [
+        (a + b)
+        for a, b in zip(
+            ax_1.get_legend_handles_labels(), ax_2.get_legend_handles_labels()
+        )
+    ]
 
-    handles = np.ravel(np.reshape(handles_all[:len(variable_names)], (1, len(variable_names))), order="F")
-    labels = np.ravel(np.reshape(labels_all[:len(variable_names)], (1, len(variable_names))), order="F")
+    handles = np.ravel(
+        np.reshape(handles_all[: len(variable_names)], (1, len(variable_names))),
+        order="F",
+    )
+    labels = np.ravel(
+        np.reshape(labels_all[: len(variable_names)], (1, len(variable_names))),
+        order="F",
+    )
     fig, ax = plt.subplots(figsize=(25, 10))
     for h, l in zip(handles, labels):
         ax.plot(np.zeros(1), label=l)
@@ -127,8 +148,6 @@ for idx_mu in test_dataset_id:
 
     os.system("pdfcrop --margins '0 -800 0 0' " + filename + " " + filename)
     os.system("pdfcrop " + filename + " " + filename)
-
-
 
 
 print("\nDone!")

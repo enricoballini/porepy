@@ -35,6 +35,13 @@ if __name__ == "__main__":
         fontsize=18,
     )
 
+    colors = [
+        [0, 0, 0],
+        [0.9, 0.1, 0.1],
+        [0.2, 0.7, 0.2],
+        [0.1, 0.1, 0.9],
+        [1, 0.85, 0.55],
+    ]
     viz.plot_loss_components(
         loss_components_training_list,
         loss_components_validation_list,
@@ -49,4 +56,5 @@ if __name__ == "__main__":
         save_folder=nn_folder,
         validate_every_n_iter=10,
         fontsize=18,
+        colors=colors,
     )
